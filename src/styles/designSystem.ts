@@ -2,10 +2,10 @@
 // Единый стиль для всего приложения
 
 export const colors = {
-  // Основные цвета (Brilliant blue palette)
-  primary: '#0066cc',        // Основной синий
-  primaryLight: '#3388dd',   // Светло-синий
-  primaryDark: '#004499',    // Темно-синий
+  // Основные цвета (dark elegant palette)
+  primary: '#1a1a1a',        // Основной темный
+  primaryLight: '#333333',   // Светло-серый
+  primaryDark: '#000000',    // Черный
   
   // Нейтральные цвета
   white: '#ffffff',
@@ -22,10 +22,10 @@ export const colors = {
   gray900: '#111827',
   
   // Семантические цвета
-  success: '#10b981',
+  success: '#22c55e',
   warning: '#f59e0b',
   error: '#ef4444',
-  info: '#3b82f6',
+  info: '#4a90e2',
   
   // Алиасы для совместимости
   text: '#1f2937',

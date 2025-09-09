@@ -1,18 +1,18 @@
 export const colors = {
-  // Primary colors (Brilliant blue palette)
-  primary: '#0066cc',
-  primaryLight: '#3388dd',
-  primaryDark: '#004499',
+  // Primary colors (dark elegant palette)
+  primary: '#1a1a1a',
+  primaryLight: '#333333',
+  primaryDark: '#000000',
   
-  // Secondary colors (teal/cyan)
-  secondary: '#00bcd4',
-  secondaryLight: '#4dd0e1',
-  secondaryDark: '#0097a7',
+  // Secondary colors (white/light gray)
+  secondary: '#ffffff',
+  secondaryLight: '#f8f9fa',
+  secondaryDark: '#e9ecef',
   
-  // Accent colors (orange/yellow)
-  accent: '#ff9800',
-  accentLight: '#ffb74d',
-  accentDark: '#f57c00',
+  // Accent colors (subtle blue)
+  accent: '#4a90e2',
+  accentLight: '#7bb3f0',
+  accentDark: '#2c5aa0',
   
   // Neutral colors
   background: '#f8fafc',

@@ -119,12 +119,12 @@ const AuthScreen: React.FC = () => {
               {/* Sign In Section */}
               <View style={styles.signInSection}>
                 <View style={styles.buttonContainer}>
-                  <Button
-                    title="Continue with Google"
-                    onPress={handleGoogleSignIn}
-                    style={styles.googleButton}
-                    disabled={isSigningIn}
-                  />
+                <Button
+                  title="Continue with Google"
+                  onPress={handleGoogleSignIn}
+                  style={styles.googleButton}
+                  disabled={isSigningIn}
+                />
                 </View>
 
                 <View style={styles.dividerContainer}>
@@ -134,12 +134,12 @@ const AuthScreen: React.FC = () => {
                 </View>
 
                 <View style={styles.buttonContainer}>
-                  <Button
-                    title="Continue with Apple"
-                    onPress={handleAppleSignIn}
-                    style={styles.appleButton}
-                    disabled={isSigningIn}
-                  />
+                <Button
+                  title="Continue with Apple"
+                  onPress={handleAppleSignIn}
+                  style={styles.appleButton}
+                  disabled={isSigningIn}
+                />
                 </View>
 
                 <View style={styles.termsContainer}>
@@ -189,7 +189,7 @@ const styles = StyleSheet.create({
     width: 100,
     height: 100,
     borderRadius: borderRadius.full,
-    backgroundColor: colors.primary,
+    backgroundColor: 'transparent',
     justifyContent: 'center',
     alignItems: 'center',
     ...shadows.lg,
@@ -244,7 +244,7 @@ const styles = StyleSheet.create({
     marginBottom: spacing.lg,
   },
   googleButton: {
-    backgroundColor: '#4285F4',
+    backgroundColor: colors.primary,
     borderRadius: borderRadius.xl,
     paddingVertical: spacing.xl,
     paddingHorizontal: spacing.xl,
@@ -255,7 +255,9 @@ const styles = StyleSheet.create({
     ...shadows.md,
   },
   appleButton: {
-    backgroundColor: '#000000',
+    backgroundColor: colors.secondary,
+    borderWidth: 1,
+    borderColor: colors.primary,
     borderRadius: borderRadius.xl,
     paddingVertical: spacing.xl,
     paddingHorizontal: spacing.xl,

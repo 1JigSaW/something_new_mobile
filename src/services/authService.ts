@@ -95,11 +95,11 @@ class AuthService {
       const userInfo = await GoogleSignin.getCurrentUser();
       if (userInfo) {
         return {
-          id: userInfo.data?.user?.id || '',
-          email: userInfo.data?.user?.email,
-          name: userInfo.data?.user?.name || undefined,
+          id: userInfo.user?.id || '',
+          email: userInfo.user?.email,
+          name: userInfo.user?.name || undefined,
           provider: 'google',
-          photo: userInfo.data?.user?.photo || undefined,
+          photo: userInfo.user?.photo || undefined,
         };
       }
     } catch (error) {

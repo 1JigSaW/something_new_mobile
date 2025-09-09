@@ -78,49 +78,76 @@ const AuthScreen: React.FC = () => {
         >
           <Container>
             <View style={styles.content}>
-              {/* Logo */}
-              <View style={styles.logoContainer}>
-                <View style={styles.logo}>
-                  <AppLogo 
-                    size={48} 
-                    color="#ffffff" 
-                    backgroundColor="transparent"
+              {/* Hero Section with Gradient Background */}
+              <View style={styles.heroSection}>
+                <View style={styles.logoContainer}>
+                  <View style={styles.logo}>
+                    <AppLogo 
+                      size={48} 
+                      color="#ffffff" 
+                      backgroundColor="transparent"
+                    />
+                  </View>
+                </View>
+
+                <View style={styles.titleContainer}>
+                  <RNText style={styles.title}>Welcome to Something New</RNText>
+                  <View style={styles.subtitleContainer}>
+                    <RNText style={styles.subtitle}>
+                      Master new skills with daily challenges designed for your schedule
+                    </RNText>
+                  </View>
+                </View>
+
+                {/* Feature highlights */}
+                <View style={styles.featuresContainer}>
+                  <View style={styles.featureItem}>
+                    <RNText style={styles.featureIcon}>⚡</RNText>
+                    <RNText style={styles.featureText}>Quick 5-30 min sessions</RNText>
+                  </View>
+                  <View style={styles.featureItem}>
+                    <RNText style={styles.featureIcon}>🎯</RNText>
+                    <RNText style={styles.featureText}>Personalized challenges</RNText>
+                  </View>
+                  <View style={styles.featureItem}>
+                    <RNText style={styles.featureIcon}>📈</RNText>
+                    <RNText style={styles.featureText}>Track your progress</RNText>
+                  </View>
+                </View>
+              </View>
+
+              {/* Sign In Section */}
+              <View style={styles.signInSection}>
+                <View style={styles.buttonContainer}>
+                  <Button
+                    title="Continue with Google"
+                    onPress={handleGoogleSignIn}
+                    style={styles.googleButton}
+                    disabled={isSigningIn}
                   />
                 </View>
-              </View>
 
-              {/* Title */}
-              <View style={styles.titleContainer}>
-                <RNText style={styles.title}>Welcome to Something New</RNText>
-                <View style={styles.subtitleContainer}>
-                  <RNText style={styles.subtitle}>Start your journey of daily challenges</RNText>
+                <View style={styles.dividerContainer}>
+                  <View style={styles.dividerLine} />
+                  <RNText style={styles.dividerText}>or</RNText>
+                  <View style={styles.dividerLine} />
+                </View>
+
+                <View style={styles.buttonContainer}>
+                  <Button
+                    title="Continue with Apple"
+                    onPress={handleAppleSignIn}
+                    style={styles.appleButton}
+                    disabled={isSigningIn}
+                  />
+                </View>
+
+                <View style={styles.termsContainer}>
+                  <RNText style={styles.termsText}>
+                    By continuing, you agree to our Terms of Service and Privacy Policy
+                  </RNText>
                 </View>
               </View>
-
-              {/* Spacer */}
-              <View style={styles.spacer} />
-
-              {/* Google Sign In Button */}
-              <View style={styles.buttonContainer}>
-                <Button
-                  title="Continue with Google"
-                  onPress={handleGoogleSignIn}
-                  style={styles.googleButton}
-                  disabled={isSigningIn}
-                />
-              </View>
-
-              {/* Apple Sign In Button (temporarily disabled) */}
-              {/* <View style={styles.buttonContainer}>
-                <Button
-                  title="Continue with Apple"
-                  onPress={handleAppleSignIn}
-                  style={styles.appleButton}
-                />
-              </View> */}
-
-              {/* Bottom Spacer */}
-              <View style={styles.bottomSpacer} />
             </View>
           </Container>
         </ScrollView>
@@ -138,8 +165,6 @@ const styles = StyleSheet.create({
   },
   content: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
     paddingHorizontal: spacing.lg,
     paddingVertical: spacing['4xl'],
   },
@@ -152,32 +177,31 @@ const styles = StyleSheet.create({
   loaderText: {
     marginTop: spacing.lg,
   },
+  heroSection: {
+    alignItems: 'center',
+    marginBottom: spacing['4xl'],
+  },
   logoContainer: {
     alignItems: 'center',
     marginBottom: spacing['3xl'],
   },
   logo: {
-    width: 80,
-    height: 80,
+    width: 100,
+    height: 100,
     borderRadius: borderRadius.full,
     backgroundColor: colors.primary,
     justifyContent: 'center',
     alignItems: 'center',
-    ...shadows.md,
-  },
-  logoText: {
-    fontSize: 32,
-    fontWeight: 'bold',
-    color: '#ffffff',
+    ...shadows.lg,
   },
   titleContainer: {
     alignItems: 'center',
     marginBottom: spacing['3xl'],
   },
   title: {
-    fontSize: 28,
+    fontSize: 32,
     fontWeight: '700',
-    color: '#1f2937',
+    color: colors.textPrimary,
     textAlign: 'center',
     marginBottom: spacing.md,
   },
@@ -185,14 +209,35 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   subtitle: {
-    fontSize: 16,
+    fontSize: 18,
     fontWeight: '400',
-    color: '#6b7280',
+    color: colors.textSecondary,
     textAlign: 'center',
-    lineHeight: 24,
+    lineHeight: 26,
+    paddingHorizontal: spacing.md,
   },
-  spacer: {
-    height: spacing['4xl'],
+  featuresContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    width: '100%',
+    paddingHorizontal: spacing.lg,
+  },
+  featureItem: {
+    alignItems: 'center',
+    flex: 1,
+  },
+  featureIcon: {
+    fontSize: 24,
+    marginBottom: spacing.sm,
+  },
+  featureText: {
+    fontSize: 12,
+    color: colors.textSecondary,
+    textAlign: 'center',
+    fontWeight: '500',
+  },
+  signInSection: {
+    width: '100%',
   },
   buttonContainer: {
     width: '100%',
@@ -200,27 +245,51 @@ const styles = StyleSheet.create({
   },
   googleButton: {
     backgroundColor: '#4285F4',
-    borderRadius: borderRadius.lg,
-    paddingVertical: spacing.lg,
+    borderRadius: borderRadius.xl,
+    paddingVertical: spacing.xl,
     paddingHorizontal: spacing.xl,
     minHeight: 56,
     justifyContent: 'center',
     alignItems: 'center',
     width: '100%',
-    ...shadows.sm,
+    ...shadows.md,
   },
   appleButton: {
     backgroundColor: '#000000',
-    borderRadius: borderRadius.lg,
-    paddingVertical: spacing.lg,
+    borderRadius: borderRadius.xl,
+    paddingVertical: spacing.xl,
     paddingHorizontal: spacing.xl,
-    minHeight: 48,
+    minHeight: 56,
     justifyContent: 'center',
     alignItems: 'center',
     width: '100%',
+    ...shadows.md,
   },
-  bottomSpacer: {
-    height: spacing['3xl'],
+  dividerContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginVertical: spacing.xl,
+  },
+  dividerLine: {
+    flex: 1,
+    height: 1,
+    backgroundColor: colors.border,
+  },
+  dividerText: {
+    marginHorizontal: spacing.lg,
+    fontSize: 14,
+    color: colors.textSecondary,
+    fontWeight: '500',
+  },
+  termsContainer: {
+    marginTop: spacing.xl,
+    paddingHorizontal: spacing.md,
+  },
+  termsText: {
+    fontSize: 12,
+    color: colors.textSecondary,
+    textAlign: 'center',
+    lineHeight: 18,
   },
 });
 

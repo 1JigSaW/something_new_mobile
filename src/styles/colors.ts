@@ -1,18 +1,18 @@
 export const colors = {
-  // Primary colors (фиолетовая палитра)
-  primary: '#8b5cf6',
-  primaryLight: '#a78bfa',
-  primaryDark: '#7c3aed',
+  // Primary colors (Brilliant blue palette)
+  primary: '#0066cc',
+  primaryLight: '#3388dd',
+  primaryDark: '#004499',
   
-  // Secondary colors
-  secondary: '#10b981',
-  secondaryLight: '#6ee7b7',
-  secondaryDark: '#059669',
+  // Secondary colors (teal/cyan)
+  secondary: '#00bcd4',
+  secondaryLight: '#4dd0e1',
+  secondaryDark: '#0097a7',
   
-  // Accent colors
-  accent: '#f59e0b',
-  accentLight: '#fbbf24',
-  accentDark: '#d97706',
+  // Accent colors (orange/yellow)
+  accent: '#ff9800',
+  accentLight: '#ffb74d',
+  accentDark: '#f57c00',
   
   // Neutral colors
   background: '#f8fafc',

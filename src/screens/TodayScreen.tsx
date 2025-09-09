@@ -9,6 +9,8 @@ import Text from '../ui/atoms/Text';
 import Button from '../ui/atoms/Button';
 import CompletionModal from '../ui/molecules/CompletionModal';
 import BeautifulLoader from '../ui/atoms/BeautifulLoader';
+import ProgressCard from '../ui/molecules/ProgressCard';
+import StatsCard from '../ui/molecules/StatsCard';
 import { useChallengeContext } from '../context/ChallengeContext';
 import { useHealthQuery } from '../features/examples/useHealthQuery';
 import { colors, timeSlotColors, spacing, borderRadius, shadows, typography } from '../styles';
@@ -145,17 +147,60 @@ export default function TodayScreen() {
         <ScrollView style={{ paddingVertical: spacing['2xl'] }}>
           <Header 
             title="Today" 
-            subtitle={dayCompleted ? "Day completed! 🎉" : "How much time do you have?"} 
+            subtitle={dayCompleted ? "Day completed! 🎉" : "Ready to learn something new?"} 
           />
           
-          <View style={{ height: spacing['3xl'] }} />
+          <View style={{ height: spacing['2xl'] }} />
+
+          {/* Stats Overview */}
+          {!dayCompleted && (
+            <View style={{ marginBottom: spacing['2xl'] }}>
+              <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: spacing.lg }}>
+                <StatsCard
+                  title="Streak"
+                  value="7"
+                  subtitle="days in a row"
+                  icon="🔥"
+                  color={colors.accent}
+                  trend="up"
+                  trendValue="+2 days"
+                />
+                <StatsCard
+                  title="Completed"
+                  value="23"
+                  subtitle="challenges"
+                  icon="✅"
+                  color={colors.success}
+                  trend="up"
+                  trendValue="+5 this week"
+                />
+              </View>
+              
+              <ProgressCard
+                title="Learning Progress"
+                subtitle="Keep up the momentum!"
+                progress={75}
+                icon="📚"
+                color={colors.primary}
+              />
+            </View>
+          )}
           
           {!selectedTime && !dayCompleted && (
             <View style={{ alignItems: 'center' }}>
               <Text variant="title" color="default">
-                Choose your time
+                How much time do you have?
               </Text>
               <View style={{ height: spacing.xl }} />
+              <View style={{ marginBottom: spacing.xl }}>
+                <RNText style={{ 
+                  color: colors.textSecondary, 
+                  textAlign: 'center',
+                  fontSize: typography.body.fontSize,
+                }}>
+                  Choose a time slot that fits your schedule
+                </RNText>
+              </View>
               <View style={{ gap: spacing.lg, width: '100%' }}>
                 {timeSlots.map((slot) => (
                   <Button
@@ -163,7 +208,12 @@ export default function TodayScreen() {
                     title={`${slot.emoji} ${slot.label}`}
                     onPress={() => handleTimeSelect(slot.key)}
                     variant="secondary"
-                    style={{ backgroundColor: slot.color }}
+                    style={{ 
+                      backgroundColor: slot.color,
+                      borderRadius: borderRadius.xl,
+                      paddingVertical: spacing.xl,
+                      ...shadows.md,
+                    }}
                   />
                 ))}
               </View>

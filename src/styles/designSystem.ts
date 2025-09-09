@@ -2,10 +2,10 @@
 // Единый стиль для всего приложения
 
 export const colors = {
-  // Основные цвета (фиолетовая палитра)
-  primary: '#8b5cf6',        // Основной фиолетовый
-  primaryLight: '#a78bfa',   // Светло-фиолетовый
-  primaryDark: '#7c3aed',    // Темно-фиолетовый
+  // Основные цвета (Brilliant blue palette)
+  primary: '#0066cc',        // Основной синий
+  primaryLight: '#3388dd',   // Светло-синий
+  primaryDark: '#004499',    // Темно-синий
   
   // Нейтральные цвета
   white: '#ffffff',

@@ -29,11 +29,11 @@ class AuthService {
       const userInfo = await GoogleSignin.signIn();
       
       return {
-        id: userInfo.user?.id || '',
-        email: userInfo.user?.email,
-        name: userInfo.user?.name || undefined,
+        id: userInfo.data?.user?.id || '',
+        email: userInfo.data?.user?.email,
+        name: userInfo.data?.user?.name || undefined,
         provider: 'google',
-        photo: userInfo.user?.photo || undefined,
+        photo: userInfo.data?.user?.photo || undefined,
       };
     } catch (error: any) {
       if (error.code === statusCodes.SIGN_IN_CANCELLED) {
@@ -95,11 +95,11 @@ class AuthService {
       const userInfo = await GoogleSignin.getCurrentUser();
       if (userInfo) {
         return {
-          id: userInfo.user?.id || '',
-          email: userInfo.user?.email,
-          name: userInfo.user?.name || undefined,
+          id: userInfo.data?.user?.id || '',
+          email: userInfo.data?.user?.email,
+          name: userInfo.data?.user?.name || undefined,
           provider: 'google',
-          photo: userInfo.user?.photo || undefined,
+          photo: userInfo.data?.user?.photo || undefined,
         };
       }
     } catch (error) {

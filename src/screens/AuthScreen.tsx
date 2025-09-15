@@ -91,28 +91,7 @@ const AuthScreen: React.FC = () => {
                 </View>
 
                 <View style={styles.titleContainer}>
-                  <RNText style={styles.title}>Welcome to Something New</RNText>
-                  <View style={styles.subtitleContainer}>
-                    <RNText style={styles.subtitle}>
-                      Master new skills with daily challenges designed for your schedule
-                    </RNText>
-                  </View>
-                </View>
-
-                {/* Feature highlights */}
-                <View style={styles.featuresContainer}>
-                  <View style={styles.featureItem}>
-                    <RNText style={styles.featureIcon}>⚡</RNText>
-                    <RNText style={styles.featureText}>Quick 5-30 min sessions</RNText>
-                  </View>
-                  <View style={styles.featureItem}>
-                    <RNText style={styles.featureIcon}>🎯</RNText>
-                    <RNText style={styles.featureText}>Personalized challenges</RNText>
-                  </View>
-                  <View style={styles.featureItem}>
-                    <RNText style={styles.featureIcon}>📈</RNText>
-                    <RNText style={styles.featureText}>Track your progress</RNText>
-                  </View>
+                  <RNText style={styles.title}>Something New</RNText>
                 </View>
               </View>
 
@@ -120,7 +99,7 @@ const AuthScreen: React.FC = () => {
               <View style={styles.signInSection}>
                 <View style={styles.buttonContainer}>
                 <Button
-                  title="Continue with Google"
+                  title="Google"
                   onPress={handleGoogleSignIn}
                   style={styles.googleButton}
                   disabled={isSigningIn}
@@ -135,18 +114,13 @@ const AuthScreen: React.FC = () => {
 
                 <View style={styles.buttonContainer}>
                 <Button
-                  title="Continue with Apple"
+                  title="Apple"
                   onPress={handleAppleSignIn}
                   style={styles.appleButton}
                   disabled={isSigningIn}
                 />
                 </View>
 
-                <View style={styles.termsContainer}>
-                  <RNText style={styles.termsText}>
-                    By continuing, you agree to our Terms of Service and Privacy Policy
-                  </RNText>
-                </View>
               </View>
             </View>
           </Container>
@@ -166,7 +140,9 @@ const styles = StyleSheet.create({
   content: {
     flex: 1,
     paddingHorizontal: spacing.lg,
-    paddingVertical: spacing['4xl'],
+    paddingTop: 80,
+    paddingBottom: spacing['4xl'],
+    justifyContent: 'center',
   },
   loaderContainer: {
     flex: 1,

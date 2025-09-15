@@ -1,39 +1,34 @@
 import React from 'react';
-import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import { NavigationContainer } from '@react-navigation/native';
 import { BottomTabNavigation } from '../navigation/BottomTabNavigation';
-import AuthScreen from '../screens/AuthScreen';
 import { useAuth } from '../context/AuthContext';
+import AuthScreen from '../screens/AuthScreen';
 
 export function AppContent() {
   const { isAuthenticated, isLoading } = useAuth();
-  
-  console.log('AppContent render - isAuthenticated:', isAuthenticated, 'isLoading:', isLoading);
 
-  // Показываем загрузку пока проверяем авторизацию
   if (isLoading) {
     return (
       <SafeAreaProvider>
-        <AuthScreen />
+        <SafeAreaView style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+          {/* Можно добавить лоадер здесь */}
+        </SafeAreaView>
       </SafeAreaProvider>
     );
   }
 
-  // Если авторизован, показываем основное приложение
-  if (isAuthenticated) {
-    return (
-      <SafeAreaProvider>
+  if (!isAuthenticated) {
+    return <AuthScreen />;
+  }
+
+  return (
+    <SafeAreaProvider>
+      <SafeAreaView style={{ flex: 1 }}>
         <NavigationContainer>
           <BottomTabNavigation />
         </NavigationContainer>
-      </SafeAreaProvider>
-    );
-  }
-
-  // Если не авторизован, показываем экран авторизации
-  return (
-    <SafeAreaProvider>
-      <AuthScreen />
+      </SafeAreaView>
     </SafeAreaProvider>
   );
 }

@@ -1,476 +1,358 @@
-import React, { useState } from 'react';
-import { View, ScrollView, Text as RNText, Alert } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
-import Screen from '../ui/Screen';
-import Container from '../ui/layout/Container';
-import Header from '../ui/layout/Header';
-import HeroCard from '../ui/layout/HeroCard';
-import Text from '../ui/atoms/Text';
-import Button from '../ui/atoms/Button';
-import CompletionModal from '../ui/molecules/CompletionModal';
-import BeautifulLoader from '../ui/atoms/BeautifulLoader';
-import ProgressCard from '../ui/molecules/ProgressCard';
-import StatsCard from '../ui/molecules/StatsCard';
-import { useChallengeContext } from '../context/ChallengeContext';
-import { useHealthQuery } from '../features/examples/useHealthQuery';
-import { colors, timeSlotColors, spacing, borderRadius, shadows, typography } from '../styles';
-
-type TimeSlot = 'small' | 'medium' | 'large';
+import React from 'react';
+import { View, ScrollView, Text, StyleSheet, TouchableOpacity, Alert } from 'react-native';
+import { useApp } from '../context/AppContext';
 
 export default function TodayScreen() {
-  const { data, isLoading } = useHealthQuery();
-  const navigation = useNavigation();
-  const { selectedForToday, setSelectedForToday } = useChallengeContext();
-  
-  const [selectedTime, setSelectedTime] = useState<TimeSlot | null>(null);
-  const [dailyChallenges, setDailyChallenges] = useState<Array<{
-    id: number;
-    title: string;
-    description: string;
-    duration: string;
-    size: TimeSlot;
-  }>>([]);
-  const [selectedChallenge, setSelectedChallenge] = useState<{
-    id: number;
-    title: string;
-    description: string;
-    duration: string;
-    size: TimeSlot;
-  } | null>(null);
-  const [replacementsLeft, setReplacementsLeft] = useState(1);
-  const [dayCompleted, setDayCompleted] = useState(false);
-  const [showCompletionModal, setShowCompletionModal] = useState(false);
+  const {
+    activeChallenge,
+    setActiveChallenge,
+    completeChallenge,
+    skipChallenge,
+    canSkip,
+    canTakeNewChallenge,
+    streak,
+    completedToday,
+    isPremium,
+  } = useApp();
 
-  const timeSlots = [
-    { key: 'small' as TimeSlot, label: 'Up to 30 min', emoji: '⚡', color: timeSlotColors.small },
-    { key: 'medium' as TimeSlot, label: '30 min to 2 hours', emoji: '🎯', color: timeSlotColors.medium },
-    { key: 'large' as TimeSlot, label: '2+ hours', emoji: '🚀', color: timeSlotColors.large },
-  ];
-
-  const handleTimeSelect = (time: TimeSlot) => {
-    setSelectedTime(time);
-    
-    // Генерируем 3 челленджа: 1 случайный + 2 из той же категории времени
-    const challenges = [
-      {
-        id: 1,
-        title: 'Learn TypeScript Basics',
-        description: 'Complete a 15-minute tutorial on TypeScript fundamentals and create your first interface',
-        duration: '15 min',
-        size: time,
-      },
-      {
-        id: 2,
-        title: 'Mindful Breathing Session',
-        description: 'Practice deep breathing exercises for 10 minutes to improve focus and reduce stress',
-        duration: '10 min',
-        size: time,
-      },
-      {
-        id: 3,
-        title: 'Quick Home Workout',
-        description: 'Complete a 20-minute bodyweight workout routine in your living room',
-        duration: '20 min',
-        size: time,
-      }
-    ];
-    
-    setDailyChallenges(challenges);
-  };
-
-
-
-  const handleSelectChallenge = (challenge: any) => {
-    setSelectedChallenge(challenge);
-  };
-
-  const handleStartChallenge = () => {
+  const handleComplete = () => {
     Alert.alert(
-      'Confirmation',
-      'Are you sure you want to mark this challenge as completed?',
+      'Поздравляем! 🎉',
+      'Вы завершили вызов! Отличная работа!',
       [
-        { text: 'Cancel', style: 'cancel' },
-        { 
-          text: 'Yes, completed', 
-          onPress: () => setShowCompletionModal(true)
-        }
+        {
+          text: 'Отлично!',
+          onPress: completeChallenge,
+        },
       ]
     );
   };
 
-  const handleConfirmCompletion = () => {
-    setShowCompletionModal(false);
-    setDayCompleted(true);
-  };
-
-  const handleChooseCustom = () => {
-    navigation.navigate('Explore' as never);
-  };
-
-
-
-  const handleReplace = () => {
-    if (replacementsLeft > 0) {
-      setReplacementsLeft(replacementsLeft - 1);
-      // Generate new set of challenges
-      const newChallenges = [
-        {
-          id: Math.floor(Math.random() * 1000),
-          title: 'New Random Challenge',
-          description: 'A fresh challenge to keep you motivated!',
-          duration: '20 min',
-          size: selectedTime!,
-        },
-        {
-          id: Math.floor(Math.random() * 1000) + 1,
-          title: 'Alternative Option',
-          description: 'Another great challenge for your time slot',
-          duration: '25 min',
-          size: selectedTime!,
-        },
-        {
-          id: Math.floor(Math.random() * 1000) + 2,
-          title: 'Third Choice',
-          description: 'One more option to consider',
-          duration: '18 min',
-          size: selectedTime!,
-        }
-      ];
-      setDailyChallenges(newChallenges);
-      setSelectedChallenge(null); // Сбрасываем выбор
+  const handleSkip = () => {
+    if (!canSkip()) {
+      Alert.alert(
+        'Лимит пропусков',
+        isPremium ? 'Что-то пошло не так' : 'Вы использовали все пропуски на сегодня'
+      );
+      return;
     }
+
+    Alert.alert(
+      'Пропустить вызов?',
+      'Вы уверены, что хотите пропустить этот вызов?',
+      [
+        {
+          text: 'Отмена',
+          style: 'cancel',
+        },
+        {
+          text: 'Пропустить',
+          onPress: skipChallenge,
+        },
+      ]
+    );
   };
+
+  const handleTakeNewChallenge = () => {
+    if (!canTakeNewChallenge()) {
+      Alert.alert(
+        'Лимит достигнут',
+        isPremium ? 'Что-то пошло не так' : 'Вы уже выполнили задачу сегодня. Вернитесь завтра!'
+      );
+      return;
+    }
+
+    // Здесь можно добавить логику выбора нового вызова
+    Alert.alert('Новый вызов', 'Выберите категорию в разделе "Категории"');
+  };
+
+  if (completedToday) {
+    return (
+      <View style={styles.container}>
+        <View style={styles.header}>
+          <Text style={styles.title}>Сегодня</Text>
+          <Text style={styles.subtitle}>Ваш прогресс</Text>
+        </View>
+        
+        <View style={styles.completedContainer}>
+          <Text style={styles.completedEmoji}>🎉</Text>
+          <Text style={styles.completedTitle}>Отлично!</Text>
+          <Text style={styles.completedText}>
+            Вы уже выполнили задачу сегодня!
+          </Text>
+          <Text style={styles.streakText}>
+            Серия: {streak} {streak === 1 ? 'день' : 'дней'}
+          </Text>
+        </View>
+      </View>
+    );
+  }
+
+  if (activeChallenge) {
+    return (
+      <View style={styles.container}>
+        <View style={styles.header}>
+          <Text style={styles.title}>Сегодня</Text>
+          <Text style={styles.subtitle}>Ваш вызов</Text>
+        </View>
+        
+        <View style={styles.challengeContainer}>
+          <View style={styles.challengeCard}>
+            <Text style={styles.challengeTitle}>{activeChallenge.title}</Text>
+            <Text style={styles.challengeDescription}>
+              {activeChallenge.short_description}
+            </Text>
+            
+            <View style={styles.challengeMeta}>
+              <Text style={styles.challengeTime}>
+                ⏱️ {activeChallenge.estimated_duration_min ? 
+                  `${activeChallenge.estimated_duration_min}m` : 
+                  activeChallenge.size === 'small' ? '5-30m' : 
+                  activeChallenge.size === 'medium' ? '30-90m' : '2h+'}
+              </Text>
+              <Text style={styles.challengeCategory}>• {activeChallenge.category}</Text>
+            </View>
+
+            {activeChallenge.is_premium_only && (
+              <View style={styles.premiumBadge}>
+                <Text style={styles.premiumText}>PREMIUM</Text>
+              </View>
+            )}
+          </View>
+
+          <View style={styles.actionsContainer}>
+            <TouchableOpacity 
+              style={styles.completeButton}
+              onPress={handleComplete}
+            >
+              <Text style={styles.completeButtonText}>✅ Завершить</Text>
+            </TouchableOpacity>
+            
+            <TouchableOpacity 
+              style={[styles.skipButton, !canSkip() && styles.skipButtonDisabled]}
+              onPress={handleSkip}
+              disabled={!canSkip()}
+            >
+              <Text style={[styles.skipButtonText, !canSkip() && styles.skipButtonTextDisabled]}>
+                ⏭️ Пропустить
+              </Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </View>
+    );
+  }
 
   return (
-    <Screen>
-      <Container>
-        <ScrollView style={{ paddingVertical: spacing['2xl'] }}>
-          <Header 
-            title="Today" 
-            subtitle={dayCompleted ? "Day completed! 🎉" : "Ready to learn something new?"} 
-          />
-          
-          <View style={{ height: spacing['2xl'] }} />
-
-          {/* Stats Overview */}
-          {!dayCompleted && (
-            <View style={{ marginBottom: spacing['2xl'] }}>
-              <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: spacing.lg }}>
-                <StatsCard
-                  title="Streak"
-                  value="7"
-                  subtitle="days in a row"
-                  icon="🔥"
-                  color={colors.accent}
-                  trend="up"
-                  trendValue="+2 days"
-                />
-                <StatsCard
-                  title="Completed"
-                  value="23"
-                  subtitle="challenges"
-                  icon="✅"
-                  color={colors.success}
-                  trend="up"
-                  trendValue="+5 this week"
-                />
-              </View>
-              
-              <ProgressCard
-                title="Learning Progress"
-                subtitle="Keep up the momentum!"
-                progress={75}
-                icon="📚"
-                color={colors.primary}
-              />
-            </View>
-          )}
-          
-          {!selectedTime && !dayCompleted && (
-            <View style={{ alignItems: 'center' }}>
-              <Text variant="title" color="default">
-                How much time do you have?
-              </Text>
-              <View style={{ height: spacing.xl }} />
-              <View style={{ marginBottom: spacing.xl }}>
-                <RNText style={{ 
-                  color: colors.textSecondary, 
-                  textAlign: 'center',
-                  fontSize: typography.body.fontSize,
-                }}>
-                  Choose a time slot that fits your schedule
-                </RNText>
-              </View>
-              <View style={{ gap: spacing.lg, width: '100%' }}>
-                {timeSlots.map((slot) => (
-                  <Button
-                    key={slot.key}
-                    title={`${slot.emoji} ${slot.label}`}
-                    onPress={() => handleTimeSelect(slot.key)}
-                    variant="secondary"
-                    style={{ 
-                      backgroundColor: slot.color,
-                      borderRadius: borderRadius.xl,
-                      paddingVertical: spacing.xl,
-                      ...shadows.md,
-                    }}
-                  />
-                ))}
-              </View>
-            </View>
-          )}
-
-          {selectedTime && dailyChallenges.length > 0 && !selectedChallenge && !dayCompleted && (
-            <View style={{ alignItems: 'center' }}>
-              <View style={{ marginBottom: spacing.xl }}>
-                <Text variant="subtitle" color="muted">
-                  Choose your challenge for today
-                </Text>
-              </View>
-              
-              <View style={{ gap: spacing.lg, width: '100%' }}>
-                {dailyChallenges.map((challenge, index) => (
-                  <View
-                    key={challenge.id}
-                    style={{
-                      backgroundColor: index === 0 ? colors.primary : colors.surface,
-                      borderRadius: borderRadius.lg,
-                      padding: spacing.lg,
-                      width: '100%',
-                      borderWidth: index === 0 ? 2 : 1,
-                      borderColor: index === 0 ? colors.primary : colors.surfaceSecondary,
-                      ...shadows.sm,
-                    }}
-                  >
-                    {index === 0 && (
-                      <View style={{ 
-                        position: 'absolute', 
-                        top: -8, 
-                        left: spacing.md,
-                        backgroundColor: colors.accent,
-                        paddingHorizontal: spacing.sm,
-                        paddingVertical: 4,
-                        borderRadius: borderRadius.sm,
-                      }}>
-                        <RNText style={{ fontSize: 12, fontWeight: '600', color: 'white' }}>
-                          RECOMMENDED
-                        </RNText>
-                      </View>
-                    )}
-                    
-                    <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: spacing.sm }}>
-                      <View style={{ 
-                        width: 8, 
-                        height: 8, 
-                        borderRadius: 4, 
-                        backgroundColor: index === 0 ? 'white' : colors.secondary,
-                        marginRight: spacing.sm 
-                      }} />
-                      <View style={{ flex: 1 }}>
-                        {index === 0 ? (
-                          <RNText style={{ fontSize: 18, fontWeight: '600', color: 'white', marginBottom: 8 }}>
-                            {challenge.title}
-                          </RNText>
-                        ) : (
-                          <Text variant="subtitle" color="default">
-                            {challenge.title}
-                          </Text>
-                        )}
-                        {index === 0 ? (
-                          <RNText style={{ color: 'white', marginBottom: 4 }}>
-                            {challenge.description}
-                          </RNText>
-                        ) : (
-                          <Text color="muted">
-                            {challenge.description}
-                          </Text>
-                        )}
-                        {index === 0 ? (
-                          <RNText style={{ color: 'white', marginTop: 4 }}>
-                            {challenge.duration}
-                          </RNText>
-                        ) : (
-                          <View style={{ marginTop: 4 }}>
-                            <Text color="muted">
-                              {challenge.duration}
-                            </Text>
-                          </View>
-                        )}
-                      </View>
-                    </View>
-                    
-                    <Button 
-                      title={index === 0 ? "Choose This" : "Select"}
-                      onPress={() => handleSelectChallenge(challenge)}
-                      variant={index === 0 ? 'secondary' : 'primary'}
-                      style={{ 
-                        backgroundColor: index === 0 ? 'white' : colors.primary,
-                        marginTop: spacing.md
-                      }}
-                    />
-                  </View>
-                ))}
-              </View>
-            </View>
-          )}
-
-          {selectedTime && selectedChallenge && !dayCompleted && (
-            <View style={{ alignItems: 'center' }}>
-              <View style={{ 
-                width: 80, 
-                height: 80, 
-                borderRadius: 40, 
-                backgroundColor: timeSlots.find(s => s.key === selectedChallenge.size)?.color || colors.primary,
-                marginBottom: spacing.xl,
-                alignItems: 'center',
-                justifyContent: 'center'
-              }}>
-                <RNText style={{ 
-                  fontSize: 32, 
-                  fontWeight: 'bold', 
-                  color: 'white' 
-                }}>
-                  {selectedChallenge.size === 'small' ? 'S' : selectedChallenge.size === 'medium' ? 'M' : 'L'}
-                </RNText>
-              </View>
-              
-              <Text variant="title" color="default">
-                {selectedChallenge.title}
-              </Text>
-              
-              <View style={{ height: spacing.lg }} />
-              
-              <Text color="muted">
-                {selectedChallenge.description}
-              </Text>
-              
-              <View style={{ height: spacing['2xl'] }} />
-              
-              <View style={{ gap: spacing.lg, width: '100%' }}>
-                <Button 
-                  title="Complete Challenge" 
-                  onPress={handleStartChallenge}
-                  style={{ backgroundColor: colors.secondary }}
-                />
-                <View style={{ flexDirection: 'row', gap: spacing.md }}>
-                  <Button 
-                    title={`Replace (${replacementsLeft})`}
-                    variant="secondary" 
-                    onPress={handleReplace}
-                    disabled={replacementsLeft === 0}
-                    style={{ flex: 1 }}
-                  />
-                  <Button 
-                    title="Choose Custom" 
-                    variant="ghost" 
-                    onPress={handleChooseCustom}
-                    style={{ flex: 1 }}
-                  />
-                </View>
-              </View>
-            </View>
-          )}
-
-          {dayCompleted && (
-            <View style={{ alignItems: 'center' }}>
-              <View style={{ 
-                width: 80, 
-                height: 80, 
-                borderRadius: 40, 
-                backgroundColor: colors.success,
-                marginBottom: spacing.xl,
-                alignItems: 'center',
-                justifyContent: 'center'
-              }}>
-                <RNText style={{ 
-                  fontSize: 32, 
-                  fontWeight: 'bold', 
-                  color: 'white' 
-                }}>
-                  ✓
-                </RNText>
-              </View>
-              <Text variant="title" color="default">
-                Great job!
-              </Text>
-              <View style={{ height: spacing.lg }} />
-              <Text color="muted">
-                You completed today's challenge. 
-                Tomorrow brings a new adventure!
-              </Text>
-              <View style={{ height: spacing['2xl'] }} />
-              <Button 
-                title="View Progress" 
-                onPress={() => navigation.navigate('Progress' as never)}
-                variant="secondary"
-                style={{ backgroundColor: colors.primary }}
-              />
-            </View>
-          )}
-
-          {selectedForToday.length > 0 && (
-            <>
-              <View style={{ height: spacing['3xl'] }} />
-              <View style={{ alignItems: 'center' }}>
-                <Text variant="subtitle" color="muted">
-                  Selected for today
-                </Text>
-                <View style={{ height: spacing.lg }} />
-                <View style={{ gap: spacing.md, width: '100%' }}>
-                  {selectedForToday.map((item, index) => (
-                    <View key={item.id} style={{ 
-                      flexDirection: 'row', 
-                      alignItems: 'center',
-                      backgroundColor: colors.surfaceSecondary,
-                      padding: spacing.md,
-                      borderRadius: borderRadius.lg,
-                    }}>
-                      <View style={{ 
-                        width: 8, 
-                        height: 8, 
-                        borderRadius: 4, 
-                        backgroundColor: item.size === 'small' ? colors.secondary : 
-                                       item.size === 'medium' ? colors.primary : colors.accent,
-                        marginRight: spacing.md 
-                      }} />
-                      <View style={{ flex: 1 }}>
-                        <Text color="default">
-                          {item.title}
-                        </Text>
-                      </View>
-                      <Button 
-                        title="Remove"
-                        variant="ghost"
-                        onPress={() => setSelectedForToday(selectedForToday.filter((_, i) => i !== index))}
-                        style={{ paddingHorizontal: spacing.sm }}
-                      />
-                    </View>
-                  ))}
-                </View>
-              </View>
-            </>
-          )}
-
-          {isLoading && (
-            <View style={{ marginTop: spacing['2xl'], alignItems: 'center' }}>
-              <BeautifulLoader size="large" color={colors.primary} />
-              <View style={{ height: spacing.lg }} />
-              <Text color="muted">Loading your day...</Text>
-            </View>
-          )}
-        </ScrollView>
-      </Container>
-
-      <CompletionModal
-        visible={showCompletionModal}
-        challengeTitle={selectedChallenge?.title || ''}
-        onClose={() => setShowCompletionModal(false)}
-        onConfirm={handleConfirmCompletion}
-      />
-
-
-    </Screen>
+    <View style={styles.container}>
+      <View style={styles.header}>
+        <Text style={styles.title}>Сегодня</Text>
+        <Text style={styles.subtitle}>Ваш вызов</Text>
+      </View>
+      
+      <View style={styles.emptyContainer}>
+        <Text style={styles.emptyEmoji}>🎯</Text>
+        <Text style={styles.emptyTitle}>Нет активного вызова</Text>
+        <Text style={styles.emptyText}>
+          Выберите категорию или возьмите новый вызов
+        </Text>
+        
+        <TouchableOpacity 
+          style={styles.newChallengeButton}
+          onPress={handleTakeNewChallenge}
+        >
+          <Text style={styles.newChallengeButtonText}>Взять новый вызов</Text>
+        </TouchableOpacity>
+      </View>
+    </View>
   );
 }
 
-
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: '#f5f5f5',
+  },
+  header: {
+    paddingHorizontal: 20,
+    paddingTop: 20,
+    paddingBottom: 20,
+    backgroundColor: 'white',
+    borderBottomWidth: 1,
+    borderBottomColor: '#e0e0e0',
+  },
+  title: {
+    fontSize: 28,
+    fontWeight: 'bold',
+    color: '#333',
+    marginBottom: 4,
+  },
+  subtitle: {
+    fontSize: 16,
+    color: '#666',
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  loadingText: {
+    fontSize: 18,
+    color: '#666',
+  },
+  completedContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 40,
+  },
+  completedEmoji: {
+    fontSize: 64,
+    marginBottom: 20,
+  },
+  completedTitle: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#333',
+    marginBottom: 12,
+  },
+  completedText: {
+    fontSize: 16,
+    color: '#666',
+    textAlign: 'center',
+    marginBottom: 20,
+    lineHeight: 24,
+  },
+  streakText: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#8B5CF6',
+  },
+  challengeContainer: {
+    flex: 1,
+    padding: 20,
+  },
+  challengeCard: {
+    backgroundColor: 'white',
+    borderRadius: 16,
+    padding: 20,
+    marginBottom: 20,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  challengeTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#333',
+    marginBottom: 12,
+  },
+  challengeDescription: {
+    fontSize: 16,
+    color: '#666',
+    lineHeight: 24,
+    marginBottom: 16,
+  },
+  challengeMeta: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  challengeTime: {
+    fontSize: 14,
+    color: '#8B5CF6',
+    fontWeight: '600',
+    marginRight: 12,
+  },
+  challengeCategory: {
+    fontSize: 14,
+    color: '#999',
+  },
+  premiumBadge: {
+    position: 'absolute',
+    top: 16,
+    right: 16,
+    backgroundColor: '#FFD700',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 8,
+  },
+  premiumText: {
+    fontSize: 12,
+    fontWeight: 'bold',
+    color: '#8B5CF6',
+  },
+  actionsContainer: {
+    flexDirection: 'row',
+    gap: 12,
+  },
+  completeButton: {
+    flex: 1,
+    backgroundColor: '#4CAF50',
+    paddingVertical: 16,
+    borderRadius: 12,
+    alignItems: 'center',
+  },
+  completeButtonText: {
+    color: 'white',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  skipButton: {
+    flex: 1,
+    backgroundColor: '#FF9800',
+    paddingVertical: 16,
+    borderRadius: 12,
+    alignItems: 'center',
+  },
+  skipButtonDisabled: {
+    backgroundColor: '#ccc',
+  },
+  skipButtonText: {
+    color: 'white',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  skipButtonTextDisabled: {
+    color: '#999',
+  },
+  emptyContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 40,
+  },
+  emptyEmoji: {
+    fontSize: 64,
+    marginBottom: 20,
+  },
+  emptyTitle: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#333',
+    marginBottom: 12,
+    textAlign: 'center',
+  },
+  emptyText: {
+    fontSize: 16,
+    color: '#666',
+    textAlign: 'center',
+    lineHeight: 24,
+    marginBottom: 32,
+  },
+  newChallengeButton: {
+    backgroundColor: '#8B5CF6',
+    paddingHorizontal: 32,
+    paddingVertical: 16,
+    borderRadius: 12,
+  },
+  newChallengeButtonText: {
+    color: 'white',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+});

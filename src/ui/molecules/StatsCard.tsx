@@ -43,44 +43,40 @@ const StatsCard: React.FC<StatsCardProps> = ({
         backgroundColor: colors.surface,
         borderRadius: borderRadius.xl,
         padding: spacing.xl,
-        marginBottom: spacing.lg,
+        flex: 1,
+        marginHorizontal: spacing.sm,
         ...shadows.md,
       }}
     >
-      <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: spacing.md }}>
+      <View style={{ alignItems: 'center', marginBottom: spacing.sm }}>
         <View style={{ 
-          width: 40, 
-          height: 40, 
-          borderRadius: 20, 
+          width: 32, 
+          height: 32, 
+          borderRadius: 16, 
           backgroundColor: color + '20',
           alignItems: 'center',
           justifyContent: 'center',
-          marginRight: spacing.md,
+          marginBottom: spacing.sm,
         }}>
-          <RNText style={{ fontSize: 20 }}>{icon}</RNText>
+          <RNText style={{ fontSize: 16 }}>{icon}</RNText>
         </View>
-        <View style={{ flex: 1 }}>
-          <RNText style={{ 
-            fontSize: typography.sm.fontSize, 
-            color: colors.textSecondary,
-            marginBottom: 4,
-          }}>
-            {title}
-          </RNText>
-        </View>
-      </View>
-
-      <View style={{ marginBottom: spacing.sm }}>
         <RNText style={{ 
-          fontSize: 32, 
+          fontSize: typography.sm.fontSize, 
+          color: colors.textSecondary,
+          marginBottom: 4,
+        }}>
+          {title}
+        </RNText>
+        <RNText style={{ 
+          fontSize: 24, 
           fontWeight: typography.weights.bold,
           color: colors.textPrimary,
-          marginBottom: 4,
+          marginBottom: 2,
         }}>
           {value}
         </RNText>
         <RNText style={{ 
-          fontSize: typography.sm.fontSize, 
+          fontSize: 12, 
           color: colors.textSecondary,
         }}>
           {subtitle}

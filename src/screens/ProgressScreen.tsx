@@ -26,7 +26,7 @@ export default function ProgressScreen() {
         <ScrollView style={{ paddingVertical: spacing.lg }}>
           <Header 
             title="Progress" 
-            subtitle="Track your learning journey"
+            subtitle="Stats"
             right={
               user?.provider !== 'anonymous' && (
                 <Button 
@@ -48,29 +48,25 @@ export default function ProgressScreen() {
               gap: spacing.md,
             }}>
               <StatsCard
-                title="Current Streak"
+                title="Streak"
                 value={currentStreak}
-                subtitle="days in a row"
+                subtitle="days"
                 icon="🔥"
                 color={colors.accent}
-                trend="up"
-                trendValue="+2 days"
               />
               <StatsCard
-                title="Total Hours"
+                title="Hours"
                 value={totalHours}
-                subtitle="hours learned"
+                subtitle="total"
                 icon="⏰"
                 color={colors.primary}
-                trend="up"
-                trendValue="+8h this week"
               />
             </View>
 
             {/* Learning Progress */}
             <ProgressCard
-              title="Learning Progress"
-              subtitle="You're doing great! Keep it up!"
+              title="Progress"
+              subtitle="Keep going!"
               progress={75}
               icon="📚"
               color={colors.primary}
@@ -86,7 +82,7 @@ export default function ProgressScreen() {
             }}>
               <View style={{ marginBottom: spacing.lg }}>
                 <Text variant="subtitle" color="default">
-                  📊 This Week
+                  📊 Week
                 </Text>
               </View>
               
@@ -121,27 +117,27 @@ export default function ProgressScreen() {
             <View style={{ marginBottom: spacing['2xl'] }}>
               <View style={{ marginBottom: spacing.lg }}>
                 <Text variant="subtitle" color="default">
-                  🏆 Achievements
+                  🏆 Badges
                 </Text>
               </View>
               
               <AchievementCard
-                title="First Steps"
-                description="Complete your first challenge"
+                title="First"
+                description="Complete first challenge"
                 icon="🎯"
                 isUnlocked={true}
               />
               
               <AchievementCard
-                title="Week Warrior"
-                description="Complete challenges for 7 days in a row"
+                title="Week"
+                description="7 days in a row"
                 icon="🔥"
                 isUnlocked={true}
               />
               
               <AchievementCard
-                title="Speed Learner"
-                description="Complete 10 quick challenges (under 30 min)"
+                title="Speed"
+                description="10 quick challenges"
                 icon="⚡"
                 isUnlocked={false}
                 progress={7}
@@ -149,8 +145,8 @@ export default function ProgressScreen() {
               />
               
               <AchievementCard
-                title="Marathon Master"
-                description="Complete 5 long challenges (2+ hours)"
+                title="Marathon"
+                description="5 long challenges"
                 icon="🏃‍♂️"
                 isUnlocked={false}
                 progress={2}
@@ -168,22 +164,22 @@ export default function ProgressScreen() {
             }}>
               <View style={{ marginBottom: spacing.lg }}>
                 <Text variant="subtitle" color="default">
-                  🔥 Learning Streaks
+                  🔥 Streaks
                 </Text>
               </View>
               
               <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
                 <View>
                   <Text variant="title" color="default">{learningStreak}</Text>
-                  <Text color="muted">Best streak</Text>
+                  <Text color="muted">Best</Text>
                 </View>
                 <View style={{ alignItems: 'center' }}>
                   <Text variant="title" color="default">{currentStreak}</Text>
-                  <Text color="muted">Current streak</Text>
+                  <Text color="muted">Current</Text>
                 </View>
                 <View style={{ alignItems: 'center' }}>
                   <Text variant="title" color="default">23</Text>
-                  <Text color="muted">Total days</Text>
+                  <Text color="muted">Total</Text>
                 </View>
               </View>
             </View>

@@ -21,11 +21,11 @@ export default function Text({
       case 'subtitle':
         return typography.subtitle;
       case 'body':
-        return typography.body;
+        return { fontSize: 16, lineHeight: 24, fontWeight: '400' as const };
       case 'caption':
         return typography.caption;
       default:
-        return typography.body;
+        return { fontSize: 16, lineHeight: 24, fontWeight: '400' as const };
     }
   };
 

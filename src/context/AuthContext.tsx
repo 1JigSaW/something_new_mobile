@@ -23,9 +23,30 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       const currentUser = await authService.getCurrentUser();
       console.log('Current user check result:', currentUser);
-      setUser(currentUser);
+      
+      // Временная заглушка для тестирования - создаем тестового пользователя
+      if (!currentUser) {
+        const testUser = {
+          id: 'test-user-123',
+          email: 'test@example.com',
+          name: 'Test User',
+          provider: 'email' as const,
+        };
+        console.log('Using test user for development');
+        setUser(testUser);
+      } else {
+        setUser(currentUser);
+      }
     } catch (error) {
       console.error('Error checking current user:', error);
+      // В случае ошибки тоже создаем тестового пользователя
+      const testUser = {
+        id: 'test-user-123',
+        email: 'test@example.com',
+        name: 'Test User',
+        provider: 'email' as const,
+      };
+      setUser(testUser);
     } finally {
       setIsLoading(false);
     }

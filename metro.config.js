@@ -1,19 +1,15 @@
 const { getDefaultConfig, mergeConfig } = require('@react-native/metro-config');
-const { withNativeWind } = require('nativewind/metro');
 
-/**
- * Metro configuration
- * https://reactnative.dev/docs/metro
- *
- * @type {import('@react-native/metro-config').MetroConfig}
- */
-const defaultConfig = getDefaultConfig(__dirname);
-
-module.exports = withNativeWind(
-  mergeConfig(defaultConfig, {
-    transformer: {
-      unstable_allowRequireContext: true,
+const config = {
+  resolver: {
+    alias: {
+      'react/jsx-runtime': 'react/jsx-runtime.js',
     },
-  }),
-  { input: './global.css' }
-);
+    unstable_enablePackageExports: false,
+  },
+  transformer: {
+    unstable_allowRequireContext: false,
+  },
+};
+
+module.exports = mergeConfig(getDefaultConfig(__dirname), config);

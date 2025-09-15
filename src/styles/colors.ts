@@ -37,6 +37,10 @@ export const colors = {
   // Shadow colors
   shadow: 'rgba(0, 0, 0, 0.1)',
   shadowLight: 'rgba(0, 0, 0, 0.05)',
+  
+  // Gray colors
+  gray200: '#e5e7eb',
+  gray300: '#d1d5db',
 } as const;
 
 export const timeSlotColors = {

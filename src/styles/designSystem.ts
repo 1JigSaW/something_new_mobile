@@ -1,6 +1,8 @@
 // Something New - Design System
 // Единый стиль для всего приложения
 
+import { typography as importedTypography } from './typography';
+
 export const colors = {
   // Основные цвета (purple palette)
   primary: '#8b5cf6',        // Основной фиолетовый

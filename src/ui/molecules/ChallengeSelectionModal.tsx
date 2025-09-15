@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { View, Modal, ScrollView, Text as RNText } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Modal, ScrollView, Text as RNText, Animated } from 'react-native';
 import Text from '../atoms/Text';
 import Button from '../atoms/Button';
 import { colors, spacing, borderRadius, shadows } from '../../styles';
@@ -62,6 +62,40 @@ export default function ChallengeSelectionModal({
   onSelect 
 }: ChallengeSelectionModalProps) {
   const [selectedChallenge, setSelectedChallenge] = useState<Challenge | null>(null);
+  const scaleAnim = new Animated.Value(0);
+  const opacityAnim = new Animated.Value(0);
+
+  useEffect(() => {
+    if (visible) {
+      Animated.parallel([
+        Animated.spring(scaleAnim, {
+          toValue: 1,
+          useNativeDriver: true,
+          tension: 100,
+          friction: 8,
+        }),
+        Animated.timing(opacityAnim, {
+          toValue: 1,
+          duration: 200,
+          useNativeDriver: true,
+        }),
+      ]).start();
+    } else {
+      Animated.parallel([
+        Animated.spring(scaleAnim, {
+          toValue: 0,
+          useNativeDriver: true,
+          tension: 100,
+          friction: 8,
+        }),
+        Animated.timing(opacityAnim, {
+          toValue: 0,
+          duration: 150,
+          useNativeDriver: true,
+        }),
+      ]).start();
+    }
+  }, [visible]);
 
   const handleSelect = () => {
     if (selectedChallenge) {
@@ -83,27 +117,29 @@ export default function ChallengeSelectionModal({
     <Modal
       visible={visible}
       transparent={true}
-      animationType="slide"
+      animationType="none"
       onRequestClose={onClose}
     >
-      <View style={{ 
+      <Animated.View style={{ 
         flex: 1, 
-        backgroundColor: 'rgba(0, 0, 0, 0.4)', 
+        backgroundColor: 'rgba(0, 0, 0, 0.5)', 
         alignItems: 'center', 
-        justifyContent: 'flex-end' 
+        justifyContent: 'center',
+        padding: spacing.xl,
+        opacity: opacityAnim,
       }}>
-        <View style={{ 
+        <Animated.View style={{ 
           width: '100%', 
           backgroundColor: colors.surface, 
-          borderTopLeftRadius: 20, 
-          borderTopRightRadius: 20, 
+          borderRadius: borderRadius.xl, 
           padding: spacing.xl,
           maxHeight: '80%',
           shadowColor: '#000',
-          shadowOffset: { width: 0, height: -2 },
-          shadowOpacity: 0.1,
-          shadowRadius: 8,
-          elevation: 5,
+          shadowOffset: { width: 0, height: 4 },
+          shadowOpacity: 0.25,
+          shadowRadius: 12,
+          elevation: 8,
+          transform: [{ scale: scaleAnim }],
         }}>
           <Text variant="title" color="default">
             Choose Your Challenge
@@ -171,8 +207,8 @@ export default function ChallengeSelectionModal({
               onPress={onClose}
             />
           </View>
-        </View>
-      </View>
+        </Animated.View>
+      </Animated.View>
     </Modal>
   );
 }

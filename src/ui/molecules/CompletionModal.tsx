@@ -1,5 +1,5 @@
-import React from 'react';
-import { View, Modal, Text as RNText } from 'react-native';
+import React, { useEffect } from 'react';
+import { View, Modal, Text as RNText, Animated } from 'react-native';
 import Text from '../atoms/Text';
 import Button from '../atoms/Button';
 import { colors, spacing, borderRadius, shadows } from '../../styles';
@@ -17,21 +17,57 @@ export default function CompletionModal({
   onClose, 
   onConfirm 
 }: CompletionModalProps) {
+  const scaleAnim = new Animated.Value(0);
+  const opacityAnim = new Animated.Value(0);
+
+  useEffect(() => {
+    if (visible) {
+      Animated.parallel([
+        Animated.spring(scaleAnim, {
+          toValue: 1,
+          useNativeDriver: true,
+          tension: 100,
+          friction: 8,
+        }),
+        Animated.timing(opacityAnim, {
+          toValue: 1,
+          duration: 200,
+          useNativeDriver: true,
+        }),
+      ]).start();
+    } else {
+      Animated.parallel([
+        Animated.spring(scaleAnim, {
+          toValue: 0,
+          useNativeDriver: true,
+          tension: 100,
+          friction: 8,
+        }),
+        Animated.timing(opacityAnim, {
+          toValue: 0,
+          duration: 150,
+          useNativeDriver: true,
+        }),
+      ]).start();
+    }
+  }, [visible]);
+
   return (
     <Modal
       visible={visible}
       transparent={true}
-      animationType="fade"
+      animationType="none"
       onRequestClose={onClose}
     >
-      <View style={{ 
+      <Animated.View style={{ 
         flex: 1, 
         backgroundColor: 'rgba(0, 0, 0, 0.5)', 
         alignItems: 'center', 
         justifyContent: 'center',
         padding: spacing.xl,
+        opacity: opacityAnim,
       }}>
-        <View style={{ 
+        <Animated.View style={{ 
           backgroundColor: colors.surface, 
           borderRadius: borderRadius.xl, 
           padding: spacing['2xl'],
@@ -39,6 +75,7 @@ export default function CompletionModal({
           maxWidth: 400,
           alignItems: 'center',
           ...shadows.lg,
+          transform: [{ scale: scaleAnim }],
         }}>
           <RNText style={{ fontSize: 64, marginBottom: spacing.lg }}>🎉</RNText>
           
@@ -66,8 +103,8 @@ export default function CompletionModal({
                   onPress={onClose}
                 />
           </View>
-        </View>
-      </View>
+        </Animated.View>
+      </Animated.View>
     </Modal>
   );
 }

@@ -233,6 +233,20 @@ export default function TodayScreen() {
             </TouchableOpacity>
           </View>
 
+          <View style={styles.selectedSecondaryActions}>
+            <TouchableOpacity 
+              style={styles.selectedFavoritesButton}
+              onPress={() => {
+                if (selectedChallenge) {
+                  addToFavorites(selectedChallenge);
+                  Alert.alert('Added to Favorites', `"${selectedChallenge.title}" added to favorites`);
+                }
+              }}
+            >
+              <Text style={styles.selectedFavoritesButtonText}>❤️ Add to Favorites</Text>
+            </TouchableOpacity>
+          </View>
+
           <TouchableOpacity 
             style={styles.backToSwipeButton}
             onPress={() => setSelectedChallenge(null)}
@@ -338,7 +352,7 @@ const styles = StyleSheet.create({
   header: {
     paddingHorizontal: 20,
     paddingTop: 20,
-    paddingBottom: 15,
+    paddingBottom: 20,
     backgroundColor: 'white',
     borderBottomWidth: 1,
     borderBottomColor: '#e0e0e0',
@@ -610,7 +624,7 @@ const styles = StyleSheet.create({
     color: '#8B5CF6',
   },
   selectedActionsContainer: {
-    marginBottom: 20,
+    marginBottom: 16,
   },
   selectedCompleteButton: {
     backgroundColor: '#4CAF50',
@@ -621,6 +635,21 @@ const styles = StyleSheet.create({
   selectedCompleteButtonText: {
     color: 'white',
     fontSize: 16,
+    fontWeight: '600',
+  },
+  selectedSecondaryActions: {
+    marginBottom: 20,
+  },
+  selectedFavoritesButton: {
+    backgroundColor: '#FF6B6B',
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    borderRadius: 12,
+    alignItems: 'center',
+  },
+  selectedFavoritesButtonText: {
+    color: 'white',
+    fontSize: 14,
     fontWeight: '600',
   },
   backToSwipeButton: {

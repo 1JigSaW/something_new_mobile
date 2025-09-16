@@ -1,8 +1,10 @@
 import React, { useEffect, useState } from 'react';
-import { View, ScrollView, Text, StyleSheet, TouchableOpacity, Alert } from 'react-native';
+import { View, ScrollView, Text, StyleSheet, TouchableOpacity, Alert, Dimensions } from 'react-native';
 import { SwipeDeck } from '../components/SwipeDeck';
 import { useApp } from '../context/AppContext';
 import { useRandomChallengesQuery } from '../features/challenges/useRandomChallengesQuery';
+
+const { width: screenWidth } = Dimensions.get('window');
 
 interface Challenge {
   id: number;
@@ -27,26 +29,22 @@ export default function CategoriesScreen() {
   } = useApp();
 
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const [selectedSize, setSelectedSize] = useState<string | null>(null);
+  const [selectedDuration, setSelectedDuration] = useState<string | null>(null);
+  const [showPremiumOnly, setShowPremiumOnly] = useState(false);
+  const [activeFilter, setActiveFilter] = useState<string | null>(null);
 
-  // Используем новый хук для получения случайных карточек
+  // Load random cards for categories - simplified
   const { 
     data: challenges = [], 
     isLoading: loading, 
     error: queryError 
   } = useRandomChallengesQuery({
-    limit: 20, // Получаем больше карточек для выбора
-    category: selectedCategory || undefined,
+    limit: 20,
     freeOnly: !isPremium,
   });
 
-  const [filteredChallenges, setFilteredChallenges] = useState<Challenge[]>([]);
-
-  // Обновляем отфильтрованные карточки при изменении данных
-  useEffect(() => {
-    setFilteredChallenges(challenges);
-  }, [challenges]);
-
-  // Group challenges by categories
+  // Simple categories grouping
   const categories = challenges.reduce((acc, challenge) => {
     const category = challenge.category || 'other';
     if (!acc[category]) {
@@ -56,11 +54,56 @@ export default function CategoriesScreen() {
     return acc;
   }, {} as Record<string, Challenge[]>);
 
+  // Simple filtering
+  let filteredChallenges = challenges;
+  
+  if (selectedCategory) {
+    filteredChallenges = filteredChallenges.filter(challenge => challenge.category === selectedCategory);
+  }
+  
+  if (selectedSize) {
+    filteredChallenges = filteredChallenges.filter(challenge => challenge.size === selectedSize);
+  }
+  
+  if (selectedDuration) {
+    filteredChallenges = filteredChallenges.filter(challenge => {
+      const duration = challenge.estimated_duration_min || 
+        (challenge.size === 'small' ? 15 : challenge.size === 'medium' ? 60 : 120);
+      
+      switch (selectedDuration) {
+        case 'quick': return duration <= 30;
+        case 'medium': return duration > 30 && duration <= 90;
+        case 'long': return duration > 90;
+        default: return true;
+      }
+    });
+  }
+  
+  if (showPremiumOnly) {
+    filteredChallenges = filteredChallenges.filter(challenge => challenge.is_premium_only);
+  }
+
   const handleCategorySelect = (category: string) => {
-    const categoryChallenges = categories[category] || [];
-    const shuffled = categoryChallenges.sort(() => Math.random() - 0.5);
-    setFilteredChallenges(shuffled);
-    setSelectedCategory(category);
+    setSelectedCategory(selectedCategory === category ? null : category);
+    setActiveFilter(null);
+  };
+
+  const handleSizeSelect = (size: string | null) => {
+    setSelectedSize(size);
+    setActiveFilter(size ? `size-${size}` : null);
+    setSelectedCategory(null);
+  };
+
+  const handleDurationSelect = (duration: string | null) => {
+    setSelectedDuration(duration);
+    setActiveFilter(duration ? `duration-${duration}` : null);
+    setSelectedCategory(null);
+  };
+
+  const handlePremiumSelect = () => {
+    setShowPremiumOnly(!showPremiumOnly);
+    setActiveFilter(!showPremiumOnly ? 'premium' : null);
+    setSelectedCategory(null);
   };
 
   const handleSwipeRight = (challenge: Challenge) => {
@@ -100,7 +143,18 @@ export default function CategoriesScreen() {
 
   const handleBackToCategories = () => {
     setSelectedCategory(null);
-    setFilteredChallenges([]);
+    setActiveFilter(null);
+  };
+
+  const handleBackToFilters = () => {
+    setActiveFilter(null);
+  };
+
+  const clearAllFilters = () => {
+    setSelectedCategory(null);
+    setSelectedSize(null);
+    setSelectedDuration(null);
+    setShowPremiumOnly(false);
   };
 
   if (loading) {
@@ -128,7 +182,10 @@ export default function CategoriesScreen() {
           </Text>
           <TouchableOpacity 
             style={styles.retryButton} 
-            onPress={() => window.location.reload()}
+            onPress={() => {
+              // Reload app
+              console.log('Reloading app...');
+            }}
           >
             <Text style={styles.retryText}>Try Again</Text>
           </TouchableOpacity>
@@ -170,41 +227,173 @@ export default function CategoriesScreen() {
     );
   }
 
-  // Show categories list
+  if (activeFilter) {
+    // Show swipe deck for active filter
+    const filterTitle = activeFilter === 'premium' ? 'Premium' : 
+                       activeFilter.startsWith('size-') ? `Size: ${activeFilter.split('-')[1]}` :
+                       activeFilter.startsWith('duration-') ? `Duration: ${activeFilter.split('-')[1]}` : 'Filter';
+    
+    return (
+      <View style={styles.container}>
+        <View style={styles.header}>
+          <TouchableOpacity onPress={handleBackToFilters} style={styles.backButton}>
+            <Text style={styles.backButtonText}>← Back</Text>
+          </TouchableOpacity>
+          <Text style={styles.title}>{filterTitle}</Text>
+          <View style={styles.placeholder} />
+        </View>
+
+        <View style={styles.deckContainer}>
+          <SwipeDeck
+            challenges={filteredChallenges}
+            onSwipeRight={handleSwipeRight}
+            onSwipeLeft={handleSwipeLeft}
+            disabled={!canTakeNewChallenge()}
+          />
+        </View>
+
+        <View style={styles.deckActions}>
+          <TouchableOpacity 
+            style={styles.favoritesButton}
+            onPress={() => filteredChallenges[0] && handleAddToFavorites(filteredChallenges[0])}
+          >
+            <Text style={styles.favoritesButtonText}>❤️ Add to Favorites</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+    );
+  }
+
+  // Show new categories interface
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <Text style={styles.title}>Categories</Text>
-        <Text style={styles.subtitle}>Choose a category to explore ideas</Text>
+        <Text style={styles.title}>Explore</Text>
+        <Text style={styles.subtitle}>Discover amazing ideas</Text>
       </View>
 
       <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
-        {Object.entries(categories).map(([categoryName, categoryChallenges]) => (
-          <TouchableOpacity
-            key={categoryName}
-            style={styles.categoryCard}
-            onPress={() => handleCategorySelect(categoryName)}
+        {/* Size Categories */}
+        <View style={[styles.section, styles.firstSection]}>
+          <Text style={styles.sectionTitle}>📦 Size</Text>
+          <ScrollView 
+            horizontal 
+            showsHorizontalScrollIndicator={false}
+            style={styles.horizontalScroll}
+            contentContainerStyle={styles.horizontalContent}
           >
-            <View style={styles.categoryContent}>
-              <Text style={styles.categoryTitle}>
-                {categoryName.toUpperCase()}
-              </Text>
-              <Text style={styles.categoryCount}>
-                {categoryChallenges.length} {categoryChallenges.length === 1 ? 'idea' : 'ideas'}
-              </Text>
-            </View>
-            <Text style={styles.categoryArrow}>→</Text>
-          </TouchableOpacity>
-        ))}
+            {[
+              { key: 'small', label: 'Small', icon: '🟢', color: '#4CAF50' },
+              { key: 'medium', label: 'Medium', icon: '🟡', color: '#FF9800' },
+              { key: 'large', label: 'Large', icon: '🔴', color: '#F44336' },
+            ].map((size) => (
+              <TouchableOpacity
+                key={size.key}
+                style={[styles.categoryCard, { borderLeftColor: size.color, borderLeftWidth: 4 }]}
+                onPress={() => handleSizeSelect(size.key)}
+              >
+                <View style={styles.categoryCardContent}>
+                  <Text style={styles.categoryIcon}>{size.icon}</Text>
+                  <Text style={styles.categoryCardTitle}>{size.label}</Text>
+                  <Text style={styles.categoryCardCount}>
+                    {challenges.filter(c => c.size === size.key).length} ideas
+                  </Text>
+                </View>
+                <Text style={styles.categoryCardArrow}>→</Text>
+              </TouchableOpacity>
+            ))}
+          </ScrollView>
+        </View>
 
-        {Object.keys(categories).length === 0 && (
-          <View style={styles.emptyContainer}>
-            <Text style={styles.emptyTitle}>No categories available</Text>
-            <Text style={styles.emptyText}>
-              Try refreshing or check your internet connection
-            </Text>
+        {/* Duration Categories */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>⏰ Duration</Text>
+          <ScrollView 
+            horizontal 
+            showsHorizontalScrollIndicator={false}
+            style={styles.horizontalScroll}
+            contentContainerStyle={styles.horizontalContent}
+          >
+            {[
+              { key: 'quick', label: 'Quick', icon: '⚡', color: '#2196F3', duration: '≤30m' },
+              { key: 'medium', label: 'Medium', icon: '⏱️', color: '#9C27B0', duration: '30-90m' },
+              { key: 'long', label: 'Long', icon: '🕐', color: '#795548', duration: '90m+' },
+            ].map((duration) => (
+              <TouchableOpacity
+                key={duration.key}
+                style={[styles.categoryCard, { borderLeftColor: duration.color, borderLeftWidth: 4 }]}
+                onPress={() => handleDurationSelect(duration.key)}
+              >
+                <View style={styles.categoryCardContent}>
+                  <Text style={styles.categoryIcon}>{duration.icon}</Text>
+                  <Text style={styles.categoryCardTitle}>{duration.label}</Text>
+                  <Text style={styles.categoryCardDuration}>{duration.duration}</Text>
+                  <Text style={styles.categoryCardCount}>
+                    {challenges.filter(c => {
+                      const d = c.estimated_duration_min || (c.size === 'small' ? 15 : c.size === 'medium' ? 60 : 120);
+                      return duration.key === 'quick' ? d <= 30 : duration.key === 'medium' ? d > 30 && d <= 90 : d > 90;
+                    }).length} ideas
+                  </Text>
+                </View>
+                <Text style={styles.categoryCardArrow}>→</Text>
+              </TouchableOpacity>
+            ))}
+          </ScrollView>
+        </View>
+
+        {/* Premium Category */}
+        {isPremium && (
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>⭐ Premium</Text>
+            <ScrollView 
+              horizontal 
+              showsHorizontalScrollIndicator={false}
+              style={styles.horizontalScroll}
+              contentContainerStyle={styles.horizontalContent}
+            >
+              <TouchableOpacity
+                style={[styles.categoryCard, { borderLeftColor: '#8B5CF6', borderLeftWidth: 4 }]}
+                onPress={handlePremiumSelect}
+              >
+                <View style={styles.categoryCardContent}>
+                  <Text style={styles.categoryIcon}>⭐</Text>
+                  <Text style={styles.categoryCardTitle}>Premium</Text>
+                  <Text style={styles.categoryCardCount}>
+                    {challenges.filter(c => c.is_premium_only).length} ideas
+                  </Text>
+                </View>
+                <Text style={styles.categoryCardArrow}>→</Text>
+              </TouchableOpacity>
+            </ScrollView>
           </View>
         )}
+
+        {/* Regular Categories */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>📂 Categories</Text>
+          <ScrollView 
+            horizontal 
+            showsHorizontalScrollIndicator={false}
+            style={styles.horizontalScroll}
+            contentContainerStyle={styles.horizontalContent}
+          >
+            {Object.entries(categories).map(([categoryName, categoryChallenges]) => (
+              <TouchableOpacity
+                key={categoryName}
+                style={[styles.categoryCard, { borderLeftColor: '#8B5CF6', borderLeftWidth: 4 }]}
+                onPress={() => handleCategorySelect(categoryName)}
+              >
+                <View style={styles.categoryCardContent}>
+                  <Text style={styles.categoryCardTitle}>{categoryName}</Text>
+                  <Text style={styles.categoryCardCount}>
+                    {categoryChallenges.length} {categoryChallenges.length === 1 ? 'idea' : 'ideas'}
+                  </Text>
+                </View>
+                <Text style={styles.categoryCardArrow}>→</Text>
+              </TouchableOpacity>
+            ))}
+          </ScrollView>
+        </View>
       </ScrollView>
     </View>
   );
@@ -213,12 +402,9 @@ export default function CategoriesScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f5f5f5',
+    backgroundColor: '#f8f9fa',
   },
   header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
     paddingHorizontal: 20,
     paddingTop: 20,
     paddingBottom: 20,
@@ -281,42 +467,115 @@ const styles = StyleSheet.create({
   },
   scrollView: {
     flex: 1,
-    padding: 20,
+  },
+  section: {
+    marginBottom: 32,
+    paddingHorizontal: 20,
+  },
+  firstSection: {
+    marginTop: 20,
+  },
+  sectionTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#1a1a1a',
+    marginBottom: 16,
+    marginTop: 8,
+  },
+  horizontalScroll: {
+    marginHorizontal: -20,
+  },
+  horizontalContent: {
+    paddingHorizontal: 20,
+    paddingRight: 40,
+  },
+  filterGroup: {
+    marginBottom: 20,
+  },
+  filterLabel: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#1a1a1a',
+    marginBottom: 12,
+  },
+  filterRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+  },
+  filterChip: {
+    backgroundColor: 'white',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderRadius: 20,
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#e0e0e0',
+  },
+  filterChipSelected: {
+    backgroundColor: '#8B5CF6',
+    borderColor: '#8B5CF6',
+  },
+  filterIcon: {
+    fontSize: 16,
+    marginRight: 8,
+  },
+  filterChipText: {
+    fontSize: 14,
+    fontWeight: '500',
+    color: '#666',
+  },
+  filterChipTextSelected: {
+    color: 'white',
   },
   categoryCard: {
+    width: 180,
     backgroundColor: 'white',
     borderRadius: 16,
     padding: 20,
-    marginBottom: 16,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
+    marginRight: 16,
     shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
+    shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
+    shadowRadius: 8,
+    elevation: 4,
+    borderWidth: 1,
+    borderColor: '#e0e0e0',
   },
-  categoryContent: {
+  categoryCardContent: {
     flex: 1,
   },
-  categoryTitle: {
+  categoryIcon: {
+    fontSize: 28,
+    marginBottom: 12,
+    textAlign: 'center',
+  },
+  categoryCardTitle: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#333',
-    marginBottom: 4,
+    color: '#1a1a1a',
+    marginBottom: 6,
+    textAlign: 'center',
   },
-  categoryCount: {
+  categoryCardDuration: {
+    fontSize: 13,
+    color: '#8B5CF6',
+    fontWeight: '600',
+    marginBottom: 8,
+    textAlign: 'center',
+  },
+  categoryCardCount: {
     fontSize: 14,
     color: '#666',
+    textAlign: 'center',
+    marginBottom: 12,
   },
-  categoryArrow: {
-    fontSize: 20,
+  categoryCardArrow: {
+    fontSize: 24,
     color: '#8B5CF6',
     fontWeight: 'bold',
+    textAlign: 'center',
   },
   emptyContainer: {
     flex: 1,

@@ -13,6 +13,6 @@ if [ ! -d "node_modules" ]; then
 fi
 
 # Start Metro bundler
-npx react-native start
+npx react-native start --reset-cache
 
 echo "✅ Frontend started. Run 'npx react-native run-ios' or 'npx react-native run-android' in another terminal"

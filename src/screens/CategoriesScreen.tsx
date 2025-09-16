@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { View, ScrollView, Text, StyleSheet, TouchableOpacity, Alert } from 'react-native';
 import { SwipeDeck } from '../components/SwipeDeck';
 import { useApp } from '../context/AppContext';
+import { useRandomChallengesQuery } from '../features/challenges/useRandomChallengesQuery';
 
 interface Challenge {
   id: number;
@@ -25,37 +26,25 @@ export default function CategoriesScreen() {
     isPremium,
   } = useApp();
 
-  const [challenges, setChallenges] = useState<Challenge[]>([]);
-  const [filteredChallenges, setFilteredChallenges] = useState<Challenge[]>([]);
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
 
+  // Используем новый хук для получения случайных карточек
+  const { 
+    data: challenges = [], 
+    isLoading: loading, 
+    error: queryError 
+  } = useRandomChallengesQuery({
+    limit: 20, // Получаем больше карточек для выбора
+    category: selectedCategory || undefined,
+    freeOnly: !isPremium,
+  });
+
+  const [filteredChallenges, setFilteredChallenges] = useState<Challenge[]>([]);
+
+  // Обновляем отфильтрованные карточки при изменении данных
   useEffect(() => {
-    fetchChallenges();
-  }, []);
-
-  const fetchChallenges = async () => {
-    try {
-      setLoading(true);
-      const response = await fetch('http://127.0.0.1:8001/api/challenges/');
-      
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-      
-      const data = await response.json();
-      console.log('Fetched challenges:', data);
-      
-      setChallenges(data);
-      setError(null);
-    } catch (err) {
-      console.error('Error fetching challenges:', err);
-      setError(err instanceof Error ? err.message : 'Unknown error');
-    } finally {
-      setLoading(false);
-    }
-  };
+    setFilteredChallenges(challenges);
+  }, [challenges]);
 
   // Group challenges by categories
   const categories = challenges.reduce((acc, challenge) => {
@@ -127,15 +116,20 @@ export default function CategoriesScreen() {
     );
   }
 
-  if (error) {
+  if (queryError) {
     return (
       <View style={styles.container}>
         <View style={styles.header}>
           <Text style={styles.title}>Categories</Text>
         </View>
         <View style={styles.errorContainer}>
-          <Text style={styles.errorText}>Error: {error}</Text>
-          <TouchableOpacity style={styles.retryButton} onPress={fetchChallenges}>
+          <Text style={styles.errorText}>
+            Error: {queryError instanceof Error ? queryError.message : 'Unknown error'}
+          </Text>
+          <TouchableOpacity 
+            style={styles.retryButton} 
+            onPress={() => window.location.reload()}
+          >
             <Text style={styles.retryText}>Try Again</Text>
           </TouchableOpacity>
         </View>

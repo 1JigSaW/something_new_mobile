@@ -6,10 +6,12 @@ import Header from '../ui/layout/Header';
 import Text from '../ui/atoms/Text';
 import Button from '../ui/atoms/Button';
 import { useChallengesQuery } from '../features/challenges/useChallengesQuery';
+import { useApp } from '../context/AppContext';
 import { colors, spacing, borderRadius, shadows } from '../styles';
 
 export default function ChooseScreen() {
   const { data, isLoading } = useChallengesQuery({ freeOnly: true });
+  const { setActiveChallenge, canTakeNewChallenge, addToFavorites } = useApp();
   const [selectedFilter, setSelectedFilter] = useState('all');
 
   // Filter challenges based on selected filter
@@ -73,6 +75,11 @@ export default function ChooseScreen() {
         <Button 
           title="Start" 
           onPress={() => {
+            if (!canTakeNewChallenge()) {
+              Alert.alert('Limit Reached', 'You have already completed a challenge today. Come back tomorrow!');
+              return;
+            }
+            setActiveChallenge(item);
             Alert.alert('Challenge Started!', 'Good luck with your challenge! 🎉');
           }}
           style={{ 
@@ -86,7 +93,8 @@ export default function ChooseScreen() {
           title="Add" 
           variant="secondary" 
           onPress={() => {
-            Alert.alert('Added!', 'Challenge added to your plan! 📅');
+            addToFavorites(item);
+            Alert.alert('Added!', 'Challenge added to your favorites! 📅');
           }}
           style={{ 
             flex: 1,

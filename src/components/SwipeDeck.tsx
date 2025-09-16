@@ -1,5 +1,5 @@
 import React, { useRef, useState, useEffect } from 'react';
-import { View, Text, StyleSheet, Animated, Dimensions } from 'react-native';
+import { View, Text, StyleSheet, Animated, Dimensions, TouchableOpacity } from 'react-native';
 import { PanGestureHandler, PanGestureHandlerGestureEvent } from 'react-native-gesture-handler';
 
 interface Challenge {
@@ -23,12 +23,24 @@ interface SwipeDeckProps {
   disabled?: boolean;
   swipeCount?: number;
   maxSwipes?: number;
+  onUpgradePremium?: () => void;
+  isPremium?: boolean;
 }
 
 const { width: screenWidth } = Dimensions.get('window');
 const SWIPE_THRESHOLD = screenWidth * 0.3;
 
-export function SwipeDeck({ challenges, onSwipeRight, onSwipeLeft, onSwipe, disabled = false, swipeCount = 0, maxSwipes = 5 }: SwipeDeckProps) {
+export function SwipeDeck({ 
+  challenges, 
+  onSwipeRight, 
+  onSwipeLeft, 
+  onSwipe, 
+  disabled = false, 
+  swipeCount = 0, 
+  maxSwipes = 5,
+  onUpgradePremium,
+  isPremium = false
+}: SwipeDeckProps) {
   const [currentIndex, setCurrentIndex] = useState(0);
   const translateX = useRef(new Animated.Value(0)).current;
   const translateY = useRef(new Animated.Value(0)).current;
@@ -118,10 +130,23 @@ export function SwipeDeck({ challenges, onSwipeRight, onSwipeLeft, onSwipe, disa
   if (challenges.length === 0 || currentIndex >= challenges.length) {
     return (
       <View style={styles.emptyContainer}>
-        <Text style={styles.emptyText}>No more ideas available</Text>
-        <Text style={styles.emptySubtext}>
-          {disabled ? 'Complete your current task to get new ideas' : 'Try refreshing'}
+        <Text style={styles.emptyText}>
+          {isPremium ? 'Нет доступных идей' : 'Карточки закончились!'}
         </Text>
+        <Text style={styles.emptySubtext}>
+          {isPremium 
+            ? 'Попробуйте обновить или выберите другую категорию' 
+            : 'Обновитесь до Premium для безлимитного доступа к идеям'
+          }
+        </Text>
+        {!isPremium && onUpgradePremium && (
+          <TouchableOpacity 
+            style={styles.premiumButton}
+            onPress={onUpgradePremium}
+          >
+            <Text style={styles.premiumButtonText}>⭐ Купить Premium</Text>
+          </TouchableOpacity>
+        )}
       </View>
     );
   }
@@ -129,9 +154,9 @@ export function SwipeDeck({ challenges, onSwipeRight, onSwipeLeft, onSwipe, disa
   if (disabled) {
     return (
       <View style={styles.emptyContainer}>
-        <Text style={styles.emptyText}>Swipe limit reached</Text>
+        <Text style={styles.emptyText}>Лимит свайпов достигнут</Text>
         <Text style={styles.emptySubtext}>
-          You've used {swipeCount}/{maxSwipes} swipes today. Upgrade to Premium for unlimited swipes.
+          Вы использовали {swipeCount}/{maxSwipes} свайпов сегодня. Обновитесь до Premium для безлимитных свайпов.
         </Text>
       </View>
     );
@@ -149,7 +174,7 @@ export function SwipeDeck({ challenges, onSwipeRight, onSwipeLeft, onSwipe, disa
     <View style={styles.container}>
       <View style={styles.swipeCounter}>
         <Text style={styles.swipeCounterText}>
-          Swipes: {swipeCount}/{maxSwipes}
+          Свайпы: {swipeCount}/{maxSwipes}
         </Text>
       </View>
       <PanGestureHandler
@@ -315,6 +340,20 @@ const styles = StyleSheet.create({
   emptySubtext: {
     fontSize: 16,
     color: '#666',
+    textAlign: 'center',
+    marginBottom: 20,
+  },
+  premiumButton: {
+    backgroundColor: '#8B5CF6',
+    paddingHorizontal: 32,
+    paddingVertical: 16,
+    borderRadius: 12,
+    marginTop: 10,
+  },
+  premiumButtonText: {
+    color: 'white',
+    fontSize: 18,
+    fontWeight: 'bold',
     textAlign: 'center',
   },
 });

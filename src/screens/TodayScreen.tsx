@@ -1,8 +1,13 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { View, ScrollView, Text, StyleSheet, TouchableOpacity, Alert } from 'react-native';
+import { useNavigation, useFocusEffect } from '@react-navigation/native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useApp } from '../context/AppContext';
+import { useRandomChallengesQuery, Challenge } from '../features/challenges/useRandomChallengesQuery';
+import { SwipeDeck } from '../components/SwipeDeck';
 
 export default function TodayScreen() {
+  const navigation = useNavigation();
   const {
     activeChallenge,
     setActiveChallenge,
@@ -13,7 +18,48 @@ export default function TodayScreen() {
     streak,
     completedToday,
     isPremium,
+    resetToNewDay,
+    checkAndResetForNewDay,
+    addToFavorites,
   } = useApp();
+
+  // Загружаем случайные карточки для сегодня
+  const { 
+    data: randomChallenges = [], 
+    isLoading: loadingChallenges,
+    error: challengesError 
+  } = useRandomChallengesQuery({
+    limit: 15,
+    freeOnly: !isPremium,
+  });
+
+  // Состояние для свайпов
+  const [swipeCount, setSwipeCount] = useState(0);
+  const maxSwipes = isPremium ? 999 : 5;
+  
+  // Состояние для выбранной карточки
+  const [selectedChallenge, setSelectedChallenge] = useState<Challenge | null>(null);
+
+  // Проверяем новый день при каждом фокусе на экране
+  useFocusEffect(
+    React.useCallback(() => {
+      const checkNewDay = async () => {
+        const wasNewDay = await checkAndResetForNewDay();
+        if (wasNewDay) {
+          console.log('Новый день! Состояние сброшено.');
+        }
+      };
+      
+      checkNewDay();
+    }, [checkAndResetForNewDay])
+  );
+
+  // Сбрасываем счетчик свайпов при новом дне
+  useEffect(() => {
+    if (!completedToday) {
+      setSwipeCount(0);
+    }
+  }, [completedToday]);
 
   const handleComplete = () => {
     Alert.alert(
@@ -57,14 +103,72 @@ export default function TodayScreen() {
     if (!canTakeNewChallenge()) {
       Alert.alert(
         'Лимит достигнут',
-        isPremium ? 'Что-то пошло не так' : 'Вы уже выполнили задачу сегодня. Вернитесь завтра!'
+        isPremium ? 'Что-то пошло не так' : 'Вы уже взяли 5 челленджей сегодня. Вернитесь завтра!'
       );
       return;
     }
 
-    // Здесь можно добавить логику выбора нового вызова
-    Alert.alert('Новый вызов', 'Выберите категорию в разделе "Категории"');
+    // Переходим на экран категорий
+    navigation.navigate('Categories' as never);
   };
+
+  // Обработчики для свайпов
+  const handleSwipeRight = (challenge: any) => {
+    console.log('Выбрана карточка:', challenge.title);
+    setSelectedChallenge(challenge);
+    setActiveChallenge(challenge);
+    setSwipeCount(prev => prev + 1);
+  };
+
+  const handleSwipeLeft = (challenge: any) => {
+    console.log('Пропущена карточка:', challenge.title);
+    setSwipeCount(prev => prev + 1);
+  };
+
+  const handleSwipe = () => {
+    console.log('Свайп выполнен, счетчик:', swipeCount + 1);
+  };
+
+  if (loadingChallenges) {
+    return (
+      <View style={styles.container}>
+        <View style={styles.header}>
+          <Text style={styles.title}>Today</Text>
+          <Text style={styles.subtitle}>Loading your challenge...</Text>
+        </View>
+        
+        <View style={styles.loadingContainer}>
+          <Text style={styles.loadingText}>Loading cards...</Text>
+        </View>
+      </View>
+    );
+  }
+
+  if (challengesError) {
+    return (
+      <View style={styles.container}>
+        <View style={styles.header}>
+          <Text style={styles.title}>Today</Text>
+          <Text style={styles.subtitle}>Loading error</Text>
+        </View>
+        
+        <View style={styles.errorContainer}>
+          <Text style={styles.errorText}>
+            Error loading cards: {challengesError instanceof Error ? challengesError.message : 'Unknown error'}
+          </Text>
+          <TouchableOpacity 
+            style={styles.retryButton} 
+            onPress={() => {
+              // Reload app
+              console.log('Reloading app...');
+            }}
+          >
+            <Text style={styles.retryButtonText}>Try Again</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+    );
+  }
 
   if (completedToday) {
     return (
@@ -83,6 +187,58 @@ export default function TodayScreen() {
           <Text style={styles.streakText}>
             Серия: {streak} {streak === 1 ? 'день' : 'дней'}
           </Text>
+        </View>
+      </View>
+    );
+  }
+
+  if (selectedChallenge) {
+    return (
+      <View style={styles.container}>
+        <View style={styles.header}>
+          <Text style={styles.title}>Сегодня</Text>
+          <Text style={styles.subtitle}>Ваш вызов</Text>
+        </View>
+        
+        <View style={styles.selectedChallengeContainer}>
+          <View style={styles.selectedChallengeCard}>
+            <Text style={styles.selectedChallengeTitle}>{selectedChallenge.title}</Text>
+            <Text style={styles.selectedChallengeDescription}>
+              {selectedChallenge.short_description}
+            </Text>
+            
+            <View style={styles.selectedChallengeMeta}>
+              <Text style={styles.selectedChallengeTime}>
+                ⏱️ {selectedChallenge.estimated_duration_min ? 
+                  `${selectedChallenge.estimated_duration_min}m` : 
+                  selectedChallenge.size === 'small' ? '5-30m' : 
+                  selectedChallenge.size === 'medium' ? '30-90m' : '2h+'}
+              </Text>
+              <Text style={styles.selectedChallengeCategory}>• {selectedChallenge.category}</Text>
+            </View>
+
+            {selectedChallenge.is_premium_only && (
+              <View style={styles.selectedPremiumBadge}>
+                <Text style={styles.selectedPremiumText}>PREMIUM</Text>
+              </View>
+            )}
+          </View>
+
+          <View style={styles.selectedActionsContainer}>
+            <TouchableOpacity 
+              style={styles.selectedCompleteButton}
+              onPress={handleComplete}
+            >
+              <Text style={styles.selectedCompleteButtonText}>✅ Завершить</Text>
+            </TouchableOpacity>
+          </View>
+
+          <TouchableOpacity 
+            style={styles.backToSwipeButton}
+            onPress={() => setSelectedChallenge(null)}
+          >
+            <Text style={styles.backToSwipeButtonText}>← Выбрать другую карточку</Text>
+          </TouchableOpacity>
         </View>
       </View>
     );
@@ -147,23 +303,29 @@ export default function TodayScreen() {
     <View style={styles.container}>
       <View style={styles.header}>
         <Text style={styles.title}>Сегодня</Text>
-        <Text style={styles.subtitle}>Ваш вызов</Text>
+        <Text style={styles.subtitle}>Свайпайте для выбора</Text>
       </View>
-      
-      <View style={styles.emptyContainer}>
-        <Text style={styles.emptyEmoji}>🎯</Text>
-        <Text style={styles.emptyTitle}>Нет активного вызова</Text>
-        <Text style={styles.emptyText}>
-          Выберите категорию или возьмите новый вызов
-        </Text>
-        
-        <TouchableOpacity 
-          style={styles.newChallengeButton}
-          onPress={handleTakeNewChallenge}
-        >
-          <Text style={styles.newChallengeButtonText}>Взять новый вызов</Text>
-        </TouchableOpacity>
+
+      <View style={styles.deckContainer}>
+        <SwipeDeck
+          challenges={randomChallenges}
+          onSwipeRight={handleSwipeRight}
+          onSwipeLeft={handleSwipeLeft}
+          onSwipe={handleSwipe}
+          disabled={swipeCount >= maxSwipes}
+          swipeCount={swipeCount}
+          maxSwipes={maxSwipes}
+          isPremium={isPremium}
+          onUpgradePremium={() => {
+            Alert.alert(
+              'Premium',
+              'Функция Premium будет доступна в следующих версиях!',
+              [{ text: 'Понятно' }]
+            );
+          }}
+        />
       </View>
+
     </View>
   );
 }
@@ -176,7 +338,7 @@ const styles = StyleSheet.create({
   header: {
     paddingHorizontal: 20,
     paddingTop: 20,
-    paddingBottom: 20,
+    paddingBottom: 15,
     backgroundColor: 'white',
     borderBottomWidth: 1,
     borderBottomColor: '#e0e0e0',
@@ -354,5 +516,123 @@ const styles = StyleSheet.create({
     color: 'white',
     fontSize: 16,
     fontWeight: '600',
+  },
+  errorContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 40,
+  },
+  errorText: {
+    fontSize: 16,
+    color: '#FF6B6B',
+    textAlign: 'center',
+    marginBottom: 20,
+    lineHeight: 24,
+  },
+  retryButton: {
+    backgroundColor: '#8B5CF6',
+    paddingHorizontal: 24,
+    paddingVertical: 12,
+    borderRadius: 8,
+  },
+  retryButtonText: {
+    color: 'white',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  deckContainer: {
+    flex: 1,
+    paddingHorizontal: 10,
+    paddingBottom: 20,
+  },
+  selectedChallengeContainer: {
+    flex: 1,
+    padding: 20,
+    justifyContent: 'center',
+  },
+  selectedChallengeCard: {
+    backgroundColor: '#8B5CF6',
+    borderRadius: 20,
+    padding: 24,
+    marginBottom: 30,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 8,
+    },
+    shadowOpacity: 0.3,
+    shadowRadius: 10,
+    elevation: 10,
+  },
+  selectedChallengeTitle: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: 'white',
+    marginBottom: 16,
+    textAlign: 'center',
+  },
+  selectedChallengeDescription: {
+    fontSize: 16,
+    color: 'white',
+    opacity: 0.9,
+    textAlign: 'center',
+    lineHeight: 24,
+    marginBottom: 24,
+  },
+  selectedChallengeMeta: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  selectedChallengeTime: {
+    fontSize: 14,
+    color: 'white',
+    marginRight: 12,
+  },
+  selectedChallengeCategory: {
+    fontSize: 14,
+    color: 'white',
+    opacity: 0.8,
+  },
+  selectedPremiumBadge: {
+    position: 'absolute',
+    top: 16,
+    right: 16,
+    backgroundColor: '#FFD700',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 12,
+  },
+  selectedPremiumText: {
+    fontSize: 12,
+    fontWeight: 'bold',
+    color: '#8B5CF6',
+  },
+  selectedActionsContainer: {
+    marginBottom: 20,
+  },
+  selectedCompleteButton: {
+    backgroundColor: '#4CAF50',
+    paddingVertical: 16,
+    borderRadius: 12,
+    alignItems: 'center',
+  },
+  selectedCompleteButtonText: {
+    color: 'white',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  backToSwipeButton: {
+    backgroundColor: '#f0f0f0',
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    borderRadius: 8,
+    alignItems: 'center',
+  },
+  backToSwipeButtonText: {
+    color: '#666',
+    fontSize: 16,
+    fontWeight: '500',
   },
 });

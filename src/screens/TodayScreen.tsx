@@ -21,6 +21,12 @@ export default function TodayScreen() {
     resetToNewDay,
     checkAndResetForNewDay,
     addToFavorites,
+    swipesUsedToday,
+    maxSwipesPerDay,
+    canSwipe,
+    useSwipe,
+    markAsViewed,
+    getUnviewedChallenges,
   } = useApp();
 
   // Load random cards for today
@@ -33,9 +39,7 @@ export default function TodayScreen() {
     freeOnly: !isPremium,
   });
 
-  // Swipe state
-  const [swipeCount, setSwipeCount] = useState(0);
-  const maxSwipes = isPremium ? 999 : 5;
+  // Swipe state - now managed globally
   
   // Selected card state
   const [selectedChallenge, setSelectedChallenge] = useState<Challenge | null>(null);
@@ -54,12 +58,7 @@ export default function TodayScreen() {
     }, [checkAndResetForNewDay])
   );
 
-  // Reset swipe counter on new day
-  useEffect(() => {
-    if (!completedToday) {
-      setSwipeCount(0);
-    }
-  }, [completedToday]);
+  // Reset swipe counter on new day - now handled globally
 
   const handleComplete = () => {
     Alert.alert(
@@ -73,6 +72,7 @@ export default function TodayScreen() {
       ]
     );
   };
+
 
   const handleSkip = () => {
     if (!canSkip()) {
@@ -114,19 +114,41 @@ export default function TodayScreen() {
 
   // Swipe handlers
   const handleSwipeRight = (challenge: any) => {
+    if (!canSwipe()) {
+      Alert.alert(
+        'Swipe limit reached',
+        `You've used ${swipesUsedToday}/${maxSwipesPerDay} swipes today. Upgrade to Premium for unlimited swipes.`
+      );
+      return;
+    }
+    
+    // Mark as viewed
+    markAsViewed(challenge.id);
+    
     console.log('Selected card:', challenge.title);
     setSelectedChallenge(challenge);
     setActiveChallenge(challenge);
-    setSwipeCount(prev => prev + 1);
+    useSwipe();
   };
 
   const handleSwipeLeft = (challenge: any) => {
+    if (!canSwipe()) {
+      Alert.alert(
+        'Swipe limit reached',
+        `You've used ${swipesUsedToday}/${maxSwipesPerDay} swipes today. Upgrade to Premium for unlimited swipes.`
+      );
+      return;
+    }
+    
+    // Mark as viewed
+    markAsViewed(challenge.id);
+    
     console.log('Skipped card:', challenge.title);
-    setSwipeCount(prev => prev + 1);
+    useSwipe();
   };
 
   const handleSwipe = () => {
-    console.log('Swipe completed, counter:', swipeCount + 1);
+    console.log('Swipe completed, counter:', swipesUsedToday + 1);
   };
 
   if (loadingChallenges) {
@@ -233,19 +255,6 @@ export default function TodayScreen() {
             </TouchableOpacity>
           </View>
 
-          <View style={styles.selectedSecondaryActions}>
-            <TouchableOpacity 
-              style={styles.selectedFavoritesButton}
-              onPress={() => {
-                if (selectedChallenge) {
-                  addToFavorites(selectedChallenge);
-                  Alert.alert('Added to Favorites', `"${selectedChallenge.title}" added to favorites`);
-                }
-              }}
-            >
-              <Text style={styles.selectedFavoritesButtonText}>❤️ Add to Favorites</Text>
-            </TouchableOpacity>
-          </View>
 
           <TouchableOpacity 
             style={styles.backToSwipeButton}
@@ -322,13 +331,17 @@ export default function TodayScreen() {
 
       <View style={styles.deckContainer}>
         <SwipeDeck
-          challenges={randomChallenges}
+          challenges={getUnviewedChallenges(randomChallenges)}
           onSwipeRight={handleSwipeRight}
           onSwipeLeft={handleSwipeLeft}
           onSwipe={handleSwipe}
-          disabled={swipeCount >= maxSwipes}
-          swipeCount={swipeCount}
-          maxSwipes={maxSwipes}
+          onAddToFavorites={(challenge) => {
+            addToFavorites(challenge);
+            Alert.alert('Added to Favorites', `"${challenge.title}" added to favorites`);
+          }}
+          disabled={!canSwipe()}
+          swipeCount={swipesUsedToday}
+          maxSwipes={maxSwipesPerDay}
           isPremium={isPremium}
           onUpgradePremium={() => {
             Alert.alert(
@@ -635,21 +648,6 @@ const styles = StyleSheet.create({
   selectedCompleteButtonText: {
     color: 'white',
     fontSize: 16,
-    fontWeight: '600',
-  },
-  selectedSecondaryActions: {
-    marginBottom: 20,
-  },
-  selectedFavoritesButton: {
-    backgroundColor: '#FF6B6B',
-    paddingVertical: 12,
-    paddingHorizontal: 20,
-    borderRadius: 12,
-    alignItems: 'center',
-  },
-  selectedFavoritesButtonText: {
-    color: 'white',
-    fontSize: 14,
     fontWeight: '600',
   },
   backToSwipeButton: {

@@ -20,6 +20,7 @@ interface SwipeDeckProps {
   onSwipeRight: (challenge: Challenge) => void;
   onSwipeLeft: (challenge: Challenge) => void;
   onSwipe?: () => void;
+  onAddToFavorites?: (challenge: Challenge) => void;
   disabled?: boolean;
   swipeCount?: number;
   maxSwipes?: number;
@@ -28,13 +29,14 @@ interface SwipeDeckProps {
 }
 
 const { width: screenWidth } = Dimensions.get('window');
-const SWIPE_THRESHOLD = screenWidth * 0.3;
+const SWIPE_THRESHOLD = screenWidth * 0.25; // Уменьшил порог для более чувствительного свайпа
 
 export function SwipeDeck({ 
   challenges, 
   onSwipeRight, 
   onSwipeLeft, 
   onSwipe, 
+  onAddToFavorites,
   disabled = false, 
   swipeCount = 0, 
   maxSwipes = 5,
@@ -59,6 +61,20 @@ export function SwipeDeck({
     [{ nativeEvent: { translationX: translateX, translationY: translateY } }],
     { useNativeDriver: true }
   );
+
+  // Интерполяция для плавного поворота во время движения
+  const rotateInterpolate = translateX.interpolate({
+    inputRange: [-screenWidth, 0, screenWidth],
+    outputRange: ['-0.2rad', '0rad', '0.2rad'],
+    extrapolate: 'clamp',
+  });
+
+  // Интерполяция для плавного масштабирования во время движения
+  const scaleInterpolate = translateX.interpolate({
+    inputRange: [-screenWidth, 0, screenWidth],
+    outputRange: [0.95, 1, 0.95],
+    extrapolate: 'clamp',
+  });
 
   const onHandlerStateChange = (event: PanGestureHandlerGestureEvent) => {
     if (disabled) return;
@@ -86,21 +102,26 @@ export function SwipeDeck({
           onSwipe();
         }
         
-        // Анимация исчезновения
+        // Улучшенная анимация исчезновения с более плавными переходами
         Animated.parallel([
           Animated.timing(translateX, {
-            toValue: translationX > 0 ? screenWidth : -screenWidth,
-            duration: 200,
+            toValue: translationX > 0 ? screenWidth * 1.5 : -screenWidth * 1.5,
+            duration: 400,
             useNativeDriver: true,
           }),
           Animated.timing(translateY, {
-            toValue: translationY,
-            duration: 200,
+            toValue: translationY * 0.3,
+            duration: 400,
+            useNativeDriver: true,
+          }),
+          Animated.timing(rotate, {
+            toValue: translationX > 0 ? 0.4 : -0.4,
+            duration: 400,
             useNativeDriver: true,
           }),
           Animated.timing(opacity, {
             toValue: 0,
-            duration: 200,
+            duration: 350,
             useNativeDriver: true,
           }),
         ]).start(() => {
@@ -109,18 +130,29 @@ export function SwipeDeck({
           // Сбрасываем анимации для следующей карточки
           translateX.setValue(0);
           translateY.setValue(0);
+          rotate.setValue(0);
           opacity.setValue(1);
         });
       } else {
-        // Возвращаем карточку на место
+        // Возвращаем карточку на место с более плавной анимацией
         Animated.parallel([
           Animated.spring(translateX, {
             toValue: 0,
             useNativeDriver: true,
+            tension: 150,
+            friction: 8,
           }),
           Animated.spring(translateY, {
             toValue: 0,
             useNativeDriver: true,
+            tension: 150,
+            friction: 8,
+          }),
+          Animated.spring(rotate, {
+            toValue: 0,
+            useNativeDriver: true,
+            tension: 150,
+            friction: 8,
           }),
         ]).start();
       }
@@ -131,11 +163,11 @@ export function SwipeDeck({
     return (
       <View style={styles.emptyContainer}>
         <Text style={styles.emptyText}>
-          {isPremium ? 'No ideas available' : 'Cards finished!'}
+          {isPremium ? 'No new ideas available' : 'Cards finished!'}
         </Text>
         <Text style={styles.emptySubtext}>
           {isPremium 
-            ? 'Try refreshing or choose another category' 
+            ? 'You\'ve seen all available ideas in this category. New ones will appear soon!' 
             : 'Upgrade to Premium for unlimited access to ideas'
           }
         </Text>
@@ -164,12 +196,6 @@ export function SwipeDeck({
 
   const currentChallenge = challenges[currentIndex];
 
-  const rotateInterpolate = translateX.interpolate({
-    inputRange: [-screenWidth, 0, screenWidth],
-    outputRange: ['-30deg', '0deg', '30deg'],
-    extrapolate: 'clamp',
-  });
-
   return (
     <View style={styles.container}>
       <View style={styles.swipeCounter}>
@@ -190,11 +216,23 @@ export function SwipeDeck({
                 { translateX },
                 { translateY },
                 { rotate: rotateInterpolate },
+                { scale: scaleInterpolate },
               ],
               opacity,
             },
           ]}
         >
+          {/* Heart button in top-right corner */}
+          {onAddToFavorites && (
+            <TouchableOpacity
+              style={styles.heartButton}
+              onPress={() => onAddToFavorites(currentChallenge)}
+              activeOpacity={0.7}
+            >
+              <Text style={styles.heartIcon}>❤️</Text>
+            </TouchableOpacity>
+          )}
+
           <View style={styles.cardContent}>
             <Text style={styles.title}>{currentChallenge.title}</Text>
             <Text style={styles.description}>{currentChallenge.short_description}</Text>
@@ -323,6 +361,29 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: 'white',
     opacity: 0.7,
+  },
+  heartButton: {
+    position: 'absolute',
+    top: 15,
+    right: 15,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: 'rgba(255, 255, 255, 0.9)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    elevation: 5,
+    zIndex: 10,
+  },
+  heartIcon: {
+    fontSize: 20,
   },
   emptyContainer: {
     flex: 1,

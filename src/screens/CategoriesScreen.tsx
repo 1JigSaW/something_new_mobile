@@ -26,6 +26,12 @@ export default function CategoriesScreen() {
     addToFavorites,
     canTakeNewChallenge,
     isPremium,
+    swipesUsedToday,
+    maxSwipesPerDay,
+    canSwipe,
+    useSwipe,
+    markAsViewed,
+    getUnviewedChallenges,
   } = useApp();
 
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
@@ -54,7 +60,7 @@ export default function CategoriesScreen() {
     return acc;
   }, {} as Record<string, Challenge[]>);
 
-  // Simple filtering
+  // Simple filtering with unviewed challenges
   let filteredChallenges = challenges;
   
   if (selectedCategory) {
@@ -83,6 +89,9 @@ export default function CategoriesScreen() {
     filteredChallenges = filteredChallenges.filter(challenge => challenge.is_premium_only);
   }
 
+  // Filter out viewed challenges
+  filteredChallenges = getUnviewedChallenges(filteredChallenges);
+
   const handleCategorySelect = (category: string) => {
     setSelectedCategory(selectedCategory === category ? null : category);
     setActiveFilter(null);
@@ -107,6 +116,14 @@ export default function CategoriesScreen() {
   };
 
   const handleSwipeRight = (challenge: Challenge) => {
+    if (!canSwipe()) {
+      Alert.alert(
+        'Swipe limit reached',
+        `You've used ${swipesUsedToday}/${maxSwipesPerDay} swipes today. Upgrade to Premium for unlimited swipes.`
+      );
+      return;
+    }
+
     if (!canTakeNewChallenge()) {
       Alert.alert(
         'Limit Reached',
@@ -114,6 +131,9 @@ export default function CategoriesScreen() {
       );
       return;
     }
+
+    // Mark as viewed
+    markAsViewed(challenge.id);
 
     Alert.alert(
       'Select this idea?',
@@ -125,15 +145,28 @@ export default function CategoriesScreen() {
         },
         {
           text: 'Select',
-          onPress: () => setActiveChallenge(challenge),
+          onPress: () => {
+            setActiveChallenge(challenge);
+            useSwipe();
+          },
         },
       ]
     );
   };
 
   const handleSwipeLeft = (challenge: Challenge) => {
-    // Simply skip without restrictions in categories
+    if (!canSwipe()) {
+      Alert.alert(
+        'Swipe limit reached',
+        `You've used ${swipesUsedToday}/${maxSwipesPerDay} swipes today. Upgrade to Premium for unlimited swipes.`
+      );
+      return;
+    }
+    
+    // Mark as viewed
+    markAsViewed(challenge.id);
     console.log('Skipped challenge:', challenge.title);
+    useSwipe();
   };
 
   const handleAddToFavorites = (challenge: Challenge) => {
@@ -207,22 +240,25 @@ export default function CategoriesScreen() {
         </View>
 
         <View style={styles.deckContainer}>
-          <SwipeDeck
-            challenges={filteredChallenges}
-            onSwipeRight={handleSwipeRight}
-            onSwipeLeft={handleSwipeLeft}
-            disabled={!canTakeNewChallenge()}
-          />
+             <SwipeDeck
+               challenges={filteredChallenges}
+               onSwipeRight={handleSwipeRight}
+               onSwipeLeft={handleSwipeLeft}
+               onAddToFavorites={handleAddToFavorites}
+               disabled={!canSwipe()}
+               swipeCount={swipesUsedToday}
+               maxSwipes={maxSwipesPerDay}
+               isPremium={isPremium}
+               onUpgradePremium={() => {
+                 Alert.alert(
+                   'Premium',
+                   'Premium feature will be available in future versions!',
+                   [{ text: 'Got it' }]
+                 );
+               }}
+             />
         </View>
 
-        <View style={styles.deckActions}>
-          <TouchableOpacity 
-            style={styles.favoritesButton}
-            onPress={() => filteredChallenges[0] && handleAddToFavorites(filteredChallenges[0])}
-          >
-            <Text style={styles.favoritesButtonText}>❤️ Add to Favorites</Text>
-          </TouchableOpacity>
-        </View>
       </View>
     );
   }
@@ -244,22 +280,25 @@ export default function CategoriesScreen() {
         </View>
 
         <View style={styles.deckContainer}>
-          <SwipeDeck
-            challenges={filteredChallenges}
-            onSwipeRight={handleSwipeRight}
-            onSwipeLeft={handleSwipeLeft}
-            disabled={!canTakeNewChallenge()}
-          />
+             <SwipeDeck
+               challenges={filteredChallenges}
+               onSwipeRight={handleSwipeRight}
+               onSwipeLeft={handleSwipeLeft}
+               onAddToFavorites={handleAddToFavorites}
+               disabled={!canSwipe()}
+               swipeCount={swipesUsedToday}
+               maxSwipes={maxSwipesPerDay}
+               isPremium={isPremium}
+               onUpgradePremium={() => {
+                 Alert.alert(
+                   'Premium',
+                   'Premium feature will be available in future versions!',
+                   [{ text: 'Got it' }]
+                 );
+               }}
+             />
         </View>
 
-        <View style={styles.deckActions}>
-          <TouchableOpacity 
-            style={styles.favoritesButton}
-            onPress={() => filteredChallenges[0] && handleAddToFavorites(filteredChallenges[0])}
-          >
-            <Text style={styles.favoritesButtonText}>❤️ Add to Favorites</Text>
-          </TouchableOpacity>
-        </View>
       </View>
     );
   }
@@ -604,16 +643,5 @@ const styles = StyleSheet.create({
     backgroundColor: 'white',
     borderTopWidth: 1,
     borderTopColor: '#e0e0e0',
-  },
-  favoritesButton: {
-    backgroundColor: '#FF6B6B',
-    paddingVertical: 16,
-    borderRadius: 12,
-    alignItems: 'center',
-  },
-  favoritesButtonText: {
-    color: 'white',
-    fontSize: 16,
-    fontWeight: '600',
   },
 });

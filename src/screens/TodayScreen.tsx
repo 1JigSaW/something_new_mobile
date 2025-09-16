@@ -23,7 +23,7 @@ export default function TodayScreen() {
     addToFavorites,
   } = useApp();
 
-  // Загружаем случайные карточки для сегодня
+  // Load random cards for today
   const { 
     data: randomChallenges = [], 
     isLoading: loadingChallenges,
@@ -33,20 +33,20 @@ export default function TodayScreen() {
     freeOnly: !isPremium,
   });
 
-  // Состояние для свайпов
+  // Swipe state
   const [swipeCount, setSwipeCount] = useState(0);
   const maxSwipes = isPremium ? 999 : 5;
   
-  // Состояние для выбранной карточки
+  // Selected card state
   const [selectedChallenge, setSelectedChallenge] = useState<Challenge | null>(null);
 
-  // Проверяем новый день при каждом фокусе на экране
+  // Check for new day on every focus
   useFocusEffect(
     React.useCallback(() => {
       const checkNewDay = async () => {
         const wasNewDay = await checkAndResetForNewDay();
         if (wasNewDay) {
-          console.log('Новый день! Состояние сброшено.');
+          console.log('New day! State reset.');
         }
       };
       
@@ -54,7 +54,7 @@ export default function TodayScreen() {
     }, [checkAndResetForNewDay])
   );
 
-  // Сбрасываем счетчик свайпов при новом дне
+  // Reset swipe counter on new day
   useEffect(() => {
     if (!completedToday) {
       setSwipeCount(0);
@@ -63,11 +63,11 @@ export default function TodayScreen() {
 
   const handleComplete = () => {
     Alert.alert(
-      'Поздравляем! 🎉',
-      'Вы завершили вызов! Отличная работа!',
+      'Congratulations! 🎉',
+      'You completed the challenge! Great work!',
       [
         {
-          text: 'Отлично!',
+          text: 'Awesome!',
           onPress: completeChallenge,
         },
       ]
@@ -77,22 +77,22 @@ export default function TodayScreen() {
   const handleSkip = () => {
     if (!canSkip()) {
       Alert.alert(
-        'Лимит пропусков',
-        isPremium ? 'Что-то пошло не так' : 'Вы использовали все пропуски на сегодня'
+        'Skip limit',
+        isPremium ? 'Something went wrong' : 'You have used all skips for today'
       );
       return;
     }
 
     Alert.alert(
-      'Пропустить вызов?',
-      'Вы уверены, что хотите пропустить этот вызов?',
+      'Skip challenge?',
+      'Are you sure you want to skip this challenge?',
       [
         {
-          text: 'Отмена',
+          text: 'Cancel',
           style: 'cancel',
         },
         {
-          text: 'Пропустить',
+          text: 'Skip',
           onPress: skipChallenge,
         },
       ]
@@ -102,31 +102,31 @@ export default function TodayScreen() {
   const handleTakeNewChallenge = () => {
     if (!canTakeNewChallenge()) {
       Alert.alert(
-        'Лимит достигнут',
-        isPremium ? 'Что-то пошло не так' : 'Вы уже взяли 5 челленджей сегодня. Вернитесь завтра!'
+        'Limit reached',
+        isPremium ? 'Something went wrong' : 'You have already taken 5 challenges today. Come back tomorrow!'
       );
       return;
     }
 
-    // Переходим на экран категорий
+    // Navigate to categories screen
     navigation.navigate('Categories' as never);
   };
 
-  // Обработчики для свайпов
+  // Swipe handlers
   const handleSwipeRight = (challenge: any) => {
-    console.log('Выбрана карточка:', challenge.title);
+    console.log('Selected card:', challenge.title);
     setSelectedChallenge(challenge);
     setActiveChallenge(challenge);
     setSwipeCount(prev => prev + 1);
   };
 
   const handleSwipeLeft = (challenge: any) => {
-    console.log('Пропущена карточка:', challenge.title);
+    console.log('Skipped card:', challenge.title);
     setSwipeCount(prev => prev + 1);
   };
 
   const handleSwipe = () => {
-    console.log('Свайп выполнен, счетчик:', swipeCount + 1);
+    console.log('Swipe completed, counter:', swipeCount + 1);
   };
 
   if (loadingChallenges) {
@@ -174,18 +174,18 @@ export default function TodayScreen() {
     return (
       <View style={styles.container}>
         <View style={styles.header}>
-          <Text style={styles.title}>Сегодня</Text>
-          <Text style={styles.subtitle}>Ваш прогресс</Text>
+          <Text style={styles.title}>Today</Text>
+          <Text style={styles.subtitle}>Your progress</Text>
         </View>
         
         <View style={styles.completedContainer}>
           <Text style={styles.completedEmoji}>🎉</Text>
-          <Text style={styles.completedTitle}>Отлично!</Text>
+          <Text style={styles.completedTitle}>Great!</Text>
           <Text style={styles.completedText}>
-            Вы уже выполнили задачу сегодня!
+            You've already completed your task today!
           </Text>
           <Text style={styles.streakText}>
-            Серия: {streak} {streak === 1 ? 'день' : 'дней'}
+            Streak: {streak} {streak === 1 ? 'day' : 'days'}
           </Text>
         </View>
       </View>
@@ -196,8 +196,8 @@ export default function TodayScreen() {
     return (
       <View style={styles.container}>
         <View style={styles.header}>
-          <Text style={styles.title}>Сегодня</Text>
-          <Text style={styles.subtitle}>Ваш вызов</Text>
+          <Text style={styles.title}>Today</Text>
+          <Text style={styles.subtitle}>Your challenge</Text>
         </View>
         
         <View style={styles.selectedChallengeContainer}>
@@ -229,7 +229,7 @@ export default function TodayScreen() {
               style={styles.selectedCompleteButton}
               onPress={handleComplete}
             >
-              <Text style={styles.selectedCompleteButtonText}>✅ Завершить</Text>
+              <Text style={styles.selectedCompleteButtonText}>✅ Complete</Text>
             </TouchableOpacity>
           </View>
 
@@ -237,7 +237,7 @@ export default function TodayScreen() {
             style={styles.backToSwipeButton}
             onPress={() => setSelectedChallenge(null)}
           >
-            <Text style={styles.backToSwipeButtonText}>← Выбрать другую карточку</Text>
+            <Text style={styles.backToSwipeButtonText}>← Choose another card</Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -302,8 +302,8 @@ export default function TodayScreen() {
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <Text style={styles.title}>Сегодня</Text>
-        <Text style={styles.subtitle}>Свайпайте для выбора</Text>
+        <Text style={styles.title}>Today</Text>
+        <Text style={styles.subtitle}>Swipe to choose</Text>
       </View>
 
       <View style={styles.deckContainer}>
@@ -319,8 +319,8 @@ export default function TodayScreen() {
           onUpgradePremium={() => {
             Alert.alert(
               'Premium',
-              'Функция Premium будет доступна в следующих версиях!',
-              [{ text: 'Понятно' }]
+              'Premium feature will be available in future versions!',
+              [{ text: 'Got it' }]
             );
           }}
         />

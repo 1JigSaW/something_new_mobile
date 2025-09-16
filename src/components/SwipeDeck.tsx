@@ -131,12 +131,12 @@ export function SwipeDeck({
     return (
       <View style={styles.emptyContainer}>
         <Text style={styles.emptyText}>
-          {isPremium ? 'Нет доступных идей' : 'Карточки закончились!'}
+          {isPremium ? 'No ideas available' : 'Cards finished!'}
         </Text>
         <Text style={styles.emptySubtext}>
           {isPremium 
-            ? 'Попробуйте обновить или выберите другую категорию' 
-            : 'Обновитесь до Premium для безлимитного доступа к идеям'
+            ? 'Try refreshing or choose another category' 
+            : 'Upgrade to Premium for unlimited access to ideas'
           }
         </Text>
         {!isPremium && onUpgradePremium && (
@@ -144,7 +144,7 @@ export function SwipeDeck({
             style={styles.premiumButton}
             onPress={onUpgradePremium}
           >
-            <Text style={styles.premiumButtonText}>⭐ Купить Premium</Text>
+            <Text style={styles.premiumButtonText}>⭐ Buy Premium</Text>
           </TouchableOpacity>
         )}
       </View>
@@ -154,9 +154,9 @@ export function SwipeDeck({
   if (disabled) {
     return (
       <View style={styles.emptyContainer}>
-        <Text style={styles.emptyText}>Лимит свайпов достигнут</Text>
+        <Text style={styles.emptyText}>Swipe limit reached</Text>
         <Text style={styles.emptySubtext}>
-          Вы использовали {swipeCount}/{maxSwipes} свайпов сегодня. Обновитесь до Premium для безлимитных свайпов.
+          You've used {swipeCount}/{maxSwipes} swipes today. Upgrade to Premium for unlimited swipes.
         </Text>
       </View>
     );
@@ -174,7 +174,7 @@ export function SwipeDeck({
     <View style={styles.container}>
       <View style={styles.swipeCounter}>
         <Text style={styles.swipeCounterText}>
-          Свайпы: {swipeCount}/{maxSwipes}
+          Swipes: {swipeCount}/{maxSwipes}
         </Text>
       </View>
       <PanGestureHandler
@@ -218,7 +218,7 @@ export function SwipeDeck({
 
           <View style={styles.instructions}>
             <Text style={styles.instructionText}>
-              ← Пропустить • Выбрать →
+              ← Skip • Choose →
             </Text>
           </View>
         </Animated.View>

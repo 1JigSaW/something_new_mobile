@@ -39,7 +39,7 @@ export function BottomTabNavigation() {
         name="Categories"
         component={CategoriesScreen}
         options={{
-          tabBarLabel: 'Категории',
+          tabBarLabel: 'Categories',
           tabBarIcon: ({ color }) => (
             <Text style={{ fontSize: 20, color, fontWeight: 'bold' }}>■</Text>
           ),
@@ -49,7 +49,7 @@ export function BottomTabNavigation() {
         name="Favorites"
         component={FavoritesScreen}
         options={{
-          tabBarLabel: 'Избранное',
+          tabBarLabel: 'Favorites',
           tabBarIcon: ({ color }) => (
             <Text style={{ fontSize: 20, color, fontWeight: 'bold' }}>★</Text>
           ),
@@ -59,7 +59,7 @@ export function BottomTabNavigation() {
         name="Profile"
         component={ProfileScreen}
         options={{
-          tabBarLabel: 'Профиль',
+          tabBarLabel: 'Profile',
           tabBarIcon: ({ color }) => (
             <Text style={{ fontSize: 20, color, fontWeight: 'bold' }}>○</Text>
           ),

@@ -26,10 +26,11 @@ interface SwipeDeckProps {
   maxSwipes?: number;
   onUpgradePremium?: () => void;
   isPremium?: boolean;
+  isSelected?: (challengeId: number) => boolean;
 }
 
 const { width: screenWidth } = Dimensions.get('window');
-const SWIPE_THRESHOLD = screenWidth * 0.25; // Уменьшил порог для более чувствительного свайпа
+const SWIPE_THRESHOLD = screenWidth * 0.5; // Even higher threshold for better visibility
 
 export function SwipeDeck({ 
   challenges, 
@@ -41,20 +42,30 @@ export function SwipeDeck({
   swipeCount = 0, 
   maxSwipes = 5,
   onUpgradePremium,
-  isPremium = false
+  isPremium = false,
+  isSelected
 }: SwipeDeckProps) {
   const [currentIndex, setCurrentIndex] = useState(0);
+  const [isNewCard, setIsNewCard] = useState(false);
   const translateX = useRef(new Animated.Value(0)).current;
   const translateY = useRef(new Animated.Value(0)).current;
   const rotate = useRef(new Animated.Value(0)).current;
   const opacity = useRef(new Animated.Value(1)).current;
+  const scale = useRef(new Animated.Value(1)).current;
+  const newCardOpacity = useRef(new Animated.Value(0)).current;
+  const newCardScale = useRef(new Animated.Value(0.8)).current;
 
-  // Сбрасываем индекс при изменении массива challenges
+  // Reset index when challenges array changes
   useEffect(() => {
     setCurrentIndex(0);
+    setIsNewCard(false);
     translateX.setValue(0);
     translateY.setValue(0);
+    rotate.setValue(0);
     opacity.setValue(1);
+    scale.setValue(1);
+    newCardOpacity.setValue(0);
+    newCardScale.setValue(0.8);
   }, [challenges]);
 
   const onGestureEvent = Animated.event(
@@ -62,79 +73,108 @@ export function SwipeDeck({
     { useNativeDriver: true }
   );
 
-  // Интерполяция для плавного поворота во время движения
+  // Enhanced rotation and scale during swipe
   const rotateInterpolate = translateX.interpolate({
     inputRange: [-screenWidth, 0, screenWidth],
-    outputRange: ['-0.2rad', '0rad', '0.2rad'],
+    outputRange: ['-0.3rad', '0rad', '0.3rad'],
     extrapolate: 'clamp',
   });
 
-  // Интерполяция для плавного масштабирования во время движения
   const scaleInterpolate = translateX.interpolate({
-    inputRange: [-screenWidth, 0, screenWidth],
+    inputRange: [-screenWidth * 0.3, 0, screenWidth * 0.3],
     outputRange: [0.95, 1, 0.95],
     extrapolate: 'clamp',
   });
 
+
   const onHandlerStateChange = (event: PanGestureHandlerGestureEvent) => {
     if (disabled) return;
 
-    const { translationX, translationY, velocityX, state } = event.nativeEvent;
+    const { translationX, translationY, state } = event.nativeEvent;
 
     if (state === 5) { // END
       const absTranslationX = Math.abs(translationX);
       const absTranslationY = Math.abs(translationY);
       
-      // Проверяем, был ли это свайп
+      // Check if this was a swipe
       if (absTranslationX > SWIPE_THRESHOLD || absTranslationY > SWIPE_THRESHOLD) {
         const currentChallenge = challenges[currentIndex];
         
-        if (translationX > 0) {
-          // Свайп вправо - выбор
-          onSwipeRight(currentChallenge);
-        } else {
-          // Свайп влево - пропуск
-          onSwipeLeft(currentChallenge);
-        }
-        
-        // Увеличиваем счетчик свайпов
-        if (onSwipe) {
-          onSwipe();
-        }
-        
-        // Улучшенная анимация исчезновения с более плавными переходами
+        // Start the dramatic exit animation immediately
         Animated.parallel([
+          // Fly away with maximum visibility - much further
           Animated.timing(translateX, {
-            toValue: translationX > 0 ? screenWidth * 1.5 : -screenWidth * 1.5,
-            duration: 400,
+            toValue: translationX > 0 ? screenWidth * 6 : -screenWidth * 6,
+            duration: 300,
             useNativeDriver: true,
           }),
           Animated.timing(translateY, {
-            toValue: translationY * 0.3,
-            duration: 400,
+            toValue: translationY * 0.4 - 400,
+            duration: 300,
             useNativeDriver: true,
           }),
           Animated.timing(rotate, {
-            toValue: translationX > 0 ? 0.4 : -0.4,
-            duration: 400,
+            toValue: translationX > 0 ? 2.0 : -2.0,
+            duration: 300,
             useNativeDriver: true,
           }),
+          Animated.timing(scale, {
+            toValue: 0.05,
+            duration: 300,
+            useNativeDriver: true,
+          }),
+          // Fade out
           Animated.timing(opacity, {
             toValue: 0,
-            duration: 350,
+            duration: 300,
             useNativeDriver: true,
           }),
         ]).start(() => {
-          // После анимации переходим к следующей карточке
-          setCurrentIndex(prev => prev + 1);
-          // Сбрасываем анимации для следующей карточки
-          translateX.setValue(0);
-          translateY.setValue(0);
-          rotate.setValue(0);
-          opacity.setValue(1);
+          // Call callbacks after animation starts
+          if (translationX > 0) {
+            onSwipeRight(currentChallenge);
+          } else {
+            onSwipeLeft(currentChallenge);
+          }
+          
+          if (onSwipe) {
+            onSwipe();
+          }
+          // Show new card animation
+          setIsNewCard(true);
+          newCardOpacity.setValue(0);
+          newCardScale.setValue(0.8);
+          
+          // Animate new card appearance
+          Animated.parallel([
+            Animated.timing(newCardOpacity, {
+              toValue: 1,
+              duration: 300,
+              useNativeDriver: true,
+            }),
+            Animated.spring(newCardScale, {
+              toValue: 1,
+              tension: 100,
+              friction: 8,
+              useNativeDriver: true,
+            }),
+          ]).start(() => {
+            // Switch to new card
+            setCurrentIndex(prev => prev + 1);
+            setIsNewCard(false);
+            
+            // Reset animations for next card
+            translateX.setValue(0);
+            translateY.setValue(0);
+            rotate.setValue(0);
+            scale.setValue(1);
+            opacity.setValue(1);
+            newCardOpacity.setValue(0);
+            newCardScale.setValue(0.8);
+          });
         });
       } else {
-        // Возвращаем карточку на место с более плавной анимацией
+        // Return card to place
         Animated.parallel([
           Animated.spring(translateX, {
             toValue: 0,
@@ -203,7 +243,9 @@ export function SwipeDeck({
           Swipes: {swipeCount}/{maxSwipes}
         </Text>
       </View>
-      <PanGestureHandler
+      
+      <View style={styles.cardContainer}>
+        <PanGestureHandler
         onGestureEvent={onGestureEvent}
         onHandlerStateChange={onHandlerStateChange}
         enabled={!disabled}
@@ -218,7 +260,7 @@ export function SwipeDeck({
                 { rotate: rotateInterpolate },
                 { scale: scaleInterpolate },
               ],
-              opacity,
+              opacity: opacity,
             },
           ]}
         >
@@ -252,7 +294,46 @@ export function SwipeDeck({
                 <Text style={styles.premiumText}>PREMIUM</Text>
               </View>
             )}
+
+            {isSelected && isSelected(currentChallenge.id) && (
+              <View style={styles.selectedBadge}>
+                <Text style={styles.selectedText}>✓ SELECTED</Text>
+              </View>
+            )}
           </View>
+
+          {/* Swipe direction indicators */}
+          <Animated.View
+            style={[
+              styles.swipeIndicator,
+              styles.leftIndicator,
+              {
+                opacity: translateX.interpolate({
+                  inputRange: [-screenWidth * 0.3, 0],
+                  outputRange: [1, 0],
+                  extrapolate: 'clamp',
+                }),
+              },
+            ]}
+          >
+            <Text style={styles.indicatorText}>SKIP</Text>
+          </Animated.View>
+          
+          <Animated.View
+            style={[
+              styles.swipeIndicator,
+              styles.rightIndicator,
+              {
+                opacity: translateX.interpolate({
+                  inputRange: [0, screenWidth * 0.3],
+                  outputRange: [0, 1],
+                  extrapolate: 'clamp',
+                }),
+              },
+            ]}
+          >
+            <Text style={styles.indicatorText}>CHOOSE</Text>
+          </Animated.View>
 
           <View style={styles.instructions}>
             <Text style={styles.instructionText}>
@@ -261,6 +342,26 @@ export function SwipeDeck({
           </View>
         </Animated.View>
       </PanGestureHandler>
+      
+      {/* New card appearing animation */}
+      {isNewCard && (
+        <Animated.View
+          style={[
+            styles.card,
+            styles.newCard,
+            {
+              opacity: newCardOpacity,
+              transform: [{ scale: newCardScale }],
+            },
+          ]}
+        >
+          <View style={styles.cardContent}>
+            <Text style={styles.title}>Loading...</Text>
+            <Text style={styles.description}>Getting your next challenge...</Text>
+          </View>
+        </Animated.View>
+      )}
+      </View>
     </View>
   );
 }
@@ -268,9 +369,17 @@ export function SwipeDeck({
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    justifyContent: 'center',
+    justifyContent: 'flex-end',
     alignItems: 'center',
-    padding: 10,
+    padding: 0,
+    paddingBottom: 150,
+  },
+  cardContainer: {
+    top: 30,
+    flex: 1,
+    width: '100%',
+    height: '100%',
+    overflow: 'visible',
   },
   swipeCounter: {
     position: 'absolute',
@@ -289,9 +398,11 @@ const styles = StyleSheet.create({
   },
   card: {
     width: screenWidth - 40,
-    height: 400,
+    height: 500,
     backgroundColor: '#8B5CF6',
     borderRadius: 20,
+    marginHorizontal: 20,
+    marginVertical: 20,
     shadowColor: '#000',
     shadowOffset: {
       width: 0,
@@ -350,6 +461,28 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: '#8B5CF6',
   },
+  selectedBadge: {
+    position: 'absolute',
+    top: 15,
+    left: 15,
+    backgroundColor: '#4CAF50',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 15,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    elevation: 5,
+  },
+  selectedText: {
+    color: 'white',
+    fontSize: 12,
+    fontWeight: 'bold',
+  },
   instructions: {
     position: 'absolute',
     bottom: 16,
@@ -361,6 +494,32 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: 'white',
     opacity: 0.7,
+  },
+  swipeIndicator: {
+    position: 'absolute',
+    top: '50%',
+    width: 80,
+    height: 40,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderRadius: 20,
+    transform: [{ translateY: -20 }],
+  },
+  leftIndicator: {
+    left: 20,
+    backgroundColor: 'rgba(255, 107, 107, 0.9)',
+  },
+  rightIndicator: {
+    right: 20,
+    backgroundColor: 'rgba(78, 205, 196, 0.9)',
+  },
+  indicatorText: {
+    color: 'white',
+    fontSize: 16,
+    fontWeight: 'bold',
+    textShadowColor: 'rgba(0, 0, 0, 0.5)',
+    textShadowOffset: { width: 1, height: 1 },
+    textShadowRadius: 2,
   },
   heartButton: {
     position: 'absolute',
@@ -418,5 +577,24 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: 'bold',
     textAlign: 'center',
+  },
+  newCard: {
+    position: 'absolute',
+    top: 20,
+    left: 20,
+    right: 20,
+    bottom: 20,
+    backgroundColor: '#8B5CF6',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderRadius: 20,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 8,
   },
 });

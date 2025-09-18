@@ -20,31 +20,21 @@ export default function FavoritesScreen() {
     favorites,
     removeFromFavorites,
     addToFavorites,
-    isPremium,
     activeChallenge,
     setActiveChallenge,
-    canTakeNewChallenge,
   } = useApp();
 
   const handleSelectChallenge = (challenge: Challenge) => {
-    if (!canTakeNewChallenge()) {
-      Alert.alert(
-        'Лимит достигнут',
-        isPremium ? 'Что-то пошло не так' : 'Вы уже выполнили задачу сегодня. Вернитесь завтра!'
-      );
-      return;
-    }
-
     Alert.alert(
-      'Выбрать эту идею?',
-      `Вы уверены, что хотите выбрать "${challenge.title}"?`,
+      'Select this idea?',
+      `Are you sure you want to select "${challenge.title}"?`,
       [
         {
-          text: 'Отмена',
+          text: 'Cancel',
           style: 'cancel',
         },
         {
-          text: 'Выбрать',
+          text: 'Select',
           onPress: () => setActiveChallenge(challenge),
         },
       ]
@@ -53,15 +43,15 @@ export default function FavoritesScreen() {
 
   const handleRemoveFromFavorites = (challenge: Challenge) => {
     Alert.alert(
-      'Удалить из избранного?',
-      `Вы уверены, что хотите удалить "${challenge.title}" из избранного?`,
+      'Remove from Favorites?',
+      `Are you sure you want to remove "${challenge.title}" from favorites?`,
       [
         {
-          text: 'Отмена',
+          text: 'Cancel',
           style: 'cancel',
         },
         {
-          text: 'Удалить',
+          text: 'Delete',
           style: 'destructive',
           onPress: () => removeFromFavorites(challenge.id),
         },
@@ -73,14 +63,14 @@ export default function FavoritesScreen() {
     return (
       <View style={styles.container}>
         <View style={styles.header}>
-          <Text style={styles.title}>Избранное</Text>
-          <Text style={styles.subtitle}>Сохраненные идеи</Text>
+          <Text style={styles.title}>Favorites</Text>
+          <Text style={styles.subtitle}>Saved ideas</Text>
         </View>
         
         <View style={styles.emptyContainer}>
-          <Text style={styles.emptyTitle}>Пока нет избранных идей</Text>
+          <Text style={styles.emptyTitle}>No favorites yet</Text>
           <Text style={styles.emptyText}>
-            Добавляйте понравившиеся идеи в избранное, чтобы вернуться к ним позже
+            Add ideas you like to favorites to return to them later
           </Text>
         </View>
       </View>
@@ -90,10 +80,9 @@ export default function FavoritesScreen() {
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <Text style={styles.title}>Избранное</Text>
+        <Text style={styles.title}>Favorites</Text>
         <Text style={styles.subtitle}>
-          {favorites.length} {favorites.length === 1 ? 'идея' : 'идей'}
-          {!isPremium && ` (лимит: 10)`}
+          {favorites.length} {favorites.length === 1 ? 'idea' : 'ideas'}
         </Text>
       </View>
 
@@ -122,36 +111,27 @@ export default function FavoritesScreen() {
             </View>
 
             <View style={styles.challengeActions}>
-              <TouchableOpacity 
-                style={[styles.selectButton, !canTakeNewChallenge() && styles.selectButtonDisabled]}
+              <TouchableOpacity
+                style={styles.selectButton}
                 onPress={() => handleSelectChallenge(challenge)}
-                disabled={!canTakeNewChallenge()}
+                activeOpacity={0.7}
               >
-                <Text style={[styles.selectButtonText, !canTakeNewChallenge() && styles.selectButtonTextDisabled]}>
-                  Выбрать
+                <Text style={styles.selectButtonText}>
+                  Select
                 </Text>
               </TouchableOpacity>
               
               <TouchableOpacity 
                 style={styles.removeButton}
                 onPress={() => handleRemoveFromFavorites(challenge)}
+                activeOpacity={0.7}
               >
-                <Text style={styles.removeButtonText}>🗑️</Text>
+                <Text style={styles.removeButtonText}>Delete</Text>
               </TouchableOpacity>
             </View>
           </View>
         ))}
 
-        {!isPremium && favorites.length >= 10 && (
-          <View style={styles.limitWarning}>
-            <Text style={styles.limitWarningText}>
-              🚫 Достигнут лимит избранного (10 идей)
-            </Text>
-            <Text style={styles.limitWarningSubtext}>
-              Обновитесь до Premium для безлимитного сохранения
-            </Text>
-          </View>
-        )}
       </ScrollView>
     </View>
   );
@@ -205,17 +185,19 @@ const styles = StyleSheet.create({
   },
   challengeCard: {
     backgroundColor: 'white',
-    borderRadius: 16,
-    padding: 20,
-    marginBottom: 16,
+    borderRadius: 20,
+    padding: 24,
+    marginBottom: 20,
     shadowColor: '#000',
     shadowOffset: {
       width: 0,
-      height: 2,
+      height: 4,
     },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
+    shadowOpacity: 0.15,
+    shadowRadius: 8,
+    elevation: 6,
+    borderWidth: 1,
+    borderColor: '#f0f0f0',
     flexDirection: 'row',
     alignItems: 'center',
   },
@@ -224,16 +206,17 @@ const styles = StyleSheet.create({
     marginRight: 12,
   },
   challengeTitle: {
-    fontSize: 18,
+    fontSize: 20,
     fontWeight: 'bold',
     color: '#333',
-    marginBottom: 8,
+    marginBottom: 10,
+    lineHeight: 26,
   },
   challengeDescription: {
-    fontSize: 14,
+    fontSize: 15,
     color: '#666',
-    lineHeight: 20,
-    marginBottom: 12,
+    lineHeight: 22,
+    marginBottom: 14,
   },
   challengeMeta: {
     flexDirection: 'row',
@@ -268,49 +251,50 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   selectButton: {
-    backgroundColor: '#8B5CF6',
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 8,
-    minWidth: 80,
+    backgroundColor: '#00C851',
+    paddingHorizontal: 20,
+    paddingVertical: 12,
+    borderRadius: 20,
+    minWidth: 90,
     alignItems: 'center',
-  },
-  selectButtonDisabled: {
-    backgroundColor: '#ccc',
+    shadowColor: '#00C851',
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    shadowOpacity: 0.4,
+    shadowRadius: 10,
+    elevation: 6,
+    borderWidth: 0,
   },
   selectButtonText: {
     color: 'white',
     fontSize: 14,
     fontWeight: '600',
-  },
-  selectButtonTextDisabled: {
-    color: '#999',
+    letterSpacing: 0.3,
   },
   removeButton: {
-    padding: 8,
+    paddingHorizontal: 20,
+    paddingVertical: 12,
+    borderRadius: 20,
+    backgroundColor: '#FF4444',
+    alignItems: 'center',
+    justifyContent: 'center',
+    minWidth: 90,
+    shadowColor: '#FF4444',
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    shadowOpacity: 0.4,
+    shadowRadius: 10,
+    elevation: 6,
+    borderWidth: 0,
   },
   removeButtonText: {
-    fontSize: 16,
-  },
-  limitWarning: {
-    backgroundColor: '#FFF3CD',
-    borderColor: '#FFEAA7',
-    borderWidth: 1,
-    borderRadius: 12,
-    padding: 16,
-    marginTop: 20,
-    alignItems: 'center',
-  },
-  limitWarningText: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: '#856404',
-    marginBottom: 4,
-    textAlign: 'center',
-  },
-  limitWarningSubtext: {
     fontSize: 14,
-    color: '#856404',
-    textAlign: 'center',
+    color: 'white',
+    fontWeight: '600',
+    letterSpacing: 0.3,
   },
 });

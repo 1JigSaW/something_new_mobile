@@ -16,46 +16,52 @@ interface Challenge {
 }
 
 interface AppContextType {
-  // Текущая активная карточка
+  // Current active challenge
   activeChallenge: Challenge | null;
   setActiveChallenge: (challenge: Challenge | null) => void;
   
-  // Статистика
+  // Statistics
   streak: number;
   completedCount: number;
   completedToday: boolean;
   
-  // Premium статус
+  // Premium status
   isPremium: boolean;
   setIsPremium: (premium: boolean) => void;
   
-  // Пропуски
+  // Skips
   skipsUsedToday: number;
   maxSkipsPerDay: number;
   
-  // Свайпы (общая логика)
+  // Swipes (global logic)
   swipesUsedToday: number;
   maxSwipesPerDay: number;
   canSwipe: () => boolean;
   useSwipe: () => void;
   
-  // Просмотренные карточки
+  // Viewed challenges
   viewedChallenges: number[];
   markAsViewed: (challengeId: number) => void;
   getUnviewedChallenges: (challenges: Challenge[]) => Challenge[];
   
-  // Избранное
+  // Selected challenges (chosen but not completed)
+  selectedChallenges: number[];
+  markAsSelected: (challengeId: number) => void;
+  isSelected: (challengeId: number) => boolean;
+  
+  // Favorites
   favorites: Challenge[];
   addToFavorites: (challenge: Challenge) => void;
   removeFromFavorites: (challengeId: number) => void;
   
-  // Действия
+  // Actions
   completeChallenge: () => void;
   skipChallenge: () => void;
   canSkip: () => boolean;
   canTakeNewChallenge: () => boolean;
   resetToNewDay: () => Promise<void>;
   checkAndResetForNewDay: () => Promise<boolean>;
+  resetTodayData: () => Promise<void>;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -69,13 +75,14 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [skipsUsedToday, setSkipsUsedToday] = useState(0);
   const [swipesUsedToday, setSwipesUsedToday] = useState(0);
   const [viewedChallenges, setViewedChallenges] = useState<number[]>([]);
+  const [selectedChallenges, setSelectedChallenges] = useState<number[]>([]);
   const [favorites, setFavorites] = useState<Challenge[]>([]);
   const [challengesTakenToday, setChallengesTakenToday] = useState(0);
 
   const maxSkipsPerDay = isPremium ? 999 : 5;
   const maxSwipesPerDay = isPremium ? 999 : 15;
 
-  // Загружаем данные при запуске
+  // Load data on startup
   useEffect(() => {
     loadAppData();
   }, []);
@@ -86,16 +93,22 @@ export function AppProvider({ children }: { children: ReactNode }) {
       const today = new Date().toDateString();
       let lastCompletedDate = await AsyncStorage.getItem('lastCompletedDate');
       
-      // Если нет lastCompletedDate - устанавливаем сегодняшнюю дату
+      // If no lastCompletedDate - set today's date
       if (!lastCompletedDate) {
         await AsyncStorage.setItem('lastCompletedDate', today);
         lastCompletedDate = today;
       }
 
-      // Загружаем просмотренные карточки
+      // Load viewed challenges
       const viewedData = await AsyncStorage.getItem('viewedChallenges');
       if (viewedData) {
         setViewedChallenges(JSON.parse(viewedData));
+      }
+
+      // Load selected challenges
+      const selectedData = await AsyncStorage.getItem('selectedChallenges');
+      if (selectedData) {
+        setSelectedChallenges(JSON.parse(selectedData));
       }
       
       if (data) {
@@ -105,16 +118,16 @@ export function AppProvider({ children }: { children: ReactNode }) {
         setIsPremium(parsed.isPremium || false);
         setFavorites(parsed.favorites || []);
         
-        // Если новый день - сбрасываем все
+        // If new day - reset everything
         if (lastCompletedDate !== today) {
           setCompletedToday(false);
           setActiveChallenge(null);
           setSkipsUsedToday(0);
           setChallengesTakenToday(0);
-          // Обновляем дату
+          // Update date
           await AsyncStorage.setItem('lastCompletedDate', today);
         } else {
-          // Тот же день - восстанавливаем состояние
+          // Same day - restore state
           setCompletedToday(parsed.completedToday || false);
           setActiveChallenge(parsed.activeChallenge || null);
           setSkipsUsedToday(parsed.skipsUsedToday || 0);
@@ -122,7 +135,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
           setChallengesTakenToday(parsed.challengesTakenToday || 0);
         }
       } else {
-        // Нет данных - устанавливаем по умолчанию
+        // No data - set defaults
         setStreak(0);
         setCompletedCount(0);
         setCompletedToday(false);
@@ -164,14 +177,14 @@ export function AppProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  // Сохраняем данные при изменении
+  // Save data on change
   useEffect(() => {
     saveAppData();
   }, [streak, completedCount, completedToday, isPremium, skipsUsedToday, swipesUsedToday, favorites, activeChallenge, challengesTakenToday]);
 
   const addToFavorites = (challenge: Challenge) => {
     if (favorites.length >= 10 && !isPremium) {
-      Alert.alert('Лимит избранного достигнут', 'Обновитесь до Premium для безлимитного сохранения.');
+      Alert.alert('Favorites limit reached', 'Upgrade to Premium for unlimited favorites.');
       return;
     }
     if (!favorites.find(fav => fav.id === challenge.id)) {
@@ -191,9 +204,14 @@ export function AppProvider({ children }: { children: ReactNode }) {
     setCompletedCount(completedCount + 1);
     setCompletedToday(true);
     setStreak(streak + 1);
+    
+    // Remove from selected and add to viewed
+    setSelectedChallenges(prev => prev.filter(id => id !== activeChallenge.id));
+    markAsViewed(activeChallenge.id);
+    
     setActiveChallenge(null);
     
-    // Сохраняем дату завершения
+    // Save completion date
     await AsyncStorage.setItem('lastCompletedDate', today);
   };
 
@@ -205,7 +223,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     setSkipsUsedToday(skipsUsedToday + 1);
     setActiveChallenge(null);
     
-    // Сохраняем дату пропуска
+    // Save skip date
     await AsyncStorage.setItem('lastSkipDate', today);
   };
 
@@ -214,19 +232,19 @@ export function AppProvider({ children }: { children: ReactNode }) {
   };
 
   const canTakeNewChallenge = () => {
-    // В бесплатной версии - можно взять челлендж если не завершили сегодня И взяли меньше 5
-    // В Premium - всегда можно
+    // In free version - can take challenge if not completed today AND taken less than 5
+    // In Premium - always can
     if (isPremium) return true;
     return !completedToday && challengesTakenToday < 5;
   };
 
   const canSwipe = () => {
-    // Можно свайпать если не превышен лимит свайпов
+    // Can swipe if swipe limit not exceeded
     return swipesUsedToday < maxSwipesPerDay;
   };
 
   const useSwipe = () => {
-    // Используем один свайп
+    // Use one swipe
     setSwipesUsedToday(prev => prev + 1);
   };
 
@@ -234,7 +252,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     setViewedChallenges(prev => {
       if (!prev.includes(challengeId)) {
         const newViewed = [...prev, challengeId];
-        // Сохраняем в AsyncStorage
+        // Save to AsyncStorage
         AsyncStorage.setItem('viewedChallenges', JSON.stringify(newViewed));
         return newViewed;
       }
@@ -246,11 +264,27 @@ export function AppProvider({ children }: { children: ReactNode }) {
     return challenges.filter(challenge => !viewedChallenges.includes(challenge.id));
   };
 
+  const markAsSelected = (challengeId: number) => {
+    setSelectedChallenges(prev => {
+      if (!prev.includes(challengeId)) {
+        const newSelected = [...prev, challengeId];
+        // Save to AsyncStorage
+        AsyncStorage.setItem('selectedChallenges', JSON.stringify(newSelected));
+        return newSelected;
+      }
+      return prev;
+    });
+  };
+
+  const isSelected = (challengeId: number) => {
+    return selectedChallenges.includes(challengeId);
+  };
+
 
   const handleSetActiveChallenge = (challenge: Challenge | null) => {
     setActiveChallenge(challenge);
     if (challenge) {
-      // Увеличиваем счетчик взятых челленджей
+      // Increase taken challenges counter
       setChallengesTakenToday(prev => prev + 1);
     }
   };
@@ -263,7 +297,55 @@ export function AppProvider({ children }: { children: ReactNode }) {
     setSkipsUsedToday(0);
     setSwipesUsedToday(0);
     setChallengesTakenToday(0);
-    // Просмотренные карточки НЕ сбрасываем - они остаются навсегда
+    setSelectedChallenges([]); // Reset selected challenges
+    // Viewed challenges are NOT reset - they remain forever
+  };
+
+  const resetTodayData = async () => {
+    try {
+      console.log('🔄 Resetting today\'s data...');
+      
+      // Clear ALL data from AsyncStorage
+      await AsyncStorage.multiRemove([
+        'lastCompletedDate',
+        'appData',
+        'selectedChallenges',
+        'viewedChallenges'
+      ]);
+      
+      // Reset all today's data in state
+      setCompletedToday(false);
+      setActiveChallenge(null);
+      setSkipsUsedToday(0);
+      setSwipesUsedToday(0);
+      setChallengesTakenToday(0);
+      setSelectedChallenges([]);
+      setViewedChallenges([]);
+      
+      // Update app data in storage
+      const data = {
+        streak,
+        completedCount,
+        completedToday: false,
+        isPremium,
+        skipsUsedToday: 0,
+        swipesUsedToday: 0,
+        favorites,
+        activeChallenge: null,
+        challengesTakenToday: 0,
+      };
+      await AsyncStorage.setItem('appData', JSON.stringify(data));
+      
+      console.log('✅ Today\'s data cleared successfully!');
+      console.log('📊 Current state:', {
+        completedToday,
+        swipesUsedToday: 0,
+        challengesTakenToday: 0,
+        skipsUsedToday: 0
+      });
+    } catch (error) {
+      console.error('❌ Failed to reset today\'s data:', error);
+    }
   };
 
   const checkAndResetForNewDay = async (): Promise<boolean> => {
@@ -271,23 +353,23 @@ export function AppProvider({ children }: { children: ReactNode }) {
       const today = new Date().toDateString();
       const lastCompletedDate = await AsyncStorage.getItem('lastCompletedDate');
       
-      // Если новый день - сбрасываем состояние
+      // If new day - reset state
       if (lastCompletedDate && lastCompletedDate !== today) {
         await resetToNewDay();
-        return true; // Был новый день
+        return true; // Was new day
       }
-      return false; // Тот же день
+      return false; // Same day
     } catch (error) {
-      console.error('Ошибка при проверке нового дня:', error);
+      console.error('Error checking new day:', error);
       return false;
     }
   };
 
-  // Проверяем новый день каждую минуту
+  // Check for new day every minute
   useEffect(() => {
     const interval = setInterval(async () => {
       await checkAndResetForNewDay();
-    }, 60000); // Проверяем каждую минуту
+    }, 60000); // Check every minute
 
     return () => clearInterval(interval);
   }, [checkAndResetForNewDay]);
@@ -310,6 +392,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
       viewedChallenges,
       markAsViewed,
       getUnviewedChallenges,
+      selectedChallenges,
+      markAsSelected,
+      isSelected,
       favorites,
       addToFavorites,
       removeFromFavorites,
@@ -319,6 +404,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       canTakeNewChallenge,
       resetToNewDay,
       checkAndResetForNewDay,
+      resetTodayData,
     }}>
       {children}
     </AppContext.Provider>

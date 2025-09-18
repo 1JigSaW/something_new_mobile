@@ -26,13 +26,13 @@ const AuthScreen: React.FC = () => {
     } catch (error: any) {
       console.error('Google Sign In failed:', error);
       
-      // Если пользователь отменил авторизацию, не показываем ошибку
+      // If user cancelled authorization, don't show error
       if (error.code === 'SIGN_IN_CANCELLED' || error.message?.includes('cancelled')) {
         console.log('User cancelled Google Sign In');
         return;
       }
       
-      // Показываем ошибку только для реальных проблем
+      // Show error only for real problems
       Alert.alert('Error', 'Failed to sign in with Google. Please try again.');
     } finally {
       setIsSigningIn(false);

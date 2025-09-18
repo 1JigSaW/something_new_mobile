@@ -20,6 +20,7 @@ export default function TodayScreen() {
     isPremium,
     resetToNewDay,
     checkAndResetForNewDay,
+    resetTodayData,
     addToFavorites,
     swipesUsedToday,
     maxSwipesPerDay,
@@ -27,6 +28,8 @@ export default function TodayScreen() {
     useSwipe,
     markAsViewed,
     getUnviewedChallenges,
+    markAsSelected,
+    isSelected,
   } = useApp();
 
   // Load random cards for today
@@ -41,8 +44,6 @@ export default function TodayScreen() {
 
   // Swipe state - now managed globally
   
-  // Selected card state
-  const [selectedChallenge, setSelectedChallenge] = useState<Challenge | null>(null);
 
   // Check for new day on every focus
   useFocusEffect(
@@ -60,44 +61,6 @@ export default function TodayScreen() {
 
   // Reset swipe counter on new day - now handled globally
 
-  const handleComplete = () => {
-    Alert.alert(
-      'Congratulations! 🎉',
-      'You completed the challenge! Great work!',
-      [
-        {
-          text: 'Awesome!',
-          onPress: completeChallenge,
-        },
-      ]
-    );
-  };
-
-
-  const handleSkip = () => {
-    if (!canSkip()) {
-      Alert.alert(
-        'Skip limit',
-        isPremium ? 'Something went wrong' : 'You have used all skips for today'
-      );
-      return;
-    }
-
-    Alert.alert(
-      'Skip challenge?',
-      'Are you sure you want to skip this challenge?',
-      [
-        {
-          text: 'Cancel',
-          style: 'cancel',
-        },
-        {
-          text: 'Skip',
-          onPress: skipChallenge,
-        },
-      ]
-    );
-  };
 
   const handleTakeNewChallenge = () => {
     if (!canTakeNewChallenge()) {
@@ -122,12 +85,10 @@ export default function TodayScreen() {
       return;
     }
     
-    // Mark as viewed
-    markAsViewed(challenge.id);
-    
-    console.log('Selected card:', challenge.title);
-    setSelectedChallenge(challenge);
+    // Mark as selected and complete immediately
+    markAsSelected(challenge.id);
     setActiveChallenge(challenge);
+    completeChallenge();
     useSwipe();
   };
 
@@ -214,119 +175,47 @@ export default function TodayScreen() {
     );
   }
 
-  if (selectedChallenge) {
-    return (
-      <View style={styles.container}>
-        <View style={styles.header}>
-          <Text style={styles.title}>Today</Text>
-          <Text style={styles.subtitle}>Your challenge</Text>
-        </View>
-        
-        <View style={styles.selectedChallengeContainer}>
-          <View style={styles.selectedChallengeCard}>
-            <Text style={styles.selectedChallengeTitle}>{selectedChallenge.title}</Text>
-            <Text style={styles.selectedChallengeDescription}>
-              {selectedChallenge.short_description}
-            </Text>
-            
-            <View style={styles.selectedChallengeMeta}>
-              <Text style={styles.selectedChallengeTime}>
-                ⏱️ {selectedChallenge.estimated_duration_min ? 
-                  `${selectedChallenge.estimated_duration_min}m` : 
-                  selectedChallenge.size === 'small' ? '5-30m' : 
-                  selectedChallenge.size === 'medium' ? '30-90m' : '2h+'}
-              </Text>
-              <Text style={styles.selectedChallengeCategory}>• {selectedChallenge.category}</Text>
-            </View>
 
-            {selectedChallenge.is_premium_only && (
-              <View style={styles.selectedPremiumBadge}>
-                <Text style={styles.selectedPremiumText}>PREMIUM</Text>
-              </View>
-            )}
-          </View>
-
-          <View style={styles.selectedActionsContainer}>
-            <TouchableOpacity 
-              style={styles.selectedCompleteButton}
-              onPress={handleComplete}
-            >
-              <Text style={styles.selectedCompleteButtonText}>✅ Complete</Text>
-            </TouchableOpacity>
-          </View>
-
-
-          <TouchableOpacity 
-            style={styles.backToSwipeButton}
-            onPress={() => setSelectedChallenge(null)}
-          >
-            <Text style={styles.backToSwipeButtonText}>← Choose another card</Text>
-          </TouchableOpacity>
-        </View>
-      </View>
-    );
-  }
-
-  if (activeChallenge) {
-    return (
-      <View style={styles.container}>
-        <View style={styles.header}>
-          <Text style={styles.title}>Сегодня</Text>
-          <Text style={styles.subtitle}>Ваш вызов</Text>
-        </View>
-        
-        <View style={styles.challengeContainer}>
-          <View style={styles.challengeCard}>
-            <Text style={styles.challengeTitle}>{activeChallenge.title}</Text>
-            <Text style={styles.challengeDescription}>
-              {activeChallenge.short_description}
-            </Text>
-            
-            <View style={styles.challengeMeta}>
-              <Text style={styles.challengeTime}>
-                ⏱️ {activeChallenge.estimated_duration_min ? 
-                  `${activeChallenge.estimated_duration_min}m` : 
-                  activeChallenge.size === 'small' ? '5-30m' : 
-                  activeChallenge.size === 'medium' ? '30-90m' : '2h+'}
-              </Text>
-              <Text style={styles.challengeCategory}>• {activeChallenge.category}</Text>
-            </View>
-
-            {activeChallenge.is_premium_only && (
-              <View style={styles.premiumBadge}>
-                <Text style={styles.premiumText}>PREMIUM</Text>
-              </View>
-            )}
-          </View>
-
-          <View style={styles.actionsContainer}>
-            <TouchableOpacity 
-              style={styles.completeButton}
-              onPress={handleComplete}
-            >
-              <Text style={styles.completeButtonText}>✅ Завершить</Text>
-            </TouchableOpacity>
-            
-            <TouchableOpacity 
-              style={[styles.skipButton, !canSkip() && styles.skipButtonDisabled]}
-              onPress={handleSkip}
-              disabled={!canSkip()}
-            >
-              <Text style={[styles.skipButtonText, !canSkip() && styles.skipButtonTextDisabled]}>
-                ⏭️ Пропустить
-              </Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-      </View>
-    );
-  }
 
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <Text style={styles.title}>Today</Text>
-        <Text style={styles.subtitle}>Swipe to choose</Text>
+        <View style={styles.headerTop}>
+          <View>
+            <Text style={styles.title}>Today</Text>
+            <Text style={styles.subtitle}>Swipe to choose</Text>
+          </View>
+          <TouchableOpacity 
+            style={styles.resetButton}
+            onPress={async () => {
+              console.log('🔥 HARD RESET STARTING...');
+              Alert.alert(
+                'Reset Today',
+                'Reset all limits and data for today?',
+                [
+                  { text: 'Cancel', style: 'cancel' },
+                  { 
+                    text: 'Reset', 
+                    style: 'destructive',
+                    onPress: async () => {
+                      try {
+                        console.log('🔥 HARD RESET - calling resetTodayData...');
+                        await resetTodayData();
+                        console.log('✅ HARD RESET COMPLETE!');
+                        Alert.alert('SUCCESS!', 'ALL DATA CLEARED!');
+                      } catch (error) {
+                        console.error('HARD RESET ERROR:', error);
+                        Alert.alert('Error', 'Hard reset failed: ' + (error instanceof Error ? error.message : String(error)));
+                      }
+                    }
+                  }
+                ]
+              );
+            }}
+          >
+            <Text style={styles.resetButtonText}>Reset</Text>
+          </TouchableOpacity>
+        </View>
       </View>
 
       <View style={styles.deckContainer}>
@@ -369,6 +258,11 @@ const styles = StyleSheet.create({
     backgroundColor: 'white',
     borderBottomWidth: 1,
     borderBottomColor: '#e0e0e0',
+  },
+  headerTop: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
   },
   title: {
     fontSize: 28,
@@ -416,98 +310,6 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: '600',
     color: '#8B5CF6',
-  },
-  challengeContainer: {
-    flex: 1,
-    padding: 20,
-  },
-  challengeCard: {
-    backgroundColor: 'white',
-    borderRadius: 16,
-    padding: 20,
-    marginBottom: 20,
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
-  },
-  challengeTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: '#333',
-    marginBottom: 12,
-  },
-  challengeDescription: {
-    fontSize: 16,
-    color: '#666',
-    lineHeight: 24,
-    marginBottom: 16,
-  },
-  challengeMeta: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  challengeTime: {
-    fontSize: 14,
-    color: '#8B5CF6',
-    fontWeight: '600',
-    marginRight: 12,
-  },
-  challengeCategory: {
-    fontSize: 14,
-    color: '#999',
-  },
-  premiumBadge: {
-    position: 'absolute',
-    top: 16,
-    right: 16,
-    backgroundColor: '#FFD700',
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 8,
-  },
-  premiumText: {
-    fontSize: 12,
-    fontWeight: 'bold',
-    color: '#8B5CF6',
-  },
-  actionsContainer: {
-    flexDirection: 'row',
-    gap: 12,
-  },
-  completeButton: {
-    flex: 1,
-    backgroundColor: '#4CAF50',
-    paddingVertical: 16,
-    borderRadius: 12,
-    alignItems: 'center',
-  },
-  completeButtonText: {
-    color: 'white',
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  skipButton: {
-    flex: 1,
-    backgroundColor: '#FF9800',
-    paddingVertical: 16,
-    borderRadius: 12,
-    alignItems: 'center',
-  },
-  skipButtonDisabled: {
-    backgroundColor: '#ccc',
-  },
-  skipButtonText: {
-    color: 'white',
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  skipButtonTextDisabled: {
-    color: '#999',
   },
   emptyContainer: {
     flex: 1,
@@ -570,96 +372,18 @@ const styles = StyleSheet.create({
   },
   deckContainer: {
     flex: 1,
-    paddingHorizontal: 10,
-    paddingBottom: 20,
+    paddingHorizontal: 0,
+    paddingBottom: 0,
   },
-  selectedChallengeContainer: {
-    flex: 1,
-    padding: 20,
-    justifyContent: 'center',
-  },
-  selectedChallengeCard: {
-    backgroundColor: '#8B5CF6',
-    borderRadius: 20,
-    padding: 24,
-    marginBottom: 30,
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 8,
-    },
-    shadowOpacity: 0.3,
-    shadowRadius: 10,
-    elevation: 10,
-  },
-  selectedChallengeTitle: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: 'white',
-    marginBottom: 16,
-    textAlign: 'center',
-  },
-  selectedChallengeDescription: {
-    fontSize: 16,
-    color: 'white',
-    opacity: 0.9,
-    textAlign: 'center',
-    lineHeight: 24,
-    marginBottom: 24,
-  },
-  selectedChallengeMeta: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  selectedChallengeTime: {
-    fontSize: 14,
-    color: 'white',
-    marginRight: 12,
-  },
-  selectedChallengeCategory: {
-    fontSize: 14,
-    color: 'white',
-    opacity: 0.8,
-  },
-  selectedPremiumBadge: {
-    position: 'absolute',
-    top: 16,
-    right: 16,
-    backgroundColor: '#FFD700',
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 12,
-  },
-  selectedPremiumText: {
-    fontSize: 12,
-    fontWeight: 'bold',
-    color: '#8B5CF6',
-  },
-  selectedActionsContainer: {
-    marginBottom: 16,
-  },
-  selectedCompleteButton: {
-    backgroundColor: '#4CAF50',
-    paddingVertical: 16,
-    borderRadius: 12,
-    alignItems: 'center',
-  },
-  selectedCompleteButtonText: {
-    color: 'white',
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  backToSwipeButton: {
-    backgroundColor: '#f0f0f0',
-    paddingVertical: 12,
-    paddingHorizontal: 20,
+  resetButton: {
+    backgroundColor: '#FF6B6B',
+    paddingHorizontal: 16,
+    paddingVertical: 8,
     borderRadius: 8,
-    alignItems: 'center',
   },
-  backToSwipeButtonText: {
-    color: '#666',
-    fontSize: 16,
-    fontWeight: '500',
+  resetButtonText: {
+    color: 'white',
+    fontSize: 14,
+    fontWeight: '600',
   },
 });

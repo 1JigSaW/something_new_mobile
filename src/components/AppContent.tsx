@@ -12,7 +12,7 @@ export function AppContent() {
     return (
       <SafeAreaProvider>
         <SafeAreaView style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-          {/* Можно добавить лоадер здесь */}
+          {/* Can add loader here */}
         </SafeAreaView>
       </SafeAreaProvider>
     );

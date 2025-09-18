@@ -24,7 +24,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const currentUser = await authService.getCurrentUser();
       console.log('Current user check result:', currentUser);
       
-      // Временная заглушка для тестирования - создаем тестового пользователя
+      // Temporary stub for testing - create test user
       if (!currentUser) {
         const testUser = {
           id: 'test-user-123',
@@ -39,7 +39,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
     } catch (error) {
       console.error('Error checking current user:', error);
-      // В случае ошибки тоже создаем тестового пользователя
+      // In case of error also create test user
       const testUser = {
         id: 'test-user-123',
         email: 'test@example.com',
@@ -77,17 +77,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     } catch (error: any) {
       console.error('Auth error:', error);
       
-      // Если пользователь отменил авторизацию, проверяем текущее состояние
+      // If user cancelled authorization, check current state
       if (error.code === 'SIGN_IN_CANCELLED' || error.message?.includes('cancelled')) {
         console.log('User cancelled authentication');
         
-        // Если пользователь уже авторизован, оставляем его авторизованным
+        // If user is already authorized, keep them authorized
         if (user) {
           console.log('User is already authenticated, keeping current session');
           return;
         }
         
-        // Если пользователь не авторизован, выбрасываем ошибку
+        // If user is not authorized, throw error
         throw new Error('Authentication was cancelled');
       }
       

@@ -26,12 +26,15 @@ export default function CategoriesScreen() {
     addToFavorites,
     canTakeNewChallenge,
     isPremium,
+    completedToday,
     swipesUsedToday,
     maxSwipesPerDay,
     canSwipe,
     useSwipe,
     markAsViewed,
     getUnviewedChallenges,
+    markAsSelected,
+    isSelected,
   } = useApp();
 
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
@@ -89,7 +92,8 @@ export default function CategoriesScreen() {
     filteredChallenges = filteredChallenges.filter(challenge => challenge.is_premium_only);
   }
 
-  // Filter out viewed challenges
+  // Don't filter out selected challenges - show them with a marker
+  // Only filter out viewed (completed/skipped) challenges
   filteredChallenges = getUnviewedChallenges(filteredChallenges);
 
   const handleCategorySelect = (category: string) => {
@@ -190,6 +194,26 @@ export default function CategoriesScreen() {
     setShowPremiumOnly(false);
   };
 
+  // Check if daily limit is reached
+  if (completedToday) {
+    return (
+      <View style={styles.container}>
+        <View style={styles.header}>
+          <Text style={styles.title}>Categories</Text>
+          <Text style={styles.subtitle}>Daily limit reached</Text>
+        </View>
+        <View style={styles.limitReachedContainer}>
+          <Text style={styles.limitReachedText}>
+            🎉 You've completed your daily challenge!
+          </Text>
+          <Text style={styles.limitReachedSubtext}>
+            Come back tomorrow for new ideas
+          </Text>
+        </View>
+      </View>
+    );
+  }
+
   if (loading) {
     return (
       <View style={styles.container}>
@@ -249,6 +273,7 @@ export default function CategoriesScreen() {
                swipeCount={swipesUsedToday}
                maxSwipes={maxSwipesPerDay}
                isPremium={isPremium}
+               isSelected={isSelected}
                onUpgradePremium={() => {
                  Alert.alert(
                    'Premium',
@@ -289,6 +314,7 @@ export default function CategoriesScreen() {
                swipeCount={swipesUsedToday}
                maxSwipes={maxSwipesPerDay}
                isPremium={isPremium}
+               isSelected={isSelected}
                onUpgradePremium={() => {
                  Alert.alert(
                    'Premium',
@@ -480,6 +506,24 @@ const styles = StyleSheet.create({
   loadingText: {
     fontSize: 18,
     color: '#666',
+  },
+  limitReachedContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 40,
+  },
+  limitReachedText: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#4CAF50',
+    textAlign: 'center',
+    marginBottom: 16,
+  },
+  limitReachedSubtext: {
+    fontSize: 16,
+    color: '#666',
+    textAlign: 'center',
   },
   errorContainer: {
     flex: 1,

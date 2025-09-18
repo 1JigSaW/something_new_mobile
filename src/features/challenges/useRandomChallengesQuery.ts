@@ -48,11 +48,15 @@ export function useRandomChallengesQuery({
         return data;
       } catch (error) {
         console.error('Random Challenges API Error:', error);
-        console.error('Random Challenges API Error details:', error.response?.data);
+        if ((error as any).response?.data) {
+          console.error('Random Challenges API Error details:', (error as any).response.data);
+        } else {
+          console.error('Random Challenges API Error details: No response data available');
+        }
         throw error;
       }
     },
     staleTime: 5 * 60 * 1000, // 5 minutes
-    refetchOnWindowFocus: false, // Не обновлять при фокусе окна
+    refetchOnWindowFocus: false, // Don't refetch on window focus
   });
 }

@@ -2,6 +2,9 @@ import React, { useEffect, useState } from 'react';
 import { View, ScrollView, Text, StyleSheet, TouchableOpacity, Alert } from 'react-native';
 import PageHeader from '../ui/layout/PageHeader';
 import Section from '../ui/layout/Section';
+import EmptyState from '../ui/molecules/EmptyState';
+import ErrorState from '../ui/molecules/ErrorState';
+import ResetButton from '../ui/atoms/ResetButton';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useApp } from '../context/AppContext';
@@ -109,14 +112,8 @@ export default function TodayScreen() {
   if (loadingChallenges) {
     return (
       <View style={styles.container}>
-        <View style={styles.header}>
-          <Text style={styles.title}>Today</Text>
-          <Text style={styles.subtitle}>Loading your challenge...</Text>
-        </View>
-        
-        <View style={styles.loadingContainer}>
-          <Text style={styles.loadingText}>Loading cards...</Text>
-        </View>
+        <PageHeader title="Today" subtitle="Loading your challenge..." />
+        <EmptyState title="Loading cards..." />
       </View>
     );
   }
@@ -124,25 +121,8 @@ export default function TodayScreen() {
   if (challengesError) {
     return (
       <View style={styles.container}>
-        <View style={styles.header}>
-          <Text style={styles.title}>Today</Text>
-          <Text style={styles.subtitle}>Loading error</Text>
-        </View>
-        
-        <View style={styles.errorContainer}>
-          <Text style={styles.errorText}>
-            Error loading cards: {challengesError instanceof Error ? challengesError.message : 'Unknown error'}
-          </Text>
-          <TouchableOpacity 
-            style={styles.retryButton} 
-            onPress={() => {
-              
-              console.log('Reloading app...');
-            }}
-          >
-            <Text style={styles.retryButtonText}>Try Again</Text>
-          </TouchableOpacity>
-        </View>
+        <PageHeader title="Today" subtitle="Loading error" />
+        <ErrorState message={`Error loading cards: ${challengesError instanceof Error ? challengesError.message : 'Unknown error'}`} />
       </View>
     );
   }
@@ -177,33 +157,23 @@ export default function TodayScreen() {
         title="Today"
         subtitle="Swipe to choose"
         right={(
-          <TouchableOpacity 
-            style={styles.resetButton}
-            onPress={async () => {
-              Alert.alert(
-                'Reset Today',
-                'Reset all limits and data for today?',
-                [
-                  { text: 'Cancel', style: 'cancel' },
-                  { 
-                    text: 'Reset', 
-                    style: 'destructive',
-                    onPress: async () => {
-                      try {
-                        await resetTodayData();
-                        Alert.alert('SUCCESS!', 'ALL DATA CLEARED!');
-                      } catch (error) {
-                        Alert.alert('Error', 'Hard reset failed: ' + (error instanceof Error ? error.message : String(error)));
-                      }
-                    }
+          <ResetButton onPress={async () => {
+            Alert.alert(
+              'Reset Today',
+              'Reset all limits and data for today?',
+              [
+                { text: 'Cancel', style: 'cancel' },
+                { text: 'Reset', style: 'destructive', onPress: async () => {
+                  try {
+                    await resetTodayData();
+                    Alert.alert('SUCCESS!', 'ALL DATA CLEARED!');
+                  } catch (error) {
+                    Alert.alert('Error', 'Hard reset failed: ' + (error instanceof Error ? error.message : String(error)));
                   }
-                ]
-              );
-            }}
-          >
-            <Text style={styles.resetIcon}>🔄</Text>
-            <Text style={styles.resetButtonText}>Reset</Text>
-          </TouchableOpacity>
+                }}
+              ]
+            );
+          }} />
         )}
       />
 
@@ -265,29 +235,7 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: colors.background,
   },
-  header: {
-    paddingHorizontal: 20,
-    paddingTop: 20,
-    paddingBottom: 20,
-    backgroundColor: colors.surface,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.border,
-  },
-  headerTop: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  title: {
-    fontSize: 28,
-    fontWeight: 'bold',
-    color: colors.textPrimary,
-    marginBottom: 4,
-  },
-  subtitle: {
-    fontSize: 16,
-    color: colors.textSecondary,
-  },
+  
   loadingContainer: {
     flex: 1,
     justifyContent: 'center',
@@ -360,30 +308,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
   },
-  errorContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 40,
-  },
-  errorText: {
-    fontSize: 16,
-    color: colors.error,
-    textAlign: 'center',
-    marginBottom: 20,
-    lineHeight: 24,
-  },
-  retryButton: {
-    backgroundColor: colors.primary,
-    paddingHorizontal: 24,
-    paddingVertical: 12,
-    borderRadius: 8,
-  },
-  retryButtonText: {
-    color: 'white',
-    fontSize: 16,
-    fontWeight: '600',
-  },
+  
   deckContainer: {
     flex: 1,
     paddingHorizontal: 0,

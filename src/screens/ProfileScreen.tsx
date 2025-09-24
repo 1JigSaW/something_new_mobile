@@ -5,8 +5,10 @@ import { useAuth } from '../context/AuthContext';
 import { useProgressStats } from '../features/progress/useProgressStats';
 import PageHeader from '../ui/layout/PageHeader';
 import Section from '../ui/layout/Section';
+import ResetButton from '../ui/atoms/ResetButton';
 import { colors } from '../styles/colors';
 import WeeklyBarChart from '../ui/molecules/WeeklyBarChart';
+import CalendarGrid from '../ui/molecules/CalendarGrid';
 import StatCard from '../ui/molecules/StatCard';
 
 const { width } = Dimensions.get('window');
@@ -151,38 +153,24 @@ export default function ProfileScreen() {
         subtitle="Your progress and statistics"
         right={(
           <View style={styles.headerButtons}>
-            <TouchableOpacity 
-              style={styles.resetButton}
-              onPress={async () => {
-                Alert.alert(
-                  'Reset All Data',
-                  'Reset all progress and data? This cannot be undone.',
-                  [
-                    { text: 'Cancel', style: 'cancel' },
-                    { 
-                      text: 'Reset', 
-                      style: 'destructive',
-                      onPress: async () => {
-                        try {
-                          await resetToNewDay();
-                          Alert.alert('Success!', 'All data has been reset.');
-                        } catch (error) {
-                          Alert.alert('Error', 'Reset failed: ' + (error instanceof Error ? error.message : String(error)));
-                        }
-                      }
+            <ResetButton onPress={async () => {
+              Alert.alert(
+                'Reset All Data',
+                'Reset all progress and data? This cannot be undone.',
+                [
+                  { text: 'Cancel', style: 'cancel' },
+                  { text: 'Reset', style: 'destructive', onPress: async () => {
+                    try {
+                      await resetToNewDay();
+                      Alert.alert('Success!', 'All data has been reset.');
+                    } catch (error) {
+                      Alert.alert('Error', 'Reset failed: ' + (error instanceof Error ? error.message : String(error)));
                     }
-                  ]
-                );
-              }}
-            >
-              <Text style={styles.resetIcon}>🔄</Text>
-              <Text style={styles.resetButtonText}>Reset</Text>
-            </TouchableOpacity>
-            
-            <TouchableOpacity 
-              style={styles.logoutButton}
-              onPress={handleLogout}
-            >
+                  }}
+                ]
+              );
+            }} />
+            <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
               <Text style={styles.logoutButtonText}>Logout</Text>
             </TouchableOpacity>
           </View>
@@ -202,41 +190,7 @@ export default function ProfileScreen() {
         </Section>
 
         <Section title="Activity Calendar" style={styles.lastSection}>
-          <View style={styles.calendarContainer}>
-            <View style={styles.calendarHeader}>
-              <Text style={styles.monthYear}>
-                {new Date().toLocaleDateString('en', { month: 'long', year: 'numeric' })}
-              </Text>
-            </View>
-            
-            <View style={styles.calendarGrid}>
-              {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map((day, index) => (
-                <Text key={index} style={styles.weekdayLabel}>{day}</Text>
-              ))}
-              
-              {calendarData.map((day, index) => (
-                <View 
-                  key={index} 
-                  style={[
-                    styles.calendarDay,
-                    day.isToday && styles.today,
-                    day.completed && styles.completedDay,
-                    !day.isCurrentMonth && styles.otherMonth
-                  ]}
-                >
-                  <Text style={[
-                    styles.dayText,
-                    day.isToday && styles.todayText,
-                    day.completed && styles.completedText,
-                    !day.isCurrentMonth && styles.otherMonthText
-                  ]}>
-                    {day.day}
-                  </Text>
-                </View>
-              ))}
-            </View>
-            
-          </View>
+          <CalendarGrid items={calendarData} />
         </Section>
 
       </ScrollView>

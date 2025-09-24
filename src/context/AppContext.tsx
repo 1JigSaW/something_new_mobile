@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { Alert } from 'react-native';
+import { http } from '../api';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 interface Challenge {
@@ -16,45 +17,36 @@ interface Challenge {
 }
 
 interface AppContextType {
-  // Current active challenge
   activeChallenge: Challenge | null;
   setActiveChallenge: (challenge: Challenge | null) => void;
-  
-  // Statistics
+
   streak: number;
   completedCount: number;
   completedToday: boolean;
-  
-  // Premium status
+
   isPremium: boolean;
   setIsPremium: (premium: boolean) => void;
-  
-  // Skips
+
   skipsUsedToday: number;
   maxSkipsPerDay: number;
-  
-  // Swipes (global logic)
+
   swipesUsedToday: number;
   maxSwipesPerDay: number;
   canSwipe: () => boolean;
   useSwipe: () => void;
-  
-  // Viewed challenges
+
   viewedChallenges: number[];
   markAsViewed: (challengeId: number) => void;
   getUnviewedChallenges: (challenges: Challenge[]) => Challenge[];
-  
-  // Selected challenges (chosen but not completed)
+
   selectedChallenges: number[];
   markAsSelected: (challengeId: number) => void;
   isSelected: (challengeId: number) => boolean;
-  
-  // Favorites
+
   favorites: Challenge[];
   addToFavorites: (challenge: Challenge) => void;
   removeFromFavorites: (challengeId: number) => void;
-  
-  // Actions
+
   completeChallenge: () => void;
   skipChallenge: () => void;
   canSkip: () => boolean;
@@ -82,7 +74,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const maxSkipsPerDay = isPremium ? 999 : 5;
   const maxSwipesPerDay = isPremium ? 999 : 15;
 
-  // Load data on startup
   useEffect(() => {
     loadAppData();
   }, []);
@@ -91,21 +82,18 @@ export function AppProvider({ children }: { children: ReactNode }) {
     try {
       const data = await AsyncStorage.getItem('appData');
       const today = new Date().toDateString();
-      let lastCompletedDate = await AsyncStorage.getItem('lastCompletedDate');
+      let lastDayDate = await AsyncStorage.getItem('lastDayDate');
       
-      // If no lastCompletedDate - set today's date
-      if (!lastCompletedDate) {
-        await AsyncStorage.setItem('lastCompletedDate', today);
-        lastCompletedDate = today;
+      if (!lastDayDate) {
+        await AsyncStorage.setItem('lastDayDate', today);
+        lastDayDate = today;
       }
 
-      // Load viewed challenges
       const viewedData = await AsyncStorage.getItem('viewedChallenges');
       if (viewedData) {
         setViewedChallenges(JSON.parse(viewedData));
       }
 
-      // Load selected challenges
       const selectedData = await AsyncStorage.getItem('selectedChallenges');
       if (selectedData) {
         setSelectedChallenges(JSON.parse(selectedData));
@@ -118,16 +106,14 @@ export function AppProvider({ children }: { children: ReactNode }) {
         setIsPremium(parsed.isPremium || false);
         setFavorites(parsed.favorites || []);
         
-        // If new day - reset everything
-        if (lastCompletedDate !== today) {
+        if (lastDayDate !== today) {
           setCompletedToday(false);
           setActiveChallenge(null);
           setSkipsUsedToday(0);
+          setSwipesUsedToday(0);
           setChallengesTakenToday(0);
-          // Update date
-          await AsyncStorage.setItem('lastCompletedDate', today);
+          await AsyncStorage.setItem('lastDayDate', today);
         } else {
-          // Same day - restore state
           setCompletedToday(parsed.completedToday || false);
           setActiveChallenge(parsed.activeChallenge || null);
           setSkipsUsedToday(parsed.skipsUsedToday || 0);
@@ -135,7 +121,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
           setChallengesTakenToday(parsed.challengesTakenToday || 0);
         }
       } else {
-        // No data - set defaults
         setStreak(0);
         setCompletedCount(0);
         setCompletedToday(false);
@@ -177,7 +162,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  // Save data on change
   useEffect(() => {
     saveAppData();
   }, [streak, completedCount, completedToday, isPremium, skipsUsedToday, swipesUsedToday, favorites, activeChallenge, challengesTakenToday]);
@@ -198,21 +182,29 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   const completeChallenge = async () => {
     if (!activeChallenge) return;
-    
-    const today = new Date().toDateString();
-    
-    setCompletedCount(completedCount + 1);
-    setCompletedToday(true);
-    setStreak(streak + 1);
-    
-    // Remove from selected and add to viewed
-    setSelectedChallenges(prev => prev.filter(id => id !== activeChallenge.id));
-    markAsViewed(activeChallenge.id);
-    
-    setActiveChallenge(null);
-    
-    // Save completion date
-    await AsyncStorage.setItem('lastCompletedDate', today);
+    try {
+      await http.post(`/api/challenges/${activeChallenge.id}/complete`);
+
+      const { data } = await http.get('/api/profile/stats');
+
+      setCompletedToday(true);
+      setStreak(typeof data?.streak === 'number' ? data.streak : streak + 1);
+      setCompletedCount(typeof data?.total_completed === 'number' ? data.total_completed : completedCount + 1);
+
+      setSelectedChallenges(prev => prev.filter(id => id !== activeChallenge.id));
+      markAsViewed(activeChallenge.id);
+      setActiveChallenge(null);
+
+      const today = new Date().toDateString();
+      await AsyncStorage.setItem('lastCompletedDate', today);
+    } catch (error: any) {
+      if (error?.response?.status === 429) {
+        Alert.alert('Limit reached', 'You can complete only one challenge per day. Come back tomorrow!');
+      } else {
+        Alert.alert('Error', 'Failed to save completion. Please try again.');
+        console.error('completeChallenge error:', error);
+      }
+    }
   };
 
   const skipChallenge = async () => {
@@ -223,7 +215,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
     setSkipsUsedToday(skipsUsedToday + 1);
     setActiveChallenge(null);
     
-    // Save skip date
     await AsyncStorage.setItem('lastSkipDate', today);
   };
 
@@ -232,19 +223,15 @@ export function AppProvider({ children }: { children: ReactNode }) {
   };
 
   const canTakeNewChallenge = () => {
-    // In free version - can take challenge if not completed today AND taken less than 5
-    // In Premium - always can
     if (isPremium) return true;
     return !completedToday && challengesTakenToday < 5;
   };
 
   const canSwipe = () => {
-    // Can swipe if swipe limit not exceeded
     return swipesUsedToday < maxSwipesPerDay;
   };
 
   const useSwipe = () => {
-    // Use one swipe
     setSwipesUsedToday(prev => prev + 1);
   };
 
@@ -252,7 +239,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
     setViewedChallenges(prev => {
       if (!prev.includes(challengeId)) {
         const newViewed = [...prev, challengeId];
-        // Save to AsyncStorage
         AsyncStorage.setItem('viewedChallenges', JSON.stringify(newViewed));
         return newViewed;
       }
@@ -268,7 +254,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
     setSelectedChallenges(prev => {
       if (!prev.includes(challengeId)) {
         const newSelected = [...prev, challengeId];
-        // Save to AsyncStorage
         AsyncStorage.setItem('selectedChallenges', JSON.stringify(newSelected));
         return newSelected;
       }
@@ -284,36 +269,32 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const handleSetActiveChallenge = (challenge: Challenge | null) => {
     setActiveChallenge(challenge);
     if (challenge) {
-      // Increase taken challenges counter
       setChallengesTakenToday(prev => prev + 1);
     }
   };
 
   const resetToNewDay = async () => {
     const today = new Date().toDateString();
-    await AsyncStorage.setItem('lastCompletedDate', today);
+    await AsyncStorage.setItem('lastDayDate', today);
     setCompletedToday(false);
     setActiveChallenge(null);
     setSkipsUsedToday(0);
     setSwipesUsedToday(0);
     setChallengesTakenToday(0);
-    setSelectedChallenges([]); // Reset selected challenges
-    // Viewed challenges are NOT reset - they remain forever
+    setSelectedChallenges([]);
   };
 
   const resetTodayData = async () => {
     try {
       console.log('🔄 Resetting today\'s data...');
       
-      // Clear ALL data from AsyncStorage
       await AsyncStorage.multiRemove([
-        'lastCompletedDate',
+        'lastDayDate',
         'appData',
         'selectedChallenges',
         'viewedChallenges'
       ]);
       
-      // Reset all today's data in state
       setCompletedToday(false);
       setActiveChallenge(null);
       setSkipsUsedToday(0);
@@ -322,7 +303,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
       setSelectedChallenges([]);
       setViewedChallenges([]);
       
-      // Update app data in storage
       const data = {
         streak,
         completedCount,
@@ -351,25 +331,23 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const checkAndResetForNewDay = async (): Promise<boolean> => {
     try {
       const today = new Date().toDateString();
-      const lastCompletedDate = await AsyncStorage.getItem('lastCompletedDate');
+      const lastDayDate = await AsyncStorage.getItem('lastDayDate');
       
-      // If new day - reset state
-      if (lastCompletedDate && lastCompletedDate !== today) {
+      if (lastDayDate && lastDayDate !== today) {
         await resetToNewDay();
-        return true; // Was new day
+        return true;
       }
-      return false; // Same day
+      return false;
     } catch (error) {
       console.error('Error checking new day:', error);
       return false;
     }
   };
 
-  // Check for new day every minute
   useEffect(() => {
     const interval = setInterval(async () => {
       await checkAndResetForNewDay();
-    }, 60000); // Check every minute
+    }, 60000);
 
     return () => clearInterval(interval);
   }, [checkAndResetForNewDay]);

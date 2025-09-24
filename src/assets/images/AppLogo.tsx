@@ -1,5 +1,6 @@
 import React from 'react';
 import { View, Image, ImageStyle } from 'react-native';
+import { colors } from '../../styles/colors';
 
 interface AppLogoProps {
   size?: number;
@@ -9,7 +10,7 @@ interface AppLogoProps {
 
 const AppLogo: React.FC<AppLogoProps> = ({ 
   size = 24, 
-  color = '#8b5cf6',
+  color = colors.primary,
   backgroundColor = 'transparent'
 }) => {
   const imageStyle: ImageStyle = {
@@ -23,7 +24,7 @@ const AppLogo: React.FC<AppLogoProps> = ({
       width: size, 
       height: size, 
       backgroundColor,
-      borderRadius: size / 8, // Небольшое скругление
+      borderRadius: size / 8,
       overflow: 'hidden',
     }}>
       <Image

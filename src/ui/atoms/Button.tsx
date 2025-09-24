@@ -5,7 +5,7 @@ import { colors, spacing, borderRadius, typography } from '../../styles';
 type ButtonProps = {
   title: string,
   onPress: () => void,
-  variant?: 'primary' | 'secondary' | 'ghost',
+  variant?: 'primary' | 'secondary' | 'success' | 'ghost',
   disabled?: boolean,
   style?: any,
 };
@@ -31,6 +31,8 @@ export default function Button({
         return { ...baseStyle, backgroundColor: colors.primary };
       case 'secondary':
         return { ...baseStyle, backgroundColor: colors.surfaceSecondary };
+      case 'success':
+        return { ...baseStyle, backgroundColor: colors.success };
       case 'ghost':
         return { ...baseStyle, backgroundColor: 'transparent' };
       default:
@@ -48,6 +50,8 @@ export default function Button({
         return { ...baseStyle, color: 'white' };
       case 'secondary':
         return { ...baseStyle, color: colors.textPrimary };
+      case 'success':
+        return { ...baseStyle, color: 'white' };
       case 'ghost':
         return { ...baseStyle, color: colors.primary };
       default:

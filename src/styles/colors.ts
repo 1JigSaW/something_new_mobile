@@ -1,50 +1,44 @@
 export const colors = {
-  // Primary colors (purple palette)
-  primary: '#8b5cf6',
-  primaryLight: '#a78bfa',
-  primaryDark: '#7c3aed',
-  
-  // Secondary colors (white/light gray)
+  primary: '#6366f1',
+  primaryLight: '#818cf8',
+  primaryDark: '#4f46e5',
   secondary: '#ffffff',
-  secondaryLight: '#f8f9fa',
-  secondaryDark: '#e9ecef',
-  
-  // Accent colors (complementary colors)
+  secondaryLight: '#f8fafc',
+  secondaryDark: '#f1f5f9',
   accent: '#f59e0b',
   accentLight: '#fbbf24',
   accentDark: '#d97706',
-  
-  // Neutral colors
   background: '#f8fafc',
   surface: '#ffffff',
   surfaceSecondary: '#f1f5f9',
-  
-  // Text colors
-  textPrimary: '#1f2937',
-  textSecondary: '#6b7280',
-  textMuted: '#9ca3af',
-  
-  // Status colors
-  success: '#10b981',
-  warning: '#f59e0b',
-  error: '#ef4444',
-  info: '#3b82f6',
-  
-  // Border colors
-  border: '#e5e7eb',
-  borderLight: '#f3f4f6',
-  
-  // Shadow colors
-  shadow: 'rgba(0, 0, 0, 0.1)',
-  shadowLight: 'rgba(0, 0, 0, 0.05)',
-  
-  // Gray colors
-  gray200: '#e5e7eb',
-  gray300: '#d1d5db',
+  textPrimary: '#0f172a',
+  textSecondary: '#475569',
+  textMuted: '#94a3b8',
+  success: '#059669',
+  warning: '#d97706',
+  error: '#dc2626',
+  info: '#0284c7',
+  border: '#e2e8f0',
+  borderLight: '#f1f5f9',
+  shadow: 'rgba(15, 23, 42, 0.08)',
+  shadowLight: 'rgba(15, 23, 42, 0.04)',
+  overlayDarker: 'rgba(0, 0, 0, 0.7)',
+  overlayDark: 'rgba(0, 0, 0, 0.5)',
+  overlayLight: 'rgba(255, 255, 255, 0.95)',
+  surfaceTint15: 'rgba(255, 255, 255, 0.15)',
+  surfaceTint20: 'rgba(255, 255, 255, 0.2)',
+  surfaceTint30: 'rgba(255, 255, 255, 0.3)',
+  gray200: '#e2e8f0',
+  gray300: '#cbd5e1',
+  categorySmall: '#059669',
+  categoryMedium: '#d97706',
+  categoryLarge: '#dc2626',
+  categoryQuick: '#0284c7',
+  categoryLong: '#7c3aed',
 } as const;
 
 export const timeSlotColors = {
-  small: colors.secondary,
-  medium: colors.accent,
-  large: colors.primary,
+  small: colors.categorySmall,
+  medium: colors.categoryMedium,
+  large: colors.categoryLarge,
 } as const;

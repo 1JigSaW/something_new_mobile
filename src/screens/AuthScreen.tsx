@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, StyleSheet, Alert, KeyboardAvoidingView, Platform, ScrollView, Text as RNText } from 'react-native';
+import { View, StyleSheet, Alert, KeyboardAvoidingView, Platform, ScrollView, Text as RNText, TouchableOpacity } from 'react-native';
 import { useAuth } from '../context/AuthContext';
 import Screen from '../ui/Screen';
 import Container from '../ui/layout/Container';
@@ -7,6 +7,7 @@ import Button from '../ui/atoms/Button';
 import Text from '../ui/atoms/Text';
 import Loader from '../ui/Loader';
 import AppLogo from '../assets/images/AppLogo';
+import { GoogleIcon, AppleIcon } from '../assets/icons';
 import {
   colors,
   spacing,
@@ -26,13 +27,12 @@ const AuthScreen: React.FC = () => {
     } catch (error: any) {
       console.error('Google Sign In failed:', error);
       
-      // If user cancelled authorization, don't show error
       if (error.code === 'SIGN_IN_CANCELLED' || error.message?.includes('cancelled')) {
         console.log('User cancelled Google Sign In');
+        setIsSigningIn(false);
         return;
       }
       
-      // Show error only for real problems
       Alert.alert('Error', 'Failed to sign in with Google. Please try again.');
     } finally {
       setIsSigningIn(false);
@@ -43,8 +43,15 @@ const AuthScreen: React.FC = () => {
     try {
       setIsSigningIn(true);
       await signIn('apple');
-    } catch (error) {
+    } catch (error: any) {
       console.error('Apple Sign In failed:', error);
+      
+      if (error.code === 'SIGN_IN_CANCELLED' || error.message?.includes('cancelled')) {
+        console.log('User cancelled Apple Sign In');
+        setIsSigningIn(false);
+        return;
+      }
+      
       Alert.alert('Error', 'Failed to sign in with Apple');
     } finally {
       setIsSigningIn(false);
@@ -78,13 +85,13 @@ const AuthScreen: React.FC = () => {
         >
           <Container>
             <View style={styles.content}>
-              {/* Hero Section with Gradient Background */}
+              {/* Hero Section */}
               <View style={styles.heroSection}>
                 <View style={styles.logoContainer}>
                   <View style={styles.logo}>
                     <AppLogo 
                       size={48} 
-                      color="#ffffff" 
+                      color={colors.surface} 
                       backgroundColor="transparent"
                     />
                   </View>
@@ -92,18 +99,28 @@ const AuthScreen: React.FC = () => {
 
                 <View style={styles.titleContainer}>
                   <RNText style={styles.title}>Something New</RNText>
+                  <RNText style={styles.subtitle}>Discover new challenges every day</RNText>
                 </View>
               </View>
 
-              {/* Sign In Section */}
-              <View style={styles.signInSection}>
+              {/* Auth Card */}
+              <View style={styles.authCard}>
+                <View style={styles.cardHeader}>
+                  <RNText style={styles.cardTitle}>Welcome!</RNText>
+                  <RNText style={styles.cardSubtitle}>Sign in to continue your journey</RNText>
+                </View>
+
                 <View style={styles.buttonContainer}>
-                <Button
-                  title="Google"
-                  onPress={handleGoogleSignIn}
-                  style={styles.googleButton}
-                  disabled={isSigningIn}
-                />
+                  <TouchableOpacity
+                    style={styles.googleButton}
+                    onPress={handleGoogleSignIn}
+                    disabled={isSigningIn}
+                  >
+                    <View style={styles.iconContainer}>
+                      <GoogleIcon size={20} color={colors.info} />
+                    </View>
+                    <RNText style={styles.buttonText}>Continue with Google</RNText>
+                  </TouchableOpacity>
                 </View>
 
                 <View style={styles.dividerContainer}>
@@ -113,14 +130,17 @@ const AuthScreen: React.FC = () => {
                 </View>
 
                 <View style={styles.buttonContainer}>
-                <Button
-                  title="Apple"
-                  onPress={handleAppleSignIn}
-                  style={styles.appleButton}
-                  disabled={isSigningIn}
-                />
+                  <TouchableOpacity
+                    style={styles.appleButton}
+                    onPress={handleAppleSignIn}
+                    disabled={isSigningIn}
+                  >
+                    <View style={styles.iconContainer}>
+                      <AppleIcon size={20} color={colors.textPrimary} />
+                    </View>
+                    <RNText style={styles.buttonText}>Continue with Apple</RNText>
+                  </TouchableOpacity>
                 </View>
-
               </View>
             </View>
           </Container>
@@ -140,7 +160,7 @@ const styles = StyleSheet.create({
   content: {
     flex: 1,
     paddingHorizontal: spacing.lg,
-    paddingTop: 80,
+    paddingTop: 60,
     paddingBottom: spacing['4xl'],
     justifyContent: 'center',
   },
@@ -155,7 +175,36 @@ const styles = StyleSheet.create({
   },
   heroSection: {
     alignItems: 'center',
-    marginBottom: spacing['4xl'],
+    marginBottom: spacing['3xl'],
+  },
+  authCard: {
+    backgroundColor: colors.primary,
+    borderRadius: 20,
+    padding: spacing['2xl'],
+    shadowColor: colors.shadow,
+    shadowOffset: {
+      width: 0,
+      height: 8,
+    },
+    shadowOpacity: 0.3,
+    shadowRadius: 10,
+    elevation: 10,
+  },
+  cardHeader: {
+    alignItems: 'center',
+    marginBottom: spacing['2xl'],
+  },
+  cardTitle: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: 'white',
+    marginBottom: spacing.sm,
+  },
+  cardSubtitle: {
+    fontSize: 16,
+    color: 'white',
+    opacity: 0.9,
+    textAlign: 'center',
   },
   logoContainer: {
     alignItems: 'center',
@@ -220,26 +269,50 @@ const styles = StyleSheet.create({
     marginBottom: spacing.lg,
   },
   googleButton: {
-    backgroundColor: colors.primary,
-    borderRadius: borderRadius.xl,
-    paddingVertical: spacing.xl,
-    paddingHorizontal: spacing.xl,
+    backgroundColor: colors.surface,
+    borderRadius: 12,
+    paddingVertical: spacing.lg,
+    paddingHorizontal: spacing.lg,
     minHeight: 56,
+    flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
     width: '100%',
-    ...shadows.md,
+    shadowColor: colors.shadow,
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
   },
   appleButton: {
-    backgroundColor: colors.primary,
-    borderRadius: borderRadius.xl,
-    paddingVertical: spacing.xl,
-    paddingHorizontal: spacing.xl,
+    backgroundColor: colors.surface,
+    borderRadius: 12,
+    paddingVertical: spacing.lg,
+    paddingHorizontal: spacing.lg,
     minHeight: 56,
+    flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
     width: '100%',
-    ...shadows.md,
+    shadowColor: colors.shadow,
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  buttonText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: colors.textPrimary,
+  },
+  iconContainer: {
+    marginRight: spacing.md,
   },
   dividerContainer: {
     flexDirection: 'row',
@@ -249,13 +322,14 @@ const styles = StyleSheet.create({
   dividerLine: {
     flex: 1,
     height: 1,
-    backgroundColor: colors.border,
+    backgroundColor: colors.borderLight,
   },
   dividerText: {
     marginHorizontal: spacing.lg,
     fontSize: 14,
-    color: colors.textSecondary,
+    color: colors.surface,
     fontWeight: '500',
+    opacity: 0.8,
   },
   termsContainer: {
     marginTop: spacing.xl,

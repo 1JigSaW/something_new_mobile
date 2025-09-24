@@ -58,12 +58,12 @@ export default function AuthModal({
             <Button 
               title="Continue with Apple" 
               onPress={onAppleAuth}
-              style={{ backgroundColor: '#000000' }}
+              style={{ backgroundColor: colors.textPrimary }}
             />
             <Button 
               title="Continue with Google" 
               onPress={onGoogleAuth}
-              style={{ backgroundColor: '#4285F4' }}
+              style={{ backgroundColor: colors.info }}
             />
             <Button 
               title="Skip for now" 

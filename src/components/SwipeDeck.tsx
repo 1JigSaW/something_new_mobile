@@ -1,6 +1,11 @@
 import React, { useRef, useState, useEffect } from 'react';
 import { View, Text, StyleSheet, Animated, Dimensions, TouchableOpacity } from 'react-native';
+import UIButton from '../ui/atoms/Button';
+import SwipeHints from '../ui/molecules/SwipeHints';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { PanGestureHandler, PanGestureHandlerGestureEvent } from 'react-native-gesture-handler';
+import { HeartIcon } from '../assets/icons';
+import { colors } from '../styles/colors';
 
 interface Challenge {
   id: number;
@@ -27,10 +32,11 @@ interface SwipeDeckProps {
   onUpgradePremium?: () => void;
   isPremium?: boolean;
   isSelected?: (challengeId: number) => boolean;
+  onReset?: () => void;
 }
 
 const { width: screenWidth } = Dimensions.get('window');
-const SWIPE_THRESHOLD = screenWidth * 0.5; // Even higher threshold for better visibility
+const SWIPE_THRESHOLD = screenWidth * 0.5;
 
 export function SwipeDeck({ 
   challenges, 
@@ -43,37 +49,105 @@ export function SwipeDeck({
   maxSwipes = 5,
   onUpgradePremium,
   isPremium = false,
-  isSelected
+  isSelected,
+  onReset
 }: SwipeDeckProps) {
   const [currentIndex, setCurrentIndex] = useState(0);
-  const [isNewCard, setIsNewCard] = useState(false);
+  const [pendingChallenge, setPendingChallenge] = useState<Challenge | null>(null);
+  const [isStopped, setIsStopped] = useState(false);
+  const [completedToday, setCompletedToday] = useState(false);
+
   const translateX = useRef(new Animated.Value(0)).current;
   const translateY = useRef(new Animated.Value(0)).current;
   const rotate = useRef(new Animated.Value(0)).current;
   const opacity = useRef(new Animated.Value(1)).current;
   const scale = useRef(new Animated.Value(1)).current;
-  const newCardOpacity = useRef(new Animated.Value(0)).current;
-  const newCardScale = useRef(new Animated.Value(0.8)).current;
+  const heartScale = useRef(new Animated.Value(1)).current;
+  const buttonsOpacity = useRef(new Animated.Value(0)).current;
 
-  // Reset index when challenges array changes
+
   useEffect(() => {
     setCurrentIndex(0);
-    setIsNewCard(false);
+    setPendingChallenge(null);
+    setIsStopped(false);
     translateX.setValue(0);
     translateY.setValue(0);
     rotate.setValue(0);
     opacity.setValue(1);
     scale.setValue(1);
-    newCardOpacity.setValue(0);
-    newCardScale.setValue(0.8);
+    heartScale.setValue(1);
   }, [challenges]);
+
+  const getTodayKey = () => {
+    const d = new Date();
+    const yyyy = d.getFullYear();
+    const mm = String(d.getMonth() + 1).padStart(2, '0');
+    const dd = String(d.getDate()).padStart(2, '0');
+    return `pending_challenge:${yyyy}-${mm}-${dd}`;
+  };
+
+  const getCompletedKey = () => {
+    const d = new Date();
+    const yyyy = d.getFullYear();
+    const mm = String(d.getMonth() + 1).padStart(2, '0');
+    const dd = String(d.getDate()).padStart(2, '0');
+    return `completed_today:${yyyy}-${mm}-${dd}`;
+  };
+
+  const loadPendingFromStorage = async () => {
+    try {
+      const key = getTodayKey();
+      const raw = await AsyncStorage.getItem(key);
+      if (raw) {
+        const parsed: Challenge = JSON.parse(raw);
+        setPendingChallenge(parsed);
+        buttonsOpacity.setValue(1);
+      }
+    } catch {}
+  };
+
+  const loadCompletedFromStorage = async () => {
+    try {
+      const key = getCompletedKey();
+      const raw = await AsyncStorage.getItem(key);
+      if (raw === 'true') {
+        setCompletedToday(true);
+      }
+    } catch {}
+  };
+
+  const savePendingToStorage = async (challenge: Challenge | null) => {
+    try {
+      const key = getTodayKey();
+      if (challenge) {
+        await AsyncStorage.setItem(key, JSON.stringify(challenge));
+      } else {
+        await AsyncStorage.removeItem(key);
+      }
+    } catch {}
+  };
+
+  const saveCompletedToStorage = async (value: boolean) => {
+    try {
+      const key = getCompletedKey();
+      if (value) {
+        await AsyncStorage.setItem(key, 'true');
+      } else {
+        await AsyncStorage.removeItem(key);
+      }
+    } catch {}
+  };
+
+  useEffect(() => {
+    loadPendingFromStorage();
+    loadCompletedFromStorage();
+  }, []);
 
   const onGestureEvent = Animated.event(
     [{ nativeEvent: { translationX: translateX, translationY: translateY } }],
     { useNativeDriver: true }
   );
 
-  // Enhanced rotation and scale during swipe
   const rotateInterpolate = translateX.interpolate({
     inputRange: [-screenWidth, 0, screenWidth],
     outputRange: ['-0.3rad', '0rad', '0.3rad'],
@@ -86,281 +160,248 @@ export function SwipeDeck({
     extrapolate: 'clamp',
   });
 
-
   const onHandlerStateChange = (event: PanGestureHandlerGestureEvent) => {
-    if (disabled) return;
-
-    const { translationX, translationY, state } = event.nativeEvent;
-
-    if (state === 5) { // END
-      const absTranslationX = Math.abs(translationX);
-      const absTranslationY = Math.abs(translationY);
-      
-      // Check if this was a swipe
-      if (absTranslationX > SWIPE_THRESHOLD || absTranslationY > SWIPE_THRESHOLD) {
-        const currentChallenge = challenges[currentIndex];
-        
-        // Start the dramatic exit animation immediately
-        Animated.parallel([
-          // Fly away with maximum visibility - much further
-          Animated.timing(translateX, {
-            toValue: translationX > 0 ? screenWidth * 6 : -screenWidth * 6,
-            duration: 300,
-            useNativeDriver: true,
-          }),
-          Animated.timing(translateY, {
-            toValue: translationY * 0.4 - 400,
-            duration: 300,
-            useNativeDriver: true,
-          }),
-          Animated.timing(rotate, {
-            toValue: translationX > 0 ? 2.0 : -2.0,
-            duration: 300,
-            useNativeDriver: true,
-          }),
-          Animated.timing(scale, {
-            toValue: 0.05,
-            duration: 300,
-            useNativeDriver: true,
-          }),
-          // Fade out
-          Animated.timing(opacity, {
-            toValue: 0,
-            duration: 300,
-            useNativeDriver: true,
-          }),
-        ]).start(() => {
-          // Call callbacks after animation starts
-          if (translationX > 0) {
-            onSwipeRight(currentChallenge);
-          } else {
-            onSwipeLeft(currentChallenge);
-          }
-          
-          if (onSwipe) {
-            onSwipe();
-          }
-          // Show new card animation
-          setIsNewCard(true);
-          newCardOpacity.setValue(0);
-          newCardScale.setValue(0.8);
-          
-          // Animate new card appearance
-          Animated.parallel([
-            Animated.timing(newCardOpacity, {
-              toValue: 1,
-              duration: 300,
-              useNativeDriver: true,
-            }),
-            Animated.spring(newCardScale, {
-              toValue: 1,
-              tension: 100,
-              friction: 8,
-              useNativeDriver: true,
-            }),
-          ]).start(() => {
-            // Switch to new card
-            setCurrentIndex(prev => prev + 1);
-            setIsNewCard(false);
-            
-            // Reset animations for next card
-            translateX.setValue(0);
-            translateY.setValue(0);
-            rotate.setValue(0);
-            scale.setValue(1);
-            opacity.setValue(1);
-            newCardOpacity.setValue(0);
-            newCardScale.setValue(0.8);
-          });
+    if (disabled || isStopped || pendingChallenge || completedToday) return;
+  
+    const { translationX, state } = event.nativeEvent;
+    if (state === 5) {
+      const currentChallenge = challenges[currentIndex];
+  
+      if (translationX < -SWIPE_THRESHOLD) {
+        Animated.timing(translateX, {
+          toValue: -screenWidth * 2,
+          duration: 300,
+          useNativeDriver: true,
+        }).start(() => {
+          onSwipeLeft(currentChallenge);
+          onSwipe?.();
+          setCurrentIndex(prev => prev + 1);
+          translateX.setValue(0);
+          translateY.setValue(0);
+          opacity.setValue(1);
         });
-      } else {
-        // Return card to place
+      } else if (translationX > SWIPE_THRESHOLD) {
         Animated.parallel([
-          Animated.spring(translateX, {
-            toValue: 0,
-            useNativeDriver: true,
-            tension: 150,
-            friction: 8,
-          }),
-          Animated.spring(translateY, {
-            toValue: 0,
-            useNativeDriver: true,
-            tension: 150,
-            friction: 8,
-          }),
-          Animated.spring(rotate, {
-            toValue: 0,
-            useNativeDriver: true,
-            tension: 150,
-            friction: 8,
-          }),
-        ]).start();
+          Animated.timing(translateX, { toValue: screenWidth * 1.5, duration: 220, useNativeDriver: true }),
+          Animated.timing(rotate, { toValue: 0.6, duration: 220, useNativeDriver: true }),
+          Animated.timing(opacity, { toValue: 0, duration: 220, useNativeDriver: true }),
+        ]).start(() => {
+          setPendingChallenge(currentChallenge);
+          savePendingToStorage(currentChallenge);
+          translateX.setValue(0);
+          translateY.setValue(0);
+          rotate.setValue(0);
+          opacity.setValue(1);
+          scale.setValue(0.9);
+          Animated.sequence([
+            Animated.spring(scale, { toValue: 1, tension: 120, friction: 10, useNativeDriver: true }),
+            Animated.timing(buttonsOpacity, { toValue: 1, duration: 180, useNativeDriver: true }),
+          ]).start();
+        });
+       } else {
+        Animated.parallel([
+          Animated.spring(translateX, { toValue: 0, useNativeDriver: true, tension: 150, friction: 8 }),
+          Animated.spring(translateY, { toValue: 0, useNativeDriver: true, tension: 150, friction: 8 }),
+          Animated.spring(rotate, { toValue: 0, useNativeDriver: true, tension: 150, friction: 8 }),
+        ]).start(() => {
+          setPendingChallenge(null);
+          buttonsOpacity.setValue(0);
+        });
       }
     }
   };
+  
 
-  if (challenges.length === 0 || currentIndex >= challenges.length) {
+  const handleAddToFavorites = (challenge: Challenge) => {
+    Animated.sequence([
+      Animated.timing(heartScale, { toValue: 1.2, duration: 100, useNativeDriver: true }),
+      Animated.timing(heartScale, { toValue: 1, duration: 100, useNativeDriver: true }),
+    ]).start();
+    onAddToFavorites?.(challenge);
+  };
+
+  const handleConfirm = () => {
+    if (!pendingChallenge) return;
+    onSwipeRight(pendingChallenge);
+    onSwipe?.();
+    setPendingChallenge(null);
+    savePendingToStorage(null);
+    setCompletedToday(true);
+    saveCompletedToStorage(true);
+    translateX.setValue(0);
+    translateY.setValue(0);
+    rotate.setValue(0);
+    opacity.setValue(1);
+    scale.setValue(1);
+    setCurrentIndex(challenges.length);
+  };
+
+  const handleSkip = () => {
+    if (!pendingChallenge) return;
+    onSwipeLeft(pendingChallenge);
+    onSwipe?.();
+    setPendingChallenge(null);
+    savePendingToStorage(null);
+    setCurrentIndex(prev => prev + 1);
+  };
+
+  const handleReset = async () => {
+    await savePendingToStorage(null);
+    await saveCompletedToStorage(false);
+    setPendingChallenge(null);
+    setCompletedToday(false);
+    setCurrentIndex(0);
+    translateX.setValue(0);
+    translateY.setValue(0);
+    rotate.setValue(0);
+    opacity.setValue(1);
+    scale.setValue(1);
+    buttonsOpacity.setValue(0);
+    onReset?.();
+  };
+
+// removed custom stopped screen: we route to the standard finished state after Complete
+
+  if (completedToday || challenges.length === 0 || currentIndex >= challenges.length) {
     return (
       <View style={styles.emptyContainer}>
         <Text style={styles.emptyText}>
-          {isPremium ? 'No new ideas available' : 'Cards finished!'}
+          {completedToday ? 'All done for today!' : (isPremium ? 'No new ideas available' : 'Cards finished!')}
         </Text>
         <Text style={styles.emptySubtext}>
-          {isPremium 
-            ? 'You\'ve seen all available ideas in this category. New ones will appear soon!' 
-            : 'Upgrade to Premium for unlimited access to ideas'
+          {completedToday 
+            ? 'Come back tomorrow for a new challenge.'
+            : (isPremium 
+              ? 'You\'ve seen all available ideas in this category. New ones will appear soon!'
+              : 'Upgrade to Premium for unlimited access to ideas')
           }
         </Text>
-        {!isPremium && onUpgradePremium && (
-          <TouchableOpacity 
-            style={styles.premiumButton}
-            onPress={onUpgradePremium}
-          >
-            <Text style={styles.premiumButtonText}>⭐ Buy Premium</Text>
-          </TouchableOpacity>
-        )}
-      </View>
-    );
-  }
-
-  if (disabled) {
-    return (
-      <View style={styles.emptyContainer}>
-        <Text style={styles.emptyText}>Swipe limit reached</Text>
-        <Text style={styles.emptySubtext}>
-          You've used {swipeCount}/{maxSwipes} swipes today. Upgrade to Premium for unlimited swipes.
-        </Text>
+        <View style={styles.buttonContainer}>
+          {!isPremium && onUpgradePremium && (
+            <TouchableOpacity style={styles.premiumButton} onPress={onUpgradePremium}>
+              <Text style={styles.premiumButtonText}>⭐ Buy Premium</Text>
+            </TouchableOpacity>
+          )}
+          {onReset && (
+            <TouchableOpacity style={styles.resetButton} onPress={handleReset}>
+              <Text style={styles.resetIcon}>🔄</Text>
+              <Text style={styles.resetButtonText}>Reset Today</Text>
+            </TouchableOpacity>
+          )}
+        </View>
       </View>
     );
   }
 
   const currentChallenge = challenges[currentIndex];
+  const displayedChallenge = pendingChallenge || currentChallenge;
 
   return (
     <View style={styles.container}>
-      <View style={styles.swipeCounter}>
-        <Text style={styles.swipeCounterText}>
-          Swipes: {swipeCount}/{maxSwipes}
-        </Text>
-      </View>
-      
+      {!pendingChallenge && (
+        <View style={styles.swipeCounter}>
+          <Text style={styles.swipeCounterText}>
+            Swipes: {swipeCount}/{maxSwipes}
+          </Text>
+        </View>
+      )}
+
       <View style={styles.cardContainer}>
         <PanGestureHandler
-        onGestureEvent={onGestureEvent}
-        onHandlerStateChange={onHandlerStateChange}
-        enabled={!disabled}
-      >
-        <Animated.View
-          style={[
-            styles.card,
-            {
-              transform: [
-                { translateX },
-                { translateY },
-                { rotate: rotateInterpolate },
-                { scale: scaleInterpolate },
-              ],
-              opacity: opacity,
-            },
-          ]}
+          onGestureEvent={onGestureEvent}
+          onHandlerStateChange={onHandlerStateChange}
+          enabled={!disabled && !pendingChallenge}
         >
-          {/* Heart button in top-right corner */}
-          {onAddToFavorites && (
-            <TouchableOpacity
-              style={styles.heartButton}
-              onPress={() => onAddToFavorites(currentChallenge)}
-              activeOpacity={0.7}
-            >
-              <Text style={styles.heartIcon}>❤️</Text>
-            </TouchableOpacity>
-          )}
+          <Animated.View
+            style={[
+              styles.card,
+              {
+                transform: [
+                  { translateX },
+                  { translateY },
+                  { rotate: rotateInterpolate },
+                  { scale: scaleInterpolate },
+                  { scale },
+                ],
+                opacity: opacity,
+                borderWidth: pendingChallenge ? 3 : 0,
+                borderColor: pendingChallenge ? colors.surface : 'transparent',
+                backgroundColor: pendingChallenge ? colors.primaryLight : colors.primary,
+              },
+            ]}
+          >
+            {onAddToFavorites && (
+              <Animated.View
+                style={[styles.heartButton, { transform: [{ scale: heartScale }] }]}
+              >
+                <TouchableOpacity
+                  style={styles.heartButtonInner}
+                  onPress={() => handleAddToFavorites(displayedChallenge)}
+                  activeOpacity={0.7}
+                >
+                  <HeartIcon size={20} color={colors.error} filled={false} />
+                </TouchableOpacity>
+              </Animated.View>
+            )}
 
-          <View style={styles.cardContent}>
-            <Text style={styles.title}>{currentChallenge.title}</Text>
-            <Text style={styles.description}>{currentChallenge.short_description}</Text>
-            
-            <View style={styles.meta}>
-              <Text style={styles.time}>
-                ⏱️ {currentChallenge.estimated_duration_min ? 
-                  `${currentChallenge.estimated_duration_min}m` : 
-                  currentChallenge.size === 'small' ? '5-30m' : 
-                  currentChallenge.size === 'medium' ? '30-90m' : '2h+'}
-              </Text>
-              <Text style={styles.category}>• {currentChallenge.category}</Text>
+            <View style={styles.cardContent}>
+              <View style={styles.cardHeader}>
+                {displayedChallenge.is_premium_only && (
+                  <View style={styles.premiumBadge}>
+                    <Text style={styles.premiumText}>⭐ PREMIUM</Text>
+                  </View>
+                )}
+                {isSelected && isSelected(displayedChallenge.id) && (
+                  <View style={styles.selectedBadge}>
+                    <Text style={styles.selectedText}>✓ SELECTED</Text>
+                  </View>
+                )}
+              </View>
+
+              <View style={styles.mainContent}>
+                <Text style={styles.title}>{displayedChallenge.title}</Text>
+                <Text style={styles.description}>{displayedChallenge.short_description}</Text>
+              </View>
+
+              <View style={styles.metaContainer}>
+                <View style={styles.metaItem}>
+                  <View style={styles.metaIconContainer}>
+                    <Text style={styles.metaIcon}>⏱️</Text>
+                  </View>
+                  <Text style={styles.metaText}>
+                    {displayedChallenge.estimated_duration_min
+                      ? `${displayedChallenge.estimated_duration_min} min`
+                      : displayedChallenge.size === 'small'
+                      ? '5-30 min'
+                      : displayedChallenge.size === 'medium'
+                      ? '30-90 min'
+                      : '2h+'}
+                  </Text>
+                </View>
+                <View style={styles.metaDivider} />
+                <View style={styles.metaItem}>
+                  <View style={styles.metaIconContainer}>
+                    <Text style={styles.metaIcon}>📂</Text>
+                  </View>
+                  <Text style={styles.metaText}>{displayedChallenge.category}</Text>
+                </View>
+              </View>
+              {pendingChallenge && (
+                <Animated.View style={[styles.actions, { opacity: buttonsOpacity }]}>
+                  <UIButton title="Skip" onPress={handleSkip} variant="secondary" style={styles.uiButtonLeft} />
+                  <UIButton title="Complete" onPress={handleConfirm} variant="success" style={styles.uiButtonRight} />
+                </Animated.View>
+              )}
+
+              {!pendingChallenge && (
+                <SwipeHints leftLabel="Select" rightLabel="Skip" style={{ paddingBottom: 4 }} />
+              )}
+
             </View>
-
-            {currentChallenge.is_premium_only && (
-              <View style={styles.premiumBadge}>
-                <Text style={styles.premiumText}>PREMIUM</Text>
-              </View>
-            )}
-
-            {isSelected && isSelected(currentChallenge.id) && (
-              <View style={styles.selectedBadge}>
-                <Text style={styles.selectedText}>✓ SELECTED</Text>
-              </View>
-            )}
-          </View>
-
-          {/* Swipe direction indicators */}
-          <Animated.View
-            style={[
-              styles.swipeIndicator,
-              styles.leftIndicator,
-              {
-                opacity: translateX.interpolate({
-                  inputRange: [-screenWidth * 0.3, 0],
-                  outputRange: [1, 0],
-                  extrapolate: 'clamp',
-                }),
-              },
-            ]}
-          >
-            <Text style={styles.indicatorText}>SKIP</Text>
           </Animated.View>
-          
-          <Animated.View
-            style={[
-              styles.swipeIndicator,
-              styles.rightIndicator,
-              {
-                opacity: translateX.interpolate({
-                  inputRange: [0, screenWidth * 0.3],
-                  outputRange: [0, 1],
-                  extrapolate: 'clamp',
-                }),
-              },
-            ]}
-          >
-            <Text style={styles.indicatorText}>CHOOSE</Text>
-          </Animated.View>
+        </PanGestureHandler>
 
-          <View style={styles.instructions}>
-            <Text style={styles.instructionText}>
-              ← Skip • Choose →
-            </Text>
-          </View>
-        </Animated.View>
-      </PanGestureHandler>
-      
-      {/* New card appearing animation */}
-      {isNewCard && (
-        <Animated.View
-          style={[
-            styles.card,
-            styles.newCard,
-            {
-              opacity: newCardOpacity,
-              transform: [{ scale: newCardScale }],
-            },
-          ]}
-        >
-          <View style={styles.cardContent}>
-            <Text style={styles.title}>Loading...</Text>
-            <Text style={styles.description}>Getting your next challenge...</Text>
-          </View>
-        </Animated.View>
-      )}
+        {/* actions already rendered above when pendingChallenge */}
       </View>
     </View>
   );
@@ -385,7 +426,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: 10,
     right: 20,
-    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+    backgroundColor: colors.overlayDarker,
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 15,
@@ -399,11 +440,11 @@ const styles = StyleSheet.create({
   card: {
     width: screenWidth - 40,
     height: 500,
-    backgroundColor: '#8B5CF6',
+    backgroundColor: colors.primary,
     borderRadius: 20,
     marginHorizontal: 20,
     marginVertical: 20,
-    shadowColor: '#000',
+    shadowColor: colors.shadow,
     shadowOffset: {
       width: 0,
       height: 8,
@@ -414,74 +455,110 @@ const styles = StyleSheet.create({
   },
   cardContent: {
     flex: 1,
-    padding: 24,
+    padding: 28,
+    justifyContent: 'space-between',
+  },
+  cardHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    marginBottom: 20,
+  },
+  mainContent: {
+    flex: 1,
     justifyContent: 'center',
-  },
-  title: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: 'white',
-    marginBottom: 16,
-    textAlign: 'center',
-  },
-  description: {
-    fontSize: 16,
-    color: 'white',
-    opacity: 0.9,
-    textAlign: 'center',
-    lineHeight: 24,
     marginBottom: 24,
   },
-  meta: {
+  title: {
+    fontSize: 26,
+    fontWeight: '700',
+    color: 'white',
+    marginBottom: 20,
+    textAlign: 'center',
+    lineHeight: 34,
+    letterSpacing: 0.5,
+  },
+  description: {
+    fontSize: 17,
+    color: 'white',
+    opacity: 0.95,
+    textAlign: 'center',
+    lineHeight: 26,
+    paddingHorizontal: 8,
+  },
+  metaContainer: {
+    backgroundColor: colors.surfaceTint15,
+    borderRadius: 20,
+    paddingVertical: 16,
+    paddingHorizontal: 24,
     flexDirection: 'row',
+    justifyContent: 'space-around',
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  metaItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+    justifyContent: 'center',
+  },
+  metaIconContainer: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: colors.surfaceTint20,
     justifyContent: 'center',
     alignItems: 'center',
-  },
-  time: {
-    fontSize: 14,
-    color: 'white',
     marginRight: 12,
   },
-  category: {
-    fontSize: 14,
+  metaIcon: {
+    fontSize: 16,
+  },
+  metaText: {
+    fontSize: 15,
     color: 'white',
-    opacity: 0.8,
+    fontWeight: '600',
+    flex: 1,
+  },
+  metaDivider: {
+    width: 1,
+    height: 24,
+    backgroundColor: colors.surfaceTint30,
+    marginHorizontal: 16,
   },
   premiumBadge: {
-    position: 'absolute',
-    top: 16,
-    right: 16,
-    backgroundColor: '#FFD700',
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 12,
+    backgroundColor: colors.accent,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 16,
+    shadowColor: colors.accent,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+    elevation: 3,
   },
   premiumText: {
     fontSize: 12,
-    fontWeight: 'bold',
-    color: '#8B5CF6',
+    fontWeight: '700',
+    color: colors.primary,
+    letterSpacing: 0.5,
   },
   selectedBadge: {
-    position: 'absolute',
-    top: 15,
-    left: 15,
-    backgroundColor: '#4CAF50',
+    backgroundColor: colors.success,
     paddingHorizontal: 12,
     paddingVertical: 6,
-    borderRadius: 15,
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.25,
-    shadowRadius: 3.84,
-    elevation: 5,
+    borderRadius: 16,
+    shadowColor: colors.success,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+    elevation: 3,
   },
   selectedText: {
-    color: 'white',
     fontSize: 12,
-    fontWeight: 'bold',
+    fontWeight: '700',
+    color: 'white',
+    letterSpacing: 0.5,
   },
   instructions: {
     position: 'absolute',
@@ -495,6 +572,7 @@ const styles = StyleSheet.create({
     color: 'white',
     opacity: 0.7,
   },
+  
   swipeIndicator: {
     position: 'absolute',
     top: '50%',
@@ -507,14 +585,14 @@ const styles = StyleSheet.create({
   },
   leftIndicator: {
     left: 20,
-    backgroundColor: 'rgba(255, 107, 107, 0.9)',
+    backgroundColor: colors.error,
   },
   rightIndicator: {
     right: 20,
-    backgroundColor: 'rgba(78, 205, 196, 0.9)',
+    backgroundColor: colors.success,
   },
   indicatorText: {
-    color: 'white',
+    color: colors.surface,
     fontSize: 16,
     fontWeight: 'bold',
     textShadowColor: 'rgba(0, 0, 0, 0.5)',
@@ -523,28 +601,29 @@ const styles = StyleSheet.create({
   },
   heartButton: {
     position: 'absolute',
-    top: 15,
-    right: 15,
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: 'rgba(255, 255, 255, 0.95)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    shadowColor: '#000',
+    top: 16,
+    right: 16,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: colors.surface,
+    shadowColor: colors.shadow,
     shadowOffset: {
       width: 0,
-      height: 3,
+      height: 2,
     },
-    shadowOpacity: 0.3,
-    shadowRadius: 4.65,
-    elevation: 8,
+    shadowOpacity: 0.1,
+    shadowRadius: 3,
+    elevation: 4,
     zIndex: 10,
     borderWidth: 1,
-    borderColor: 'rgba(255, 182, 193, 0.3)',
+    borderColor: colors.borderLight,
   },
-  heartIcon: {
-    fontSize: 20,
+  heartButtonInner: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderRadius: 20,
   },
   emptyContainer: {
     flex: 1,
@@ -555,25 +634,25 @@ const styles = StyleSheet.create({
   emptyText: {
     fontSize: 20,
     fontWeight: 'bold',
-    color: '#333',
+    color: colors.textPrimary,
     marginBottom: 8,
     textAlign: 'center',
   },
   emptySubtext: {
     fontSize: 16,
-    color: '#666',
+    color: colors.textSecondary,
     textAlign: 'center',
     marginBottom: 20,
   },
   premiumButton: {
-    backgroundColor: '#8B5CF6',
+    backgroundColor: colors.primary,
     paddingHorizontal: 32,
     paddingVertical: 16,
     borderRadius: 12,
     marginTop: 10,
   },
   premiumButtonText: {
-    color: 'white',
+    color: colors.surface,
     fontSize: 18,
     fontWeight: 'bold',
     textAlign: 'center',
@@ -584,11 +663,11 @@ const styles = StyleSheet.create({
     left: 20,
     right: 20,
     bottom: 20,
-    backgroundColor: '#8B5CF6',
+    backgroundColor: colors.primary,
     justifyContent: 'center',
     alignItems: 'center',
     borderRadius: 20,
-    shadowColor: '#000',
+    shadowColor: colors.shadow,
     shadowOffset: {
       width: 0,
       height: 4,
@@ -597,4 +676,77 @@ const styles = StyleSheet.create({
     shadowRadius: 8,
     elevation: 8,
   },
+  selectedOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: colors.overlayDarker,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderRadius: 20,
+  },
+  selectedContent: {
+    backgroundColor: colors.overlayLight,
+    padding: 20,
+    borderRadius: 16,
+    alignItems: 'center',
+    marginHorizontal: 20,
+  },
+  selectedTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: colors.primary,
+    marginBottom: 8,
+    textAlign: 'center',
+  },
+  selectedSubtitle: {
+    fontSize: 14,
+    color: colors.textSecondary,
+    textAlign: 'center',
+    lineHeight: 20,
+  },
+  buttonContainer: {
+    flexDirection: 'row',
+    gap: 12,
+    marginTop: 20,
+    flexWrap: 'wrap',
+    justifyContent: 'center',
+  },
+  resetButton: {
+    backgroundColor: colors.error,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderRadius: 12,
+    flexDirection: 'row',
+    alignItems: 'center',
+    shadowColor: colors.shadow,
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  resetIcon: {
+    fontSize: 16,
+    marginRight: 6,
+  },
+  resetButtonText: {
+    color: 'white',
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  actions: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginTop: 16,
+    paddingHorizontal: 16,
+  },
+  uiButtonLeft: { flex: 1, marginRight: 8 },
+  uiButtonRight: { flex: 1, marginLeft: 8 },
+  
 });

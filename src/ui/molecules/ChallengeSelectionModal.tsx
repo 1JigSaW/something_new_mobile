@@ -134,7 +134,7 @@ export default function ChallengeSelectionModal({
           borderRadius: borderRadius.xl, 
           padding: spacing.xl,
           maxHeight: '80%',
-          shadowColor: '#000',
+          shadowColor: colors.shadow,
           shadowOffset: { width: 0, height: 4 },
           shadowOpacity: 0.25,
           shadowRadius: 12,

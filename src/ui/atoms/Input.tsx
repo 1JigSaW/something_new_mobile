@@ -19,7 +19,7 @@ export default function Input({
       {label ? <Text className="mb-1">{label}</Text> : null}
       <TextInput
         className="w-full bg-white border border-gray-200 rounded-lg px-3 py-3 text-base"
-        placeholderTextColor="#9ca3af"
+        placeholderTextColor={colors.textMuted}
         {...rest}
       />
       {error ? (

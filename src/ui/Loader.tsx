@@ -9,7 +9,7 @@ type LoaderProps = {
 export default function Loader({ label = 'Loading…' }: LoaderProps) {
   return (
     <View className="w-full items-center justify-center py-6">
-      <ActivityIndicator color="#5566ff" />
+      <ActivityIndicator color={colors.primary} />
       <Text color="muted" className="mt-2">{label}</Text>
     </View>
   );

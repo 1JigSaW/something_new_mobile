@@ -3,6 +3,7 @@ import { View, ScrollView, Text, StyleSheet, TouchableOpacity, Alert, Dimensions
 import { SwipeDeck } from '../components/SwipeDeck';
 import { useApp } from '../context/AppContext';
 import { useRandomChallengesQuery } from '../features/challenges/useRandomChallengesQuery';
+import { colors } from '../styles/colors';
 
 const { width: screenWidth } = Dimensions.get('window');
 
@@ -43,7 +44,6 @@ export default function CategoriesScreen() {
   const [showPremiumOnly, setShowPremiumOnly] = useState(false);
   const [activeFilter, setActiveFilter] = useState<string | null>(null);
 
-  // Load random cards for categories - simplified
   const { 
     data: challenges = [], 
     isLoading: loading, 
@@ -53,7 +53,6 @@ export default function CategoriesScreen() {
     freeOnly: !isPremium,
   });
 
-  // Simple categories grouping
   const categories = challenges.reduce((acc, challenge) => {
     const category = challenge.category || 'other';
     if (!acc[category]) {
@@ -63,7 +62,6 @@ export default function CategoriesScreen() {
     return acc;
   }, {} as Record<string, Challenge[]>);
 
-  // Simple filtering with unviewed challenges
   let filteredChallenges = challenges;
   
   if (selectedCategory) {
@@ -92,8 +90,6 @@ export default function CategoriesScreen() {
     filteredChallenges = filteredChallenges.filter(challenge => challenge.is_premium_only);
   }
 
-  // Don't filter out selected challenges - show them with a marker
-  // Only filter out viewed (completed/skipped) challenges
   filteredChallenges = getUnviewedChallenges(filteredChallenges);
 
   const handleCategorySelect = (category: string) => {
@@ -136,7 +132,6 @@ export default function CategoriesScreen() {
       return;
     }
 
-    // Mark as viewed
     markAsViewed(challenge.id);
 
     Alert.alert(
@@ -167,7 +162,6 @@ export default function CategoriesScreen() {
       return;
     }
     
-    // Mark as viewed
     markAsViewed(challenge.id);
     console.log('Skipped challenge:', challenge.title);
     useSwipe();
@@ -194,7 +188,6 @@ export default function CategoriesScreen() {
     setShowPremiumOnly(false);
   };
 
-  // Check if daily limit is reached
   if (completedToday) {
     return (
       <View style={styles.container}>
@@ -240,7 +233,6 @@ export default function CategoriesScreen() {
           <TouchableOpacity 
             style={styles.retryButton} 
             onPress={() => {
-              // Reload app
               console.log('Reloading app...');
             }}
           >
@@ -252,7 +244,6 @@ export default function CategoriesScreen() {
   }
 
   if (selectedCategory) {
-    // Show swipe deck for selected category
     return (
       <View style={styles.container}>
         <View style={styles.header}>
@@ -289,7 +280,6 @@ export default function CategoriesScreen() {
   }
 
   if (activeFilter) {
-    // Show swipe deck for active filter
     const filterTitle = activeFilter === 'premium' ? 'Premium' : 
                        activeFilter.startsWith('size-') ? `Size: ${activeFilter.split('-')[1]}` :
                        activeFilter.startsWith('duration-') ? `Duration: ${activeFilter.split('-')[1]}` : 'Filter';
@@ -329,7 +319,6 @@ export default function CategoriesScreen() {
     );
   }
 
-  // Show new categories interface
   return (
     <View style={styles.container}>
       <View style={styles.header}>
@@ -348,17 +337,17 @@ export default function CategoriesScreen() {
             contentContainerStyle={styles.horizontalContent}
           >
             {[
-              { key: 'small', label: 'Small', icon: '🟢', color: '#4CAF50' },
-              { key: 'medium', label: 'Medium', icon: '🟡', color: '#FF9800' },
-              { key: 'large', label: 'Large', icon: '🔴', color: '#F44336' },
+              { key: 'small', label: 'Small', icon: '●', color: colors.categorySmall },
+              { key: 'medium', label: 'Medium', icon: '●', color: colors.categoryMedium },
+              { key: 'large', label: 'Large', icon: '●', color: colors.categoryLarge },
             ].map((size) => (
               <TouchableOpacity
                 key={size.key}
-                style={[styles.categoryCard, { borderLeftColor: size.color, borderLeftWidth: 4 }]}
+                style={[styles.categoryCard, { backgroundColor: size.color + '15' }]}
                 onPress={() => handleSizeSelect(size.key)}
               >
                 <View style={styles.categoryCardContent}>
-                  <Text style={styles.categoryIcon}>{size.icon}</Text>
+                  <Text style={[styles.categoryIcon, { color: size.color }]}>{size.icon}</Text>
                   <Text style={styles.categoryCardTitle}>{size.label}</Text>
                   <Text style={styles.categoryCardCount}>
                     {challenges.filter(c => c.size === size.key).length} ideas
@@ -380,17 +369,17 @@ export default function CategoriesScreen() {
             contentContainerStyle={styles.horizontalContent}
           >
             {[
-              { key: 'quick', label: 'Quick', icon: '⚡', color: '#2196F3', duration: '≤30m' },
-              { key: 'medium', label: 'Medium', icon: '⏱️', color: '#9C27B0', duration: '30-90m' },
-              { key: 'long', label: 'Long', icon: '🕐', color: '#795548', duration: '90m+' },
+              { key: 'quick', label: 'Quick', icon: '⚡', color: colors.categoryQuick, duration: '≤30m' },
+              { key: 'medium', label: 'Medium', icon: '⏱', color: colors.categoryMedium, duration: '30-90m' },
+              { key: 'long', label: 'Long', icon: '🕐', color: colors.categoryLong, duration: '90m+' },
             ].map((duration) => (
               <TouchableOpacity
                 key={duration.key}
-                style={[styles.categoryCard, { borderLeftColor: duration.color, borderLeftWidth: 4 }]}
+                style={[styles.categoryCard, { backgroundColor: duration.color + '15' }]}
                 onPress={() => handleDurationSelect(duration.key)}
               >
                 <View style={styles.categoryCardContent}>
-                  <Text style={styles.categoryIcon}>{duration.icon}</Text>
+                  <Text style={[styles.categoryIcon, { color: duration.color }]}>{duration.icon}</Text>
                   <Text style={styles.categoryCardTitle}>{duration.label}</Text>
                   <Text style={styles.categoryCardDuration}>{duration.duration}</Text>
                   <Text style={styles.categoryCardCount}>
@@ -417,7 +406,7 @@ export default function CategoriesScreen() {
               contentContainerStyle={styles.horizontalContent}
             >
               <TouchableOpacity
-                style={[styles.categoryCard, { borderLeftColor: '#8B5CF6', borderLeftWidth: 4 }]}
+                style={[styles.categoryCard, { backgroundColor: colors.primary + '15' }]}
                 onPress={handlePremiumSelect}
               >
                 <View style={styles.categoryCardContent}>
@@ -445,7 +434,7 @@ export default function CategoriesScreen() {
             {Object.entries(categories).map(([categoryName, categoryChallenges]) => (
               <TouchableOpacity
                 key={categoryName}
-                style={[styles.categoryCard, { borderLeftColor: '#8B5CF6', borderLeftWidth: 4 }]}
+                style={[styles.categoryCard, { backgroundColor: colors.primary + '15' }]}
                 onPress={() => handleCategorySelect(categoryName)}
               >
                 <View style={styles.categoryCardContent}>
@@ -467,24 +456,24 @@ export default function CategoriesScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f8f9fa',
+    backgroundColor: colors.background,
   },
   header: {
     paddingHorizontal: 20,
     paddingTop: 20,
     paddingBottom: 20,
-    backgroundColor: 'white',
+    backgroundColor: colors.surface,
     borderBottomWidth: 1,
-    borderBottomColor: '#e0e0e0',
+    borderBottomColor: colors.border,
   },
   title: {
     fontSize: 28,
     fontWeight: 'bold',
-    color: '#333',
+    color: colors.textPrimary,
   },
   subtitle: {
     fontSize: 16,
-    color: '#666',
+    color: colors.textSecondary,
     marginTop: 4,
   },
   backButton: {
@@ -492,7 +481,7 @@ const styles = StyleSheet.create({
   },
   backButtonText: {
     fontSize: 16,
-    color: '#8B5CF6',
+    color: colors.primary,
     fontWeight: '600',
   },
   placeholder: {
@@ -505,7 +494,7 @@ const styles = StyleSheet.create({
   },
   loadingText: {
     fontSize: 18,
-    color: '#666',
+    color: colors.textSecondary,
   },
   limitReachedContainer: {
     flex: 1,
@@ -516,13 +505,13 @@ const styles = StyleSheet.create({
   limitReachedText: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: '#4CAF50',
+    color: colors.success,
     textAlign: 'center',
     marginBottom: 16,
   },
   limitReachedSubtext: {
     fontSize: 16,
-    color: '#666',
+    color: colors.textSecondary,
     textAlign: 'center',
   },
   errorContainer: {
@@ -533,18 +522,18 @@ const styles = StyleSheet.create({
   },
   errorText: {
     fontSize: 18,
-    color: 'red',
+    color: colors.error,
     marginBottom: 20,
     textAlign: 'center',
   },
   retryButton: {
-    backgroundColor: '#8B5CF6',
+    backgroundColor: colors.primary,
     paddingHorizontal: 20,
     paddingVertical: 12,
     borderRadius: 8,
   },
   retryText: {
-    color: 'white',
+    color: colors.surface,
     fontSize: 16,
     fontWeight: '600',
   },
@@ -561,7 +550,7 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 20,
     fontWeight: 'bold',
-    color: '#1a1a1a',
+    color: colors.textPrimary,
     marginBottom: 16,
     marginTop: 8,
   },
@@ -578,7 +567,7 @@ const styles = StyleSheet.create({
   filterLabel: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#1a1a1a',
+    color: colors.textPrimary,
     marginBottom: 12,
   },
   filterRow: {
@@ -587,18 +576,18 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   filterChip: {
-    backgroundColor: 'white',
+    backgroundColor: colors.surface,
     paddingHorizontal: 16,
     paddingVertical: 12,
     borderRadius: 20,
     flexDirection: 'row',
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: '#e0e0e0',
+    borderColor: colors.border,
   },
   filterChipSelected: {
-    backgroundColor: '#8B5CF6',
-    borderColor: '#8B5CF6',
+    backgroundColor: colors.primary,
+    borderColor: colors.primary,
   },
   filterIcon: {
     fontSize: 16,
@@ -607,24 +596,24 @@ const styles = StyleSheet.create({
   filterChipText: {
     fontSize: 14,
     fontWeight: '500',
-    color: '#666',
+    color: colors.textSecondary,
   },
   filterChipTextSelected: {
-    color: 'white',
+    color: colors.surface,
   },
   categoryCard: {
     width: 180,
-    backgroundColor: 'white',
+    backgroundColor: colors.surface,
     borderRadius: 16,
     padding: 20,
     marginRight: 16,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 4,
+    shadowColor: colors.shadow,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 12,
+    elevation: 3,
     borderWidth: 1,
-    borderColor: '#e0e0e0',
+    borderColor: colors.borderLight,
   },
   categoryCardContent: {
     flex: 1,
@@ -637,26 +626,26 @@ const styles = StyleSheet.create({
   categoryCardTitle: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#1a1a1a',
+    color: colors.textPrimary,
     marginBottom: 6,
     textAlign: 'center',
   },
   categoryCardDuration: {
     fontSize: 13,
-    color: '#8B5CF6',
+    color: colors.primary,
     fontWeight: '600',
     marginBottom: 8,
     textAlign: 'center',
   },
   categoryCardCount: {
     fontSize: 14,
-    color: '#666',
+    color: colors.textSecondary,
     textAlign: 'center',
     marginBottom: 12,
   },
   categoryCardArrow: {
     fontSize: 24,
-    color: '#8B5CF6',
+    color: colors.primary,
     fontWeight: 'bold',
     textAlign: 'center',
   },
@@ -669,13 +658,13 @@ const styles = StyleSheet.create({
   emptyTitle: {
     fontSize: 20,
     fontWeight: 'bold',
-    color: '#333',
+    color: colors.textPrimary,
     marginBottom: 12,
     textAlign: 'center',
   },
   emptyText: {
     fontSize: 16,
-    color: '#666',
+    color: colors.textSecondary,
     textAlign: 'center',
     lineHeight: 24,
   },
@@ -684,8 +673,8 @@ const styles = StyleSheet.create({
   },
   deckActions: {
     padding: 20,
-    backgroundColor: 'white',
+    backgroundColor: colors.surface,
     borderTopWidth: 1,
-    borderTopColor: '#e0e0e0',
+    borderTopColor: colors.border,
   },
 });

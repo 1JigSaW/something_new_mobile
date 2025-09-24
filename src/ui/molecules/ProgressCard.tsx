@@ -5,7 +5,7 @@ import { colors, spacing, borderRadius, shadows, typography } from '../../styles
 interface ProgressCardProps {
   title: string;
   subtitle: string;
-  progress: number; // 0-100
+  progress: number;
   color?: string;
   icon?: string;
   onPress?: () => void;

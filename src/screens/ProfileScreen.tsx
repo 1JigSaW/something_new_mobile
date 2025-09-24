@@ -1,8 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { View, ScrollView, Text, StyleSheet, TouchableOpacity, Switch, Alert, Dimensions } from 'react-native';
 import { useApp } from '../context/AppContext';
-import { useQuery } from '@tanstack/react-query';
-import { http } from '../api';
+import { useAuth } from '../context/AuthContext';
+import { useProgressStats } from '../features/progress/useProgressStats';
+import PageHeader from '../ui/layout/PageHeader';
+import Section from '../ui/layout/Section';
+import { colors } from '../styles/colors';
+import WeeklyBarChart from '../ui/molecules/WeeklyBarChart';
+import StatCard from '../ui/molecules/StatCard';
 
 const { width } = Dimensions.get('window');
 
@@ -13,6 +18,8 @@ export default function ProfileScreen() {
     resetToNewDay,
   } = useApp();
 
+  const { signOut, user } = useAuth();
+
   const [selectedPeriod, setSelectedPeriod] = useState('week');
   const [progressData, setProgressData] = useState<Array<{
     date: string;
@@ -21,22 +28,8 @@ export default function ProfileScreen() {
     streak: number;
   }>>([]);
 
-  // Fetch real progress data from API
-  const { data: progressStats } = useQuery({
-    queryKey: ['progress-stats'],
-    queryFn: async () => {
-      try {
-        const { data } = await http.get('/api/profile/stats/test');
-        return data;
-      } catch (error) {
-        console.error('Profile stats API Error:', error);
-        throw error;
-      }
-    },
-    staleTime: 5 * 60 * 1000, // 5 minutes
-  });
+  const { data: progressStats } = useProgressStats();
 
-  // Generate real progress data from API
   useEffect(() => {
     if (progressStats) {
       const data = [];
@@ -47,7 +40,6 @@ export default function ProfileScreen() {
         date.setDate(date.getDate() - i);
         const dateStr = date.toISOString().split('T')[0];
         
-        // Get completion data for this date from API
         const dayStats = progressStats.daily_stats?.find((stat: any) => stat.date === dateStr) || { completed: 0 };
         
         data.push({
@@ -62,7 +54,6 @@ export default function ProfileScreen() {
     }
   }, [progressStats, streak]);
 
-  // Generate calendar data for the current month with real data
   const generateCalendarData = () => {
     const today = new Date();
     const year = today.getFullYear();
@@ -74,17 +65,14 @@ export default function ProfileScreen() {
     
     const calendar = [];
     
-    // Add empty cells for days before the first day of the month
     for (let i = 0; i < startingDayOfWeek; i++) {
       calendar.push({ day: '', completed: false, isCurrentMonth: false });
     }
     
-    // Add days of the month with real completion data
     for (let day = 1; day <= daysInMonth; day++) {
       const isToday = day === today.getDate();
       const dateStr = new Date(year, month, day).toISOString().split('T')[0];
       
-      // Get real completion data from API
       const dayStats = progressStats?.daily_stats?.find((stat: any) => stat.date === dateStr);
       const completed = dayStats ? dayStats.completed > 0 : false;
       
@@ -116,16 +104,38 @@ export default function ProfileScreen() {
     return 'Incredible achievements!';
   };
 
+  const handleLogout = () => {
+    Alert.alert(
+      'Logout',
+      'Are you sure you want to logout?',
+      [
+        {
+          text: 'Cancel',
+          style: 'cancel',
+        },
+        {
+          text: 'Logout',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await signOut();
+              console.log('User logged out successfully');
+            } catch (error) {
+              console.error('Logout error:', error);
+              Alert.alert('Error', 'Failed to logout. Please try again.');
+            }
+          },
+        },
+      ]
+    );
+  };
+
   const calendarData = generateCalendarData();
 
-  // Show loading state if data is not available
   if (!progressStats) {
     return (
       <View style={styles.container}>
-        <View style={styles.header}>
-          <Text style={styles.title}>Profile</Text>
-          <Text style={styles.subtitle}>Your progress and statistics</Text>
-        </View>
+        <PageHeader title="Profile" subtitle="Your progress and statistics" />
         <View style={styles.loadingContainer}>
           <Text style={styles.loadingText}>Loading progress data...</Text>
         </View>
@@ -134,61 +144,64 @@ export default function ProfileScreen() {
   }
 
   return (
+    
     <View style={styles.container}>
-      <View style={styles.header}>
-        <Text style={styles.title}>Profile</Text>
-        <Text style={styles.subtitle}>Your progress and statistics</Text>
-      </View>
+      <PageHeader
+        title="Profile"
+        subtitle="Your progress and statistics"
+        right={(
+          <View style={styles.headerButtons}>
+            <TouchableOpacity 
+              style={styles.resetButton}
+              onPress={async () => {
+                Alert.alert(
+                  'Reset All Data',
+                  'Reset all progress and data? This cannot be undone.',
+                  [
+                    { text: 'Cancel', style: 'cancel' },
+                    { 
+                      text: 'Reset', 
+                      style: 'destructive',
+                      onPress: async () => {
+                        try {
+                          await resetToNewDay();
+                          Alert.alert('Success!', 'All data has been reset.');
+                        } catch (error) {
+                          Alert.alert('Error', 'Reset failed: ' + (error instanceof Error ? error.message : String(error)));
+                        }
+                      }
+                    }
+                  ]
+                );
+              }}
+            >
+              <Text style={styles.resetIcon}>🔄</Text>
+              <Text style={styles.resetButtonText}>Reset</Text>
+            </TouchableOpacity>
+            
+            <TouchableOpacity 
+              style={styles.logoutButton}
+              onPress={handleLogout}
+            >
+              <Text style={styles.logoutButtonText}>Logout</Text>
+            </TouchableOpacity>
+          </View>
+        )}
+      />
 
       <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
-        {/* Progress Overview */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Progress Overview</Text>
-          
-        <View style={styles.statsGrid}>
-          <View style={styles.statCard}>
-            <Text style={styles.statNumber}>{progressStats?.streak || streak}</Text>
-            <Text style={styles.statLabel}>Day Streak</Text>
-            <Text style={styles.statMessage}>{getStreakMessage()}</Text>
+        <Section title="Progress Overview">
+          <View style={styles.statsGrid}>
+            <StatCard value={progressStats?.streak || streak} label="Day Streak" message={getStreakMessage()} />
+            <StatCard value={progressStats?.total_completed || completedCount} label="Completed" message={getCompletedMessage()} style={{ marginLeft: 12 }} />
           </View>
-          
-          <View style={styles.statCard}>
-            <Text style={styles.statNumber}>{progressStats?.total_completed || completedCount}</Text>
-            <Text style={styles.statLabel}>Completed</Text>
-            <Text style={styles.statMessage}>{getCompletedMessage()}</Text>
-          </View>
-        </View>
-        </View>
+        </Section>
 
-        {/* Weekly Progress Chart */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Weekly Progress</Text>
-          
-          <View style={styles.chartContainer}>
-            <View style={styles.chart}>
-              {progressData.map((item, index) => (
-                <View key={index} style={styles.chartBar}>
-                  <View 
-                    style={[
-                      styles.bar, 
-                      { 
-                        height: item.completed ? 60 : 20,
-                        backgroundColor: item.completed ? '#4CAF50' : '#E0E0E0'
-                      }
-                    ]} 
-                  />
-                  <Text style={styles.barLabel}>{item.day}</Text>
-                </View>
-              ))}
-            </View>
-            <Text style={styles.chartSubtitle}>Daily completion rate</Text>
-          </View>
-        </View>
+        <Section title="Weekly Progress">
+          <WeeklyBarChart items={progressData} />
+        </Section>
 
-        {/* Calendar View */}
-        <View style={styles.lastSection}>
-          <Text style={styles.sectionTitle}>Activity Calendar</Text>
-          
+        <Section title="Activity Calendar" style={styles.lastSection}>
           <View style={styles.calendarContainer}>
             <View style={styles.calendarHeader}>
               <Text style={styles.monthYear}>
@@ -224,7 +237,7 @@ export default function ProfileScreen() {
             </View>
             
           </View>
-        </View>
+        </Section>
 
       </ScrollView>
     </View>
@@ -234,25 +247,35 @@ export default function ProfileScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f5f5f5',
+    backgroundColor: colors.background,
   },
   header: {
     paddingHorizontal: 20,
     paddingTop: 20,
     paddingBottom: 20,
-    backgroundColor: 'white',
+    backgroundColor: colors.surface,
     borderBottomWidth: 1,
-    borderBottomColor: '#e0e0e0',
+    borderBottomColor: colors.border,
+  },
+  headerContent: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  headerButtons: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
   },
   title: {
     fontSize: 28,
     fontWeight: 'bold',
-    color: '#333',
+    color: colors.textPrimary,
     marginBottom: 4,
   },
   subtitle: {
     fontSize: 16,
-    color: '#666',
+    color: colors.textSecondary,
   },
   scrollView: {
     flex: 1,
@@ -276,7 +299,7 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 20,
     fontWeight: 'bold',
-    color: '#333',
+    color: colors.textPrimary,
     marginTop: 8,
     marginBottom: 16,
   },
@@ -285,43 +308,12 @@ const styles = StyleSheet.create({
     gap: 12,
     marginBottom: 20,
   },
-  statCard: {
-    flex: 1,
-    backgroundColor: 'white',
-    borderRadius: 16,
-    padding: 20,
-    alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
-  },
-  statNumber: {
-    fontSize: 32,
-    fontWeight: 'bold',
-    color: '#8B5CF6',
-    marginBottom: 4,
-  },
-  statLabel: {
-    fontSize: 14,
-    color: '#666',
-    marginBottom: 8,
-  },
-  statMessage: {
-    fontSize: 12,
-    color: '#999',
-    textAlign: 'center',
-  },
-  // Chart styles
+  
   chartContainer: {
-    backgroundColor: 'white',
+    backgroundColor: colors.surface,
     borderRadius: 16,
     padding: 20,
-    shadowColor: '#000',
+    shadowColor: colors.shadow,
     shadowOffset: {
       width: 0,
       height: 2,
@@ -349,22 +341,22 @@ const styles = StyleSheet.create({
   },
   barLabel: {
     fontSize: 12,
-    color: '#666',
+    color: colors.textSecondary,
     fontWeight: '500',
   },
   chartSubtitle: {
     fontSize: 12,
-    color: '#999',
+    color: colors.textMuted,
     textAlign: 'center',
   },
-  // Calendar styles
+  
   calendarContainer: {
-    backgroundColor: 'white',
+    backgroundColor: colors.surface,
     borderRadius: 16,
     paddingHorizontal: 20,
     paddingTop: 20,
     paddingBottom: 20,
-    shadowColor: '#000',
+    shadowColor: colors.shadow,
     shadowOffset: {
       width: 0,
       height: 2,
@@ -381,7 +373,7 @@ const styles = StyleSheet.create({
   monthYear: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#333',
+    color: colors.textPrimary,
   },
   calendarGrid: {
     flexDirection: 'row',
@@ -393,7 +385,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     fontSize: 12,
     fontWeight: 'bold',
-    color: '#666',
+    color: colors.textSecondary,
     paddingVertical: 8,
   },
   calendarDay: {
@@ -405,10 +397,10 @@ const styles = StyleSheet.create({
     margin: 1,
   },
   today: {
-    backgroundColor: '#8B5CF6',
+    backgroundColor: colors.primary,
   },
   completedDay: {
-    backgroundColor: '#4CAF50',
+    backgroundColor: colors.success,
   },
   otherMonth: {
     opacity: 0.3,
@@ -416,20 +408,20 @@ const styles = StyleSheet.create({
   dayText: {
     fontSize: 14,
     fontWeight: '500',
-    color: '#333',
+    color: colors.textPrimary,
   },
   todayText: {
-    color: 'white',
+    color: colors.surface,
     fontWeight: 'bold',
   },
   completedText: {
-    color: 'white',
+    color: colors.surface,
     fontWeight: 'bold',
   },
   otherMonthText: {
-    color: '#999',
+    color: colors.textMuted,
   },
-  // Loading styles
+  
   loadingContainer: {
     flex: 1,
     justifyContent: 'center',
@@ -438,7 +430,35 @@ const styles = StyleSheet.create({
   },
   loadingText: {
     fontSize: 16,
-    color: '#666',
+    color: colors.textSecondary,
     textAlign: 'center',
+  },
+  resetButton: {
+    backgroundColor: colors.accent,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 8,
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  resetIcon: {
+    fontSize: 14,
+    marginRight: 4,
+  },
+  resetButtonText: {
+    color: colors.surface,
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  logoutButton: {
+    backgroundColor: colors.error,
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 8,
+  },
+  logoutButtonText: {
+    color: colors.surface,
+    fontSize: 14,
+    fontWeight: '600',
   },
 });

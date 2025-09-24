@@ -1,5 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { authService, AuthUser } from '../services/authService';
+import { shouldUseFallback } from '../config/authFallback';
 
 interface AuthContextType {
   user: AuthUser | null;
@@ -19,34 +21,76 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     checkCurrentUser();
   }, []);
 
+  const saveUserToStorage = async (user: AuthUser | null) => {
+    try {
+      if (user) {
+        await AsyncStorage.setItem('auth_user', JSON.stringify(user));
+      } else {
+        await AsyncStorage.removeItem('auth_user');
+      }
+    } catch (error) {
+      console.error('Error saving user to storage:', error);
+    }
+  };
+
+  const loadUserFromStorage = async (): Promise<AuthUser | null> => {
+    try {
+      const userData = await AsyncStorage.getItem('auth_user');
+      return userData ? JSON.parse(userData) : null;
+    } catch (error) {
+      console.error('Error loading user from storage:', error);
+      return null;
+    }
+  };
+
   const checkCurrentUser = async () => {
     try {
+      if (!shouldUseFallback()) {
+        console.log('Fallback disabled - checking only with auth service');
+        const currentUser = await authService.getCurrentUser();
+        console.log('Current user check result:', currentUser);
+        
+        if (currentUser) {
+          setUser(currentUser);
+          await saveUserToStorage(currentUser);
+        } else {
+          setUser(null);
+          await saveUserToStorage(null);
+        }
+        setIsLoading(false);
+        return;
+      }
+
+      const savedUser = await loadUserFromStorage();
+      if (savedUser) {
+        const currentUser = await authService.getCurrentUser();
+        if (currentUser) {
+          console.log('Found valid saved user:', currentUser);
+          setUser(currentUser);
+          await saveUserToStorage(currentUser);
+        } else {
+          console.log('Saved user is no longer valid, clearing');
+          setUser(null);
+          await saveUserToStorage(null);
+        }
+        setIsLoading(false);
+        return;
+      }
+
       const currentUser = await authService.getCurrentUser();
       console.log('Current user check result:', currentUser);
       
-      // Temporary stub for testing - create test user
-      if (!currentUser) {
-        const testUser = {
-          id: 'test-user-123',
-          email: 'test@example.com',
-          name: 'Test User',
-          provider: 'email' as const,
-        };
-        console.log('Using test user for development');
-        setUser(testUser);
-      } else {
+      if (currentUser) {
         setUser(currentUser);
+        await saveUserToStorage(currentUser);
+      } else {
+        setUser(null);
+        await saveUserToStorage(null);
       }
     } catch (error) {
       console.error('Error checking current user:', error);
-      // In case of error also create test user
-      const testUser = {
-        id: 'test-user-123',
-        email: 'test@example.com',
-        name: 'Test User',
-        provider: 'email' as const,
-      };
-      setUser(testUser);
+      setUser(null);
+      await saveUserToStorage(null);
     } finally {
       setIsLoading(false);
     }
@@ -62,7 +106,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       } else if (provider === 'apple') {
         authUser = await authService.signInWithApple();
       } else if (provider === 'email' && userData) {
-        // Mock email auth - in a real app, you'd call your backend API
         authUser = {
           id: userData.email,
           email: userData.email,
@@ -74,20 +117,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
 
       setUser(authUser);
+      await saveUserToStorage(authUser);
     } catch (error: any) {
       console.error('Auth error:', error);
       
-      // If user cancelled authorization, check current state
       if (error.code === 'SIGN_IN_CANCELLED' || error.message?.includes('cancelled')) {
         console.log('User cancelled authentication');
         
-        // If user is already authorized, keep them authorized
         if (user) {
           console.log('User is already authenticated, keeping current session');
           return;
         }
         
-        // If user is not authorized, throw error
         throw new Error('Authentication was cancelled');
       }
       
@@ -102,6 +143,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       await authService.signOut();
       setUser(null);
+      await saveUserToStorage(null);
     } catch (error) {
       console.error('Sign out error:', error);
     } finally {

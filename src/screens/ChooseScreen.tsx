@@ -14,7 +14,6 @@ export default function ChooseScreen() {
   const { setActiveChallenge, canTakeNewChallenge, addToFavorites } = useApp();
   const [selectedFilter, setSelectedFilter] = useState('all');
 
-  // Filter challenges based on selected filter
   const filteredChallenges = data?.filter(challenge => {
     if (selectedFilter === 'all') return true;
     return challenge.size === selectedFilter;

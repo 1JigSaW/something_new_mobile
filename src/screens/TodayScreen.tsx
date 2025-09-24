@@ -1,10 +1,13 @@
 import React, { useEffect, useState } from 'react';
 import { View, ScrollView, Text, StyleSheet, TouchableOpacity, Alert } from 'react-native';
+import PageHeader from '../ui/layout/PageHeader';
+import Section from '../ui/layout/Section';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useApp } from '../context/AppContext';
 import { useRandomChallengesQuery, Challenge } from '../features/challenges/useRandomChallengesQuery';
 import { SwipeDeck } from '../components/SwipeDeck';
+import { colors } from '../styles/colors';
 
 export default function TodayScreen() {
   const navigation = useNavigation();
@@ -32,7 +35,6 @@ export default function TodayScreen() {
     isSelected,
   } = useApp();
 
-  // Load random cards for today
   const { 
     data: randomChallenges = [], 
     isLoading: loadingChallenges,
@@ -42,10 +44,9 @@ export default function TodayScreen() {
     freeOnly: !isPremium,
   });
 
-  // Swipe state - now managed globally
   
-
-  // Check for new day on every focus
+  
+  
   useFocusEffect(
     React.useCallback(() => {
       const checkNewDay = async () => {
@@ -59,9 +60,6 @@ export default function TodayScreen() {
     }, [checkAndResetForNewDay])
   );
 
-  // Reset swipe counter on new day - now handled globally
-
-
   const handleTakeNewChallenge = () => {
     if (!canTakeNewChallenge()) {
       Alert.alert(
@@ -71,11 +69,9 @@ export default function TodayScreen() {
       return;
     }
 
-    // Navigate to categories screen
     navigation.navigate('Categories' as never);
   };
 
-  // Swipe handlers
   const handleSwipeRight = (challenge: any) => {
     if (!canSwipe()) {
       Alert.alert(
@@ -85,7 +81,6 @@ export default function TodayScreen() {
       return;
     }
     
-    // Mark as selected and complete immediately
     markAsSelected(challenge.id);
     setActiveChallenge(challenge);
     completeChallenge();
@@ -101,7 +96,6 @@ export default function TodayScreen() {
       return;
     }
     
-    // Mark as viewed
     markAsViewed(challenge.id);
     
     console.log('Skipped card:', challenge.title);
@@ -142,7 +136,7 @@ export default function TodayScreen() {
           <TouchableOpacity 
             style={styles.retryButton} 
             onPress={() => {
-              // Reload app
+              
               console.log('Reloading app...');
             }}
           >
@@ -179,16 +173,13 @@ export default function TodayScreen() {
 
   return (
     <View style={styles.container}>
-      <View style={styles.header}>
-        <View style={styles.headerTop}>
-          <View>
-            <Text style={styles.title}>Today</Text>
-            <Text style={styles.subtitle}>Swipe to choose</Text>
-          </View>
+      <PageHeader
+        title="Today"
+        subtitle="Swipe to choose"
+        right={(
           <TouchableOpacity 
             style={styles.resetButton}
             onPress={async () => {
-              console.log('🔥 HARD RESET STARTING...');
               Alert.alert(
                 'Reset Today',
                 'Reset all limits and data for today?',
@@ -199,12 +190,9 @@ export default function TodayScreen() {
                     style: 'destructive',
                     onPress: async () => {
                       try {
-                        console.log('🔥 HARD RESET - calling resetTodayData...');
                         await resetTodayData();
-                        console.log('✅ HARD RESET COMPLETE!');
                         Alert.alert('SUCCESS!', 'ALL DATA CLEARED!');
                       } catch (error) {
-                        console.error('HARD RESET ERROR:', error);
                         Alert.alert('Error', 'Hard reset failed: ' + (error instanceof Error ? error.message : String(error)));
                       }
                     }
@@ -213,10 +201,11 @@ export default function TodayScreen() {
               );
             }}
           >
+            <Text style={styles.resetIcon}>🔄</Text>
             <Text style={styles.resetButtonText}>Reset</Text>
           </TouchableOpacity>
-        </View>
-      </View>
+        )}
+      />
 
       <View style={styles.deckContainer}>
         <SwipeDeck
@@ -239,6 +228,31 @@ export default function TodayScreen() {
               [{ text: 'Got it' }]
             );
           }}
+          onReset={async () => {
+            console.log('🔥 RESET FROM SWIPEDECK...');
+            Alert.alert(
+              'Reset Today',
+              'Reset all limits and data for today?',
+              [
+                { text: 'Cancel', style: 'cancel' },
+                { 
+                  text: 'Reset', 
+                  style: 'destructive',
+                  onPress: async () => {
+                    try {
+                      console.log('🔥 RESET - calling resetTodayData...');
+                      await resetTodayData();
+                      console.log('✅ RESET COMPLETE!');
+                      Alert.alert('SUCCESS!', 'ALL DATA CLEARED!');
+                    } catch (error) {
+                      console.error('RESET ERROR:', error);
+                      Alert.alert('Error', 'Reset failed: ' + (error instanceof Error ? error.message : String(error)));
+                    }
+                  }
+                }
+              ]
+            );
+          }}
         />
       </View>
 
@@ -249,15 +263,15 @@ export default function TodayScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f5f5f5',
+    backgroundColor: colors.background,
   },
   header: {
     paddingHorizontal: 20,
     paddingTop: 20,
     paddingBottom: 20,
-    backgroundColor: 'white',
+    backgroundColor: colors.surface,
     borderBottomWidth: 1,
-    borderBottomColor: '#e0e0e0',
+    borderBottomColor: colors.border,
   },
   headerTop: {
     flexDirection: 'row',
@@ -267,12 +281,12 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 28,
     fontWeight: 'bold',
-    color: '#333',
+    color: colors.textPrimary,
     marginBottom: 4,
   },
   subtitle: {
     fontSize: 16,
-    color: '#666',
+    color: colors.textSecondary,
   },
   loadingContainer: {
     flex: 1,
@@ -281,7 +295,7 @@ const styles = StyleSheet.create({
   },
   loadingText: {
     fontSize: 18,
-    color: '#666',
+    color: colors.textSecondary,
   },
   completedContainer: {
     flex: 1,
@@ -296,12 +310,12 @@ const styles = StyleSheet.create({
   completedTitle: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: '#333',
+    color: colors.textPrimary,
     marginBottom: 12,
   },
   completedText: {
     fontSize: 16,
-    color: '#666',
+    color: colors.textSecondary,
     textAlign: 'center',
     marginBottom: 20,
     lineHeight: 24,
@@ -309,7 +323,7 @@ const styles = StyleSheet.create({
   streakText: {
     fontSize: 18,
     fontWeight: '600',
-    color: '#8B5CF6',
+    color: colors.primary,
   },
   emptyContainer: {
     flex: 1,
@@ -324,25 +338,25 @@ const styles = StyleSheet.create({
   emptyTitle: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: '#333',
+    color: colors.textPrimary,
     marginBottom: 12,
     textAlign: 'center',
   },
   emptyText: {
     fontSize: 16,
-    color: '#666',
+    color: colors.textSecondary,
     textAlign: 'center',
     lineHeight: 24,
     marginBottom: 32,
   },
   newChallengeButton: {
-    backgroundColor: '#8B5CF6',
+    backgroundColor: colors.primary,
     paddingHorizontal: 32,
     paddingVertical: 16,
     borderRadius: 12,
   },
   newChallengeButtonText: {
-    color: 'white',
+    color: colors.surface,
     fontSize: 16,
     fontWeight: '600',
   },
@@ -354,13 +368,13 @@ const styles = StyleSheet.create({
   },
   errorText: {
     fontSize: 16,
-    color: '#FF6B6B',
+    color: colors.error,
     textAlign: 'center',
     marginBottom: 20,
     lineHeight: 24,
   },
   retryButton: {
-    backgroundColor: '#8B5CF6',
+    backgroundColor: colors.primary,
     paddingHorizontal: 24,
     paddingVertical: 12,
     borderRadius: 8,
@@ -376,10 +390,24 @@ const styles = StyleSheet.create({
     paddingBottom: 0,
   },
   resetButton: {
-    backgroundColor: '#FF6B6B',
+    backgroundColor: colors.error,
     paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 8,
+    paddingVertical: 10,
+    borderRadius: 12,
+    flexDirection: 'row',
+    alignItems: 'center',
+    shadowColor: colors.shadow,
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  resetIcon: {
+    fontSize: 16,
+    marginRight: 6,
   },
   resetButtonText: {
     color: 'white',

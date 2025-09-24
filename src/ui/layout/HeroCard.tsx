@@ -19,7 +19,7 @@ export default function HeroCard({
       width: '100%', 
       borderRadius: 16, 
       padding: 20, 
-      backgroundColor: '#5566ff' 
+      backgroundColor: colors.primary 
     }}>
       <Text variant="title">
         {title}

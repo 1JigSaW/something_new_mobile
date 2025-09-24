@@ -1,43 +1,33 @@
-// Something New - Design System
-// Единый стиль для всего приложения
-
 import { typography as importedTypography } from './typography';
+import { colors as palette } from './colors';
 
 export const colors = {
-  // Основные цвета (purple palette)
-  primary: '#8b5cf6',        // Основной фиолетовый
-  primaryLight: '#a78bfa',   // Светло-фиолетовый
-  primaryDark: '#7c3aed',    // Темно-фиолетовый
-  
-  // Нейтральные цвета
-  white: '#ffffff',
-  black: '#000000',
-  gray50: '#f9fafb',
-  gray100: '#f3f4f6',
-  gray200: '#e5e7eb',
-  gray300: '#d1d5db',
-  gray400: '#9ca3af',
+  primary: palette.primary,
+  primaryLight: palette.primaryLight,
+  primaryDark: palette.primaryDark,
+  white: palette.surface,
+  black: palette.textPrimary,
+  gray50: palette.secondaryLight,
+  gray100: palette.secondaryDark,
+  gray200: palette.gray200,
+  gray300: palette.gray300,
+  gray400: palette.textMuted,
   gray500: '#6b7280',
   gray600: '#4b5563',
   gray700: '#374151',
   gray800: '#1f2937',
   gray900: '#111827',
-  
-  // Семантические цвета
-  success: '#10b981',
-  warning: '#f59e0b',
-  error: '#ef4444',
-  info: '#8b5cf6',
-  
-  // Алиасы для совместимости
-  text: '#1f2937',
-  textMuted: '#6b7280',
-  background: '#ffffff',
-  border: '#e5e7eb',
+  success: palette.success,
+  warning: palette.warning,
+  error: palette.error,
+  info: palette.info,
+  text: palette.textPrimary,
+  textMuted: palette.textSecondary,
+  background: palette.background,
+  border: palette.border,
 } as const;
 
 export const typography = {
-  // Размеры шрифтов
   xs: { 
     fontSize: 12, 
     lineHeight: 16,
@@ -79,7 +69,6 @@ export const typography = {
     fontWeight: '700' as const,
   },
   
-  // Веса шрифтов
   weights: {
     light: '300' as const,
     normal: '400' as const,
@@ -115,21 +104,21 @@ export const borderRadius = {
 
 export const shadows = {
   sm: {
-    shadowColor: '#000',
+    shadowColor: palette.shadow,
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.05,
     shadowRadius: 2,
     elevation: 1,
   },
   md: {
-    shadowColor: '#000',
+    shadowColor: palette.shadow,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
     elevation: 2,
   },
   lg: {
-    shadowColor: '#000',
+    shadowColor: palette.shadow,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.15,
     shadowRadius: 8,

@@ -2,7 +2,9 @@ import React from 'react';
 import { View, ScrollView, Text as RNText } from 'react-native';
 import Screen from '../ui/Screen';
 import Container from '../ui/layout/Container';
-import Header from '../ui/layout/Header';
+import PageHeader from '../ui/layout/PageHeader';
+import Section from '../ui/layout/Section';
+import WeeklyBarChart from '../ui/molecules/WeeklyBarChart';
 import Text from '../ui/atoms/Text';
 import Button from '../ui/atoms/Button';
 import BeautifulLoader from '../ui/atoms/BeautifulLoader';
@@ -24,23 +26,20 @@ export default function ProgressScreen() {
     <Screen>
       <Container>
         <ScrollView style={{ paddingVertical: spacing.lg }}>
-          <Header 
+          <PageHeader 
             title="Progress" 
             subtitle="Stats"
-            right={
-              user?.provider !== 'anonymous' && (
-                <Button 
-                  title="Logout" 
-                  variant="ghost" 
-                  onPress={signOut}
-                  style={{ paddingHorizontal: spacing.sm }}
-                />
-              )
-            }
+            right={user?.provider !== 'anonymous' ? (
+              <Button 
+                title="Logout" 
+                variant="ghost" 
+                onPress={signOut}
+                style={{ paddingHorizontal: spacing.sm }}
+              />
+            ) : undefined}
           />
           
           <View style={{ marginTop: spacing['2xl'] }}>
-            {/* Main Stats Grid */}
             <View style={{ 
               flexDirection: 'row', 
               justifyContent: 'space-between', 
@@ -63,7 +62,6 @@ export default function ProgressScreen() {
               />
             </View>
 
-            {/* Learning Progress */}
             <ProgressCard
               title="Progress"
               subtitle="Keep going!"
@@ -72,20 +70,7 @@ export default function ProgressScreen() {
               color={colors.primary}
             />
 
-            {/* Weekly Overview */}
-            <View style={{
-              backgroundColor: colors.surface,
-              borderRadius: borderRadius.xl,
-              padding: spacing.xl,
-              marginBottom: spacing['2xl'],
-              ...shadows.md,
-            }}>
-              <View style={{ marginBottom: spacing.lg }}>
-                <Text variant="subtitle" color="default">
-                  📊 Week
-                </Text>
-              </View>
-              
+            <Section title="📊 Week">
               <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: spacing.lg }}>
                 <View style={{ alignItems: 'center' }}>
                   <Text variant="title" color="default">{thisWeekChallenges}</Text>
@@ -100,20 +85,17 @@ export default function ProgressScreen() {
                   <Text color="muted">Time Spent</Text>
                 </View>
               </View>
+              <WeeklyBarChart items={[
+                { day: 'S', completed: 1 },
+                { day: 'M', completed: 0 },
+                { day: 'T', completed: 1 },
+                { day: 'W', completed: 1 },
+                { day: 'T', completed: 0 },
+                { day: 'F', completed: 1 },
+                { day: 'S', completed: 1 },
+              ]} />
+            </Section>
 
-              {/* Weekly Chart Placeholder */}
-              <View style={{
-                height: 60,
-                backgroundColor: colors.surfaceSecondary,
-                borderRadius: borderRadius.lg,
-                alignItems: 'center',
-                justifyContent: 'center',
-              }}>
-                <Text color="muted">Weekly activity chart</Text>
-              </View>
-            </View>
-
-            {/* Achievements Section */}
             <View style={{ marginBottom: spacing['2xl'] }}>
               <View style={{ marginBottom: spacing.lg }}>
                 <Text variant="subtitle" color="default">

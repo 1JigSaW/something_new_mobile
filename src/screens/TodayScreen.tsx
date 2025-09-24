@@ -130,10 +130,7 @@ export default function TodayScreen() {
   if (completedToday) {
     return (
       <View style={styles.container}>
-        <View style={styles.header}>
-          <Text style={styles.title}>Today</Text>
-          <Text style={styles.subtitle}>Your progress</Text>
-        </View>
+        <PageHeader title="Today" subtitle="Your progress" />
         
         <View style={styles.completedContainer}>
           <Text style={styles.completedEmoji}>🎉</Text>

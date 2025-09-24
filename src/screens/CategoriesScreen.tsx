@@ -327,7 +327,6 @@ export default function CategoriesScreen() {
       </View>
 
       <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
-        {/* Size Categories */}
         <View style={[styles.section, styles.firstSection]}>
           <Text style={styles.sectionTitle}>📦 Size</Text>
           <ScrollView 
@@ -359,7 +358,6 @@ export default function CategoriesScreen() {
           </ScrollView>
         </View>
 
-        {/* Duration Categories */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>⏰ Duration</Text>
           <ScrollView 
@@ -395,7 +393,6 @@ export default function CategoriesScreen() {
           </ScrollView>
         </View>
 
-        {/* Premium Category */}
         {isPremium && (
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>⭐ Premium</Text>

@@ -1,13 +1,15 @@
 import React, { useState } from 'react';
-import { View, FlatList, Text as RNText, Alert } from 'react-native';
+import { View, FlatList, Alert } from 'react-native';
 import Screen from '../ui/Screen';
 import Container from '../ui/layout/Container';
 import PageHeader from '../ui/layout/PageHeader';
 import Text from '../ui/atoms/Text';
 import Button from '../ui/atoms/Button';
-import { useChallengesQuery } from '../features/challenges/useChallengesQuery';
+import { ChallengeCard } from '../ui/molecules/ChallengeCard';
+import { ScreenEmptyState } from '../ui/molecules/ScreenEmptyState';
+import { useChallengesQuery } from '../features';
 import { useApp } from '../context/AppContext';
-import { colors, spacing, borderRadius, shadows } from '../styles';
+import { colors, spacing, borderRadius } from '../styles';
 
 export default function ChooseScreen() {
   const { data, isLoading } = useChallengesQuery({ freeOnly: true });
@@ -35,74 +37,27 @@ export default function ChooseScreen() {
     }
   };
 
+  const handleSelectChallenge = (challenge: any) => {
+    if (!canTakeNewChallenge()) {
+      Alert.alert('Limit Reached', 'You have already completed a challenge today. Come back tomorrow!');
+      return;
+    }
+    setActiveChallenge(challenge);
+    Alert.alert('Challenge Started!', 'Good luck with your challenge! 🎉');
+  };
+
+  const handleAddToFavorites = (challenge: any) => {
+    addToFavorites(challenge);
+    Alert.alert('Added!', 'Challenge added to your favorites! 📅');
+  };
+
   const renderChallenge = ({ item }: { item: any }) => (
-    <View
-      style={{
-        backgroundColor: colors.surface,
-        borderRadius: borderRadius.xl,
-        padding: spacing.xl,
-        marginBottom: spacing.md,
-        ...shadows.md,
-      }}
-    >
-      <View style={{ flexDirection: 'row', alignItems: 'flex-start', marginBottom: spacing.md }}>
-        <View style={{ 
-          width: 12, 
-          height: 12, 
-          borderRadius: 6, 
-          backgroundColor: colors.primary,
-          marginRight: spacing.md,
-          marginTop: 4,
-        }} />
-        <View style={{ flex: 1 }}>
-          <View style={{ marginBottom: spacing.sm }}>
-            <Text variant="subtitle" color="default">
-              {item.title}
-            </Text>
-          </View>
-          <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: spacing.sm }}>
-            <RNText style={{ fontSize: 16, marginRight: spacing.sm }}>⏱️</RNText>
-            <Text color="muted">
-              {item.estimated_duration_min ? `${item.estimated_duration_min}m` : 
-               item.size === 'small' ? '5-30m' : item.size === 'medium' ? '30-90m' : '2h+'}
-            </Text>
-          </View>
-        </View>
-      </View>
-      
-      <View style={{ flexDirection: 'row', gap: spacing.sm, marginTop: spacing.md }}>
-        <Button 
-          title="Start" 
-          onPress={() => {
-            if (!canTakeNewChallenge()) {
-              Alert.alert('Limit Reached', 'You have already completed a challenge today. Come back tomorrow!');
-              return;
-            }
-            setActiveChallenge(item);
-            Alert.alert('Challenge Started!', 'Good luck with your challenge! 🎉');
-          }}
-          style={{ 
-            flex: 1, 
-            backgroundColor: colors.primary,
-            borderRadius: borderRadius.xl,
-            paddingVertical: spacing.lg,
-          }}
-        />
-        <Button 
-          title="Add" 
-          variant="secondary" 
-          onPress={() => {
-            addToFavorites(item);
-            Alert.alert('Added!', 'Challenge added to your favorites! 📅');
-          }}
-          style={{ 
-            flex: 1,
-            borderRadius: borderRadius.xl,
-            paddingVertical: spacing.lg,
-          }}
-        />
-      </View>
-    </View>
+    <ChallengeCard
+      challenge={item}
+      onSelect={handleSelectChallenge}
+      onAddToFavorites={handleAddToFavorites}
+      showActions={true}
+    />
   );
 
   return (
@@ -140,13 +95,16 @@ export default function ChooseScreen() {
 
           {/* Challenges List */}
           {isLoading ? (
-            <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
-              <Text color="muted">Loading challenges...</Text>
-            </View>
+            <ScreenEmptyState 
+              title="Loading challenges..." 
+              icon="⏳"
+            />
           ) : filteredChallenges.length === 0 ? (
-            <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
-              <Text color="muted">No challenges found</Text>
-            </View>
+            <ScreenEmptyState 
+              title="No challenges found" 
+              subtitle="Try adjusting your filters"
+              icon="🔍"
+            />
           ) : (
             <FlatList
               data={filteredChallenges}

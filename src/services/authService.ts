@@ -1,8 +1,7 @@
 import { GoogleSignin, statusCodes } from '@react-native-google-signin/google-signin';
 import { appleAuth } from '@invertase/react-native-apple-authentication';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { AUTH_CONFIG } from '../config/auth';
-import { shouldUseFallback } from '../config/authFallback';
+import { AUTH_CONFIG, shouldUseFallback } from '../config';
 import { http } from '../api';
 import { API } from '../api/endpoints';
 

@@ -76,7 +76,7 @@ export function SwipeDeck({
     opacity.setValue(1);
     scale.setValue(1);
     heartScale.setValue(1);
-  }, [challenges]);
+  }, [challenges, heartScale, opacity, rotate, scale, translateX, translateY]);
 
   const getTodayKey = () => {
     const d = new Date();

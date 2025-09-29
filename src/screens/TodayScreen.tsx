@@ -6,14 +6,16 @@ import EmptyState from '../ui/molecules/EmptyState';
 import ErrorState from '../ui/molecules/ErrorState';
 import ResetButton from '../ui/atoms/ResetButton';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
+import { TabScreenProps, TAB_SCREENS } from '../types/navigation';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useApp } from '../context/AppContext';
-import { useRandomChallengesQuery, Challenge } from '../features/challenges/useRandomChallengesQuery';
+import { useRandomChallengesQuery, Challenge } from '../features';
 import { SwipeDeck } from '../ui/organisms/SwipeDeck';
 import { colors } from '../styles/colors';
 
-export default function TodayScreen() {
-  const navigation = useNavigation();
+type Props = TabScreenProps<'Today'>;
+
+export default function TodayScreen({ navigation }: Props) {
   const {
     activeChallenge,
     setActiveChallenge,
@@ -72,7 +74,7 @@ export default function TodayScreen() {
       return;
     }
 
-    navigation.navigate('Categories' as never);
+    navigation.navigate(TAB_SCREENS.CATEGORIES);
   };
 
   const handleSwipeRight = (challenge: any) => {

@@ -1,38 +1,25 @@
 import React from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { Text } from 'react-native';
 import TodayScreen from '../screens/TodayScreen';
 import CategoriesScreen from '../screens/CategoriesScreen';
 import FavoritesScreen from '../screens/FavoritesScreen';
 import ProfileScreen from '../screens/ProfileScreen';
-import { colors } from '../styles/colors';
+import { TabIcon } from './TabIcon';
+import { TAB_BAR_CONFIG, TAB_LABELS } from './config';
+import { TAB_SCREENS, RootTabParamList } from '../types/navigation';
 
-const Tab = createBottomTabNavigator();
+const Tab = createBottomTabNavigator<RootTabParamList>();
 
 export function BottomTabNavigation() {
   return (
-    <Tab.Navigator
-      screenOptions={{
-        headerShown: false,
-        tabBarStyle: {
-          backgroundColor: colors.surface,
-          borderTopWidth: 1,
-          borderTopColor: colors.border,
-          paddingBottom: 5,
-          paddingTop: 5,
-          height: 60,
-        },
-        tabBarActiveTintColor: colors.primary,
-        tabBarInactiveTintColor: colors.textSecondary,
-      }}
-    >
+    <Tab.Navigator screenOptions={TAB_BAR_CONFIG}>
       <Tab.Screen
         name="Today"
         component={TodayScreen}
         options={{
-          tabBarLabel: 'Today',
+          tabBarLabel: TAB_LABELS.TODAY,
           tabBarIcon: ({ color }) => (
-            <Text style={{ fontSize: 20, color, fontWeight: 'bold' }}>●</Text>
+            <TabIcon name="Today" color={color} />
           ),
         }}
       />
@@ -40,9 +27,9 @@ export function BottomTabNavigation() {
         name="Categories"
         component={CategoriesScreen}
         options={{
-          tabBarLabel: 'Categories',
+          tabBarLabel: TAB_LABELS.CATEGORIES,
           tabBarIcon: ({ color }) => (
-            <Text style={{ fontSize: 20, color, fontWeight: 'bold' }}>■</Text>
+            <TabIcon name="Categories" color={color} />
           ),
         }}
       />
@@ -50,9 +37,9 @@ export function BottomTabNavigation() {
         name="Favorites"
         component={FavoritesScreen}
         options={{
-          tabBarLabel: 'Favorites',
+          tabBarLabel: TAB_LABELS.FAVORITES,
           tabBarIcon: ({ color }) => (
-            <Text style={{ fontSize: 20, color, fontWeight: 'bold' }}>★</Text>
+            <TabIcon name="Favorites" color={color} />
           ),
         }}
       />
@@ -60,9 +47,9 @@ export function BottomTabNavigation() {
         name="Profile"
         component={ProfileScreen}
         options={{
-          tabBarLabel: 'Profile',
+          tabBarLabel: TAB_LABELS.PROFILE,
           tabBarIcon: ({ color }) => (
-            <Text style={{ fontSize: 20, color, fontWeight: 'bold' }}>○</Text>
+            <TabIcon name="Profile" color={color} />
           ),
         }}
       />

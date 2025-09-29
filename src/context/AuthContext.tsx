@@ -1,7 +1,8 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { authService, AuthUser } from '../services/authService';
-import { shouldUseFallback } from '../config/authFallback';
+import { shouldUseFallback } from '../config';
+import { useAsyncStorage } from '../hooks/useAsyncStorage';
+import { STORAGE_KEYS } from '../types/hooks';
 
 interface AuthContextType {
   user: AuthUser | null;
@@ -14,34 +15,12 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [user, setUser] = useState<AuthUser | null>(null);
+  const [user, saveUser] = useAsyncStorage<AuthUser | null>(STORAGE_KEYS.AUTH_USER, null);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     checkCurrentUser();
-  }, []);
-
-  const saveUserToStorage = async (user: AuthUser | null) => {
-    try {
-      if (user) {
-        await AsyncStorage.setItem('auth_user', JSON.stringify(user));
-      } else {
-        await AsyncStorage.removeItem('auth_user');
-      }
-    } catch (error) {
-      console.error('Error saving user to storage:', error);
-    }
-  };
-
-  const loadUserFromStorage = async (): Promise<AuthUser | null> => {
-    try {
-      const userData = await AsyncStorage.getItem('auth_user');
-      return userData ? JSON.parse(userData) : null;
-    } catch (error) {
-      console.error('Error loading user from storage:', error);
-      return null;
-    }
-  };
+  }, [user]);
 
   const checkCurrentUser = async () => {
     try {
@@ -50,28 +29,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         const currentUser = await authService.getCurrentUser();
         console.log('Current user check result:', currentUser);
         
-        if (currentUser) {
-          setUser(currentUser);
-          await saveUserToStorage(currentUser);
-        } else {
-          setUser(null);
-          await saveUserToStorage(null);
-        }
+        await saveUser(currentUser);
         setIsLoading(false);
         return;
       }
 
-      const savedUser = await loadUserFromStorage();
-      if (savedUser) {
+      if (user) {
         const currentUser = await authService.getCurrentUser();
         if (currentUser) {
           console.log('Found valid saved user:', currentUser);
-          setUser(currentUser);
-          await saveUserToStorage(currentUser);
+          await saveUser(currentUser);
         } else {
           console.log('Saved user is no longer valid, clearing');
-          setUser(null);
-          await saveUserToStorage(null);
+          await saveUser(null);
         }
         setIsLoading(false);
         return;
@@ -80,17 +50,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const currentUser = await authService.getCurrentUser();
       console.log('Current user check result:', currentUser);
       
-      if (currentUser) {
-        setUser(currentUser);
-        await saveUserToStorage(currentUser);
-      } else {
-        setUser(null);
-        await saveUserToStorage(null);
-      }
+      await saveUser(currentUser);
     } catch (error) {
       console.error('Error checking current user:', error);
-      setUser(null);
-      await saveUserToStorage(null);
+      await saveUser(null);
     } finally {
       setIsLoading(false);
     }
@@ -111,8 +74,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         throw new Error('Unsupported provider or missing user data');
       }
 
-      setUser(authUser);
-      await saveUserToStorage(authUser);
+      await saveUser(authUser);
     } catch (error: any) {
       console.error('Auth error:', error);
       
@@ -137,8 +99,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setIsLoading(true);
     try {
       await authService.signOut();
-      setUser(null);
-      await saveUserToStorage(null);
+      await saveUser(null);
     } catch (error) {
       console.error('Sign out error:', error);
     } finally {

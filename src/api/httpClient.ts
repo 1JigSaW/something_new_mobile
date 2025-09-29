@@ -1,6 +1,6 @@
 import axios, { AxiosError, AxiosInstance } from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { shouldUseFallback } from '../config/authFallback';
+import { shouldUseFallback } from '../config';
 
 export function createHttpClient({ baseURL }: { baseURL: string }): AxiosInstance {
   const instance = axios.create({

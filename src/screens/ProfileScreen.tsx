@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { View, ScrollView, Text, StyleSheet, TouchableOpacity, Switch, Alert, Dimensions } from 'react-native';
 import { useApp } from '../context/AppContext';
 import { useAuth } from '../context/AuthContext';
-import { useProgressStats } from '../features/progress/useProgressStats';
+import { useProgressStats } from '../features';
 import PageHeader from '../ui/layout/PageHeader';
 import Section from '../ui/layout/Section';
 import ResetButton from '../ui/atoms/ResetButton';

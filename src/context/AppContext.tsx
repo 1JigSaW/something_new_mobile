@@ -1,23 +1,11 @@
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import React, { createContext, useContext, ReactNode } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { Alert } from 'react-native';
 import { http } from '../api';
 import { API } from '../api/endpoints';
-import { shouldUseFallback } from '../config/authFallback';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-
-interface Challenge {
-  id: number;
-  title: string;
-  short_description: string;
-  category: string;
-  tags: string;
-  size: 'small' | 'medium' | 'large';
-  estimated_duration_min: number;
-  is_premium_only: boolean;
-  created_at: string;
-  updated_at: string;
-}
+import { shouldUseFallback } from '../config';
+import { useDailyData, useUserData, useFavorites, useViewedChallenges, useSelectedChallenges } from '../hooks';
+import { Challenge } from '../types/challenge';
 
 interface AppContextType {
   activeChallenge: Challenge | null;
@@ -63,142 +51,45 @@ const AppContext = createContext<AppContextType | undefined>(undefined);
 
 export function AppProvider({ children }: { children: ReactNode }) {
   const queryClient = useQueryClient();
-  const [activeChallenge, setActiveChallenge] = useState<Challenge | null>(null);
-  const [streak, setStreak] = useState(0);
-  const [completedCount, setCompletedCount] = useState(0);
-  const [completedToday, setCompletedToday] = useState(false);
-  const [isPremium, setIsPremium] = useState(false);
-  const [skipsUsedToday, setSkipsUsedToday] = useState(0);
-  const [swipesUsedToday, setSwipesUsedToday] = useState(0);
-  const [viewedChallenges, setViewedChallenges] = useState<number[]>([]);
-  const [selectedChallenges, setSelectedChallenges] = useState<number[]>([]);
-  const [favorites, setFavorites] = useState<Challenge[]>([]);
-  const [challengesTakenToday, setChallengesTakenToday] = useState(0);
+  
+  const { dailyData, updateDailyData, resetForNewDay, resetTodayData } = useDailyData();
+  const { userStats, incrementStreak, incrementCompletedCount, setPremium } = useUserData();
+  const { favorites, addToFavorites, removeFromFavorites } = useFavorites(userStats.isPremium);
+  const { viewedChallenges, markAsViewed, getUnviewedChallenges } = useViewedChallenges();
+  const { selectedChallenges, markAsSelected, isSelected, removeFromSelected } = useSelectedChallenges();
 
-  const maxSkipsPerDay = isPremium ? 999 : 5;
-  const maxSwipesPerDay = isPremium ? 999 : 15;
+  const maxSkipsPerDay = userStats.isPremium ? 999 : 5;
+  const maxSwipesPerDay = userStats.isPremium ? 999 : 15;
 
-  useEffect(() => {
-    loadAppData();
-  }, []);
-
-  const loadAppData = async () => {
-    try {
-      const data = await AsyncStorage.getItem('appData');
-      const today = new Date().toDateString();
-      let lastDayDate = await AsyncStorage.getItem('lastDayDate');
-      
-      if (!lastDayDate) {
-        await AsyncStorage.setItem('lastDayDate', today);
-        lastDayDate = today;
-      }
-
-      const viewedData = await AsyncStorage.getItem('viewedChallenges');
-      if (viewedData) {
-        setViewedChallenges(JSON.parse(viewedData));
-      }
-
-      const selectedData = await AsyncStorage.getItem('selectedChallenges');
-      if (selectedData) {
-        setSelectedChallenges(JSON.parse(selectedData));
-      }
-      
-      if (data) {
-        const parsed = JSON.parse(data);
-        setStreak(parsed.streak || 0);
-        setCompletedCount(parsed.completedCount || 0);
-        setIsPremium(parsed.isPremium || false);
-        setFavorites(parsed.favorites || []);
-        
-        if (lastDayDate !== today) {
-          setCompletedToday(false);
-          setActiveChallenge(null);
-          setSkipsUsedToday(0);
-          setSwipesUsedToday(0);
-          setChallengesTakenToday(0);
-          await AsyncStorage.setItem('lastDayDate', today);
-        } else {
-          setCompletedToday(parsed.completedToday || false);
-          setActiveChallenge(parsed.activeChallenge || null);
-          setSkipsUsedToday(parsed.skipsUsedToday || 0);
-          setSwipesUsedToday(parsed.swipesUsedToday || 0);
-          setChallengesTakenToday(parsed.challengesTakenToday || 0);
-        }
-      } else {
-        setStreak(0);
-        setCompletedCount(0);
-        setCompletedToday(false);
-        setIsPremium(false);
-        setSkipsUsedToday(0);
-        setFavorites([]);
-        setActiveChallenge(null);
-        setChallengesTakenToday(0);
-      }
-    } catch (error) {
-      console.error('Error loading app data:', error);
-      setStreak(0);
-      setCompletedCount(0);
-      setCompletedToday(false);
-      setIsPremium(false);
-      setSkipsUsedToday(0);
-      setFavorites([]);
-      setActiveChallenge(null);
-      setChallengesTakenToday(0);
-    }
+  const canSkip = () => {
+    return dailyData.skipsUsedToday < maxSkipsPerDay;
   };
 
-  const saveAppData = async () => {
-    try {
-      const data = {
-        streak,
-        completedCount,
-        completedToday,
-        isPremium,
-        skipsUsedToday,
-        swipesUsedToday,
-        favorites,
-        activeChallenge,
-        challengesTakenToday,
-      };
-      await AsyncStorage.setItem('appData', JSON.stringify(data));
-    } catch (error) {
-      console.error('Error saving app data:', error);
-    }
+  const canSwipe = () => {
+    return dailyData.swipesUsedToday < maxSwipesPerDay;
   };
 
-  useEffect(() => {
-    saveAppData();
-  }, [streak, completedCount, completedToday, isPremium, skipsUsedToday, swipesUsedToday, favorites, activeChallenge, challengesTakenToday]);
-
-  const addToFavorites = (challenge: Challenge) => {
-    if (favorites.length >= 10 && !isPremium) {
-      Alert.alert('Favorites limit reached', 'Upgrade to Premium for unlimited favorites.');
-      return;
-    }
-    if (!favorites.find(fav => fav.id === challenge.id)) {
-      setFavorites([...favorites, challenge]);
-    }
+  const useSwipe = async () => {
+    await updateDailyData({ swipesUsedToday: dailyData.swipesUsedToday + 1 });
   };
 
-  const removeFromFavorites = (challengeId: number) => {
-    setFavorites(favorites.filter(fav => fav.id !== challengeId));
+  const canTakeNewChallenge = () => {
+    if (userStats.isPremium) return true;
+    return !dailyData.completedToday && dailyData.challengesTakenToday < 5;
   };
 
   const completeChallenge = async (challenge?: Challenge) => {
-    const target = challenge || activeChallenge;
+    const target = challenge || dailyData.activeChallenge;
     if (!target) return;
+    
     try {
       let stats: any | null = null;
       const useFallback = shouldUseFallback();
 
       if (!useFallback) {
         try {
-          await http.post(
-            API.challenges.complete({ id: target.id }),
-          );
-          const { data } = await http.get(
-            API.profile.stats(),
-          );
+          await http.post(API.challenges.complete({ id: target.id }));
+          const { data } = await http.get(API.profile.stats());
           stats = data;
         } catch (e) {
           stats = null;
@@ -207,13 +98,13 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
       if (stats) {
         queryClient.setQueryData(['progress-stats'], stats);
-        setCompletedToday(true);
-        setStreak(typeof stats?.streak === 'number' ? stats.streak : streak + 1);
-        setCompletedCount(typeof stats?.total_completed === 'number' ? stats.total_completed : completedCount + 1);
+        await updateDailyData({ completedToday: true });
+        await incrementStreak();
+        await incrementCompletedCount();
       } else {
-        setCompletedToday(true);
-        setStreak(prev => prev + 1);
-        setCompletedCount(prev => prev + 1);
+        await updateDailyData({ completedToday: true });
+        await incrementStreak();
+        await incrementCompletedCount();
 
         const today = new Date();
         const todayStr = today.toISOString().split('T')[0];
@@ -238,12 +129,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
         });
       }
 
-      setSelectedChallenges(prev => prev.filter(id => id !== target.id));
-      markAsViewed(target.id);
-      setActiveChallenge(null);
-
-      const todaySaved = new Date().toDateString();
-      await AsyncStorage.setItem('lastCompletedDate', todaySaved);
+      await removeFromSelected(target.id);
+      await markAsViewed(target.id);
+      await updateDailyData({ activeChallenge: null });
     } catch (error: any) {
       if (error?.response?.status === 429) {
         Alert.alert('Limit reached', 'You can complete only one challenge per day. Come back tomorrow!');
@@ -255,162 +143,43 @@ export function AppProvider({ children }: { children: ReactNode }) {
   };
 
   const skipChallenge = async () => {
-    if (!activeChallenge) return;
+    if (!dailyData.activeChallenge) return;
     
-    const today = new Date().toDateString();
-    
-    setSkipsUsedToday(skipsUsedToday + 1);
-    setActiveChallenge(null);
-    
-    await AsyncStorage.setItem('lastSkipDate', today);
-  };
-
-  const canSkip = () => {
-    return skipsUsedToday < maxSkipsPerDay;
-  };
-
-  const canTakeNewChallenge = () => {
-    if (isPremium) return true;
-    return !completedToday && challengesTakenToday < 5;
-  };
-
-  const canSwipe = () => {
-    return swipesUsedToday < maxSwipesPerDay;
-  };
-
-  const useSwipe = () => {
-    setSwipesUsedToday(prev => prev + 1);
-  };
-
-  const markAsViewed = (challengeId: number) => {
-    setViewedChallenges(prev => {
-      if (!prev.includes(challengeId)) {
-        const newViewed = [...prev, challengeId];
-        AsyncStorage.setItem('viewedChallenges', JSON.stringify(newViewed));
-        return newViewed;
-      }
-      return prev;
+    await updateDailyData({ 
+      skipsUsedToday: dailyData.skipsUsedToday + 1,
+      activeChallenge: null 
     });
   };
 
-  const getUnviewedChallenges = (challenges: Challenge[]) => {
-    return challenges.filter(challenge => !viewedChallenges.includes(challenge.id));
-  };
-
-  const markAsSelected = (challengeId: number) => {
-    setSelectedChallenges(prev => {
-      if (!prev.includes(challengeId)) {
-        const newSelected = [...prev, challengeId];
-        AsyncStorage.setItem('selectedChallenges', JSON.stringify(newSelected));
-        return newSelected;
-      }
-      return prev;
+  const setActiveChallenge = async (challenge: Challenge | null) => {
+    await updateDailyData({ 
+      activeChallenge: challenge,
+      challengesTakenToday: challenge ? dailyData.challengesTakenToday + 1 : dailyData.challengesTakenToday 
     });
-  };
-
-  const isSelected = (challengeId: number) => {
-    return selectedChallenges.includes(challengeId);
-  };
-
-
-  const handleSetActiveChallenge = (challenge: Challenge | null) => {
-    setActiveChallenge(challenge);
-    if (challenge) {
-      setChallengesTakenToday(prev => prev + 1);
-    }
-  };
-
-  const resetToNewDay = async () => {
-    const today = new Date().toDateString();
-    await AsyncStorage.setItem('lastDayDate', today);
-    setCompletedToday(false);
-    setActiveChallenge(null);
-    setSkipsUsedToday(0);
-    setSwipesUsedToday(0);
-    setChallengesTakenToday(0);
-    setSelectedChallenges([]);
-  };
-
-  const resetTodayData = async () => {
-    try {
-      console.log('🔄 Resetting today\'s data...');
-      
-      await AsyncStorage.multiRemove([
-        'lastDayDate',
-        'appData',
-        'selectedChallenges',
-        'viewedChallenges'
-      ]);
-      
-      setCompletedToday(false);
-      setActiveChallenge(null);
-      setSkipsUsedToday(0);
-      setSwipesUsedToday(0);
-      setChallengesTakenToday(0);
-      setSelectedChallenges([]);
-      setViewedChallenges([]);
-      
-      const data = {
-        streak,
-        completedCount,
-        completedToday: false,
-        isPremium,
-        skipsUsedToday: 0,
-        swipesUsedToday: 0,
-        favorites,
-        activeChallenge: null,
-        challengesTakenToday: 0,
-      };
-      await AsyncStorage.setItem('appData', JSON.stringify(data));
-      
-      console.log('✅ Today\'s data cleared successfully!');
-      console.log('📊 Current state:', {
-        completedToday,
-        swipesUsedToday: 0,
-        challengesTakenToday: 0,
-        skipsUsedToday: 0
-      });
-    } catch (error) {
-      console.error('❌ Failed to reset today\'s data:', error);
-    }
   };
 
   const checkAndResetForNewDay = async (): Promise<boolean> => {
     try {
-      const today = new Date().toDateString();
-      const lastDayDate = await AsyncStorage.getItem('lastDayDate');
-      
-      if (lastDayDate && lastDayDate !== today) {
-        await resetToNewDay();
-        return true;
-      }
-      return false;
+      await resetForNewDay();
+      return true;
     } catch (error) {
       console.error('Error checking new day:', error);
       return false;
     }
   };
 
-  useEffect(() => {
-    const interval = setInterval(async () => {
-      await checkAndResetForNewDay();
-    }, 60000);
-
-    return () => clearInterval(interval);
-  }, [checkAndResetForNewDay]);
-
   return (
     <AppContext.Provider value={{
-      activeChallenge,
-      setActiveChallenge: handleSetActiveChallenge,
-      streak,
-      completedCount,
-      completedToday,
-      isPremium,
-      setIsPremium,
-      skipsUsedToday,
+      activeChallenge: dailyData.activeChallenge,
+      setActiveChallenge,
+      streak: userStats.streak,
+      completedCount: userStats.completedCount,
+      completedToday: dailyData.completedToday,
+      isPremium: userStats.isPremium,
+      setIsPremium: setPremium,
+      skipsUsedToday: dailyData.skipsUsedToday,
       maxSkipsPerDay,
-      swipesUsedToday,
+      swipesUsedToday: dailyData.swipesUsedToday,
       maxSwipesPerDay,
       canSwipe,
       useSwipe,
@@ -427,7 +196,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       skipChallenge,
       canSkip,
       canTakeNewChallenge,
-      resetToNewDay,
+      resetToNewDay: resetForNewDay,
       checkAndResetForNewDay,
       resetTodayData,
     }}>

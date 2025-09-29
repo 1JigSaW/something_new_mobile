@@ -3,18 +3,11 @@ import { View, StyleSheet, Alert, KeyboardAvoidingView, Platform, ScrollView, Te
 import { useAuth } from '../context/AuthContext';
 import Screen from '../ui/Screen';
 import Container from '../ui/layout/Container';
-import Button from '../ui/atoms/Button';
 import Text from '../ui/atoms/Text';
 import Loader from '../ui/Loader';
 import AppLogo from '../assets/images/AppLogo';
 import { GoogleIcon, AppleIcon } from '../assets/icons';
-import {
-  colors,
-  spacing,
-  borderRadius,
-  shadows,
-  typography
-} from '../styles';
+import { colors, spacing, borderRadius, shadows } from '../styles';
 
 const AuthScreen: React.FC = () => {
   const { signIn, isLoading } = useAuth();

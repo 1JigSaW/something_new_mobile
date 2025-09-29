@@ -5,23 +5,12 @@ import EmptyState from '../ui/molecules/EmptyState';
 import ErrorState from '../ui/molecules/ErrorState';
 import { SwipeDeck } from '../ui/organisms/SwipeDeck';
 import { useApp } from '../context/AppContext';
-import { useRandomChallengesQuery } from '../features/challenges/useRandomChallengesQuery';
+import { useRandomChallengesQuery } from '../features';
 import { colors } from '../styles/colors';
 
 const { width: screenWidth } = Dimensions.get('window');
 
-interface Challenge {
-  id: number;
-  title: string;
-  short_description: string;
-  category: string;
-  tags: string;
-  size: 'small' | 'medium' | 'large';
-  estimated_duration_min: number;
-  is_premium_only: boolean;
-  created_at: string;
-  updated_at: string;
-}
+import { Challenge } from '../types/challenge';
 
 export default function CategoriesScreen() {
   const {

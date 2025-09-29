@@ -1,20 +1,15 @@
 import { useQuery } from '@tanstack/react-query';
 import { http } from '../../api';
 import { API } from '../../api/endpoints';
+import { ProgressStats } from '../../types/challenge';
 
 export function useProgressStats() {
-  return useQuery({
+  return useQuery<ProgressStats>({
     queryKey: ['progress-stats'],
     queryFn: async () => {
       try {
-        const { data } = await http.get(
-          API.profile.stats(),
-        );
-        return data as {
-          daily_stats: Array<{ date: string; completed: number }>,
-          streak: number,
-          total_completed: number,
-        };
+        const { data } = await http.get(API.profile.stats());
+        return data as ProgressStats;
       } catch (error) {
         const today = new Date();
         const days = 30;

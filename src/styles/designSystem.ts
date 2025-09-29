@@ -1,4 +1,3 @@
-import { typography as importedTypography } from './typography';
 import { colors as palette } from './colors';
 
 export const colors = {

@@ -2,10 +2,10 @@ import React from 'react';
 import { View, ScrollView, StyleSheet, Alert } from 'react-native';
 import { useApp } from '../context/AppContext';
 import { Challenge } from '../types/challenge';
-import { ScreenHeader } from '../ui/molecules/ScreenHeader';
-import { ChallengeCard } from '../ui/molecules/ChallengeCard';
-import { ScreenEmptyState } from '../ui/molecules/ScreenEmptyState';
-import { colors } from '../styles/colors';
+import { ScreenHeader } from '../ui/molecules';
+import { ChallengeCard } from '../ui/molecules';
+import { ScreenEmptyState } from '../ui/molecules';
+import { colors } from '../styles';
 
 export default function FavoritesScreen() {
   const {

@@ -112,7 +112,7 @@ export default function TodayScreen({ navigation }: Props) {
     return (
       <View style={styles.container}>
         <PageHeader title="Today" subtitle="Loading error" />
-        <ErrorState message={`Error loading cards: ${challengesError instanceof Error ? challengesError.message : 'Unknown error'}`} />
+        <ErrorState message={`Error loading cards: ${(challengesError.message)}`} />
       </View>
     );
   }

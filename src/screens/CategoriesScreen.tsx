@@ -6,7 +6,7 @@ import ErrorState from '../ui/molecules/ErrorState';
 import { SwipeDeck } from '../ui/organisms/SwipeDeck';
 import { useApp } from '../context/AppContext';
 import { useRandomChallengesQuery } from '../features';
-import { colors } from '../styles/colors';
+import { colors } from '../styles';
 import { Challenge } from '../types/challenge';
 
 export default function CategoriesScreen() {

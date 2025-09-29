@@ -3,10 +3,10 @@ import notifee, { AndroidImportance } from '@notifee/react-native';
 
 export async function requestPushPermission(): Promise<boolean> {
   const authStatus = await messaging().requestPermission();
-  const enabled =
+  return (
     authStatus === messaging.AuthorizationStatus.AUTHORIZED ||
-    authStatus === messaging.AuthorizationStatus.PROVISIONAL;
-  return enabled;
+    authStatus === messaging.AuthorizationStatus.PROVISIONAL
+  );
 }
 
 export async function ensureDefaultChannel(): Promise<void> {

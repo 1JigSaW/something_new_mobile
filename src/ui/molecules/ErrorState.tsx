@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, Text, StyleSheet, ViewStyle } from 'react-native';
-import { colors } from '../../styles/colors';
+import { colors } from '../../styles';
 
 type ErrorStateProps = {
   message: string,

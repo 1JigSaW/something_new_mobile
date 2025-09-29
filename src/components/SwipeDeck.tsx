@@ -141,7 +141,7 @@ export function SwipeDeck({
   useEffect(() => {
     loadPendingFromStorage();
     loadCompletedFromStorage();
-  }, []);
+  }, [loadCompletedFromStorage, loadPendingFromStorage]);
 
   const onGestureEvent = Animated.event(
     [{ nativeEvent: { translationX: translateX, translationY: translateY } }],
@@ -277,11 +277,6 @@ export function SwipeDeck({
           }
         </Text>
         <View style={styles.buttonContainer}>
-          {!isPremium && onUpgradePremium && (
-            <TouchableOpacity style={styles.premiumButton} onPress={onUpgradePremium}>
-              <Text style={styles.premiumButtonText}>⭐ Buy Premium</Text>
-            </TouchableOpacity>
-          )}
           {onReset && (
             <TouchableOpacity style={styles.resetButton} onPress={handleReset}>
               <Text style={styles.resetIcon}>🔄</Text>

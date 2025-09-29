@@ -17,7 +17,6 @@ const ProgressCard: React.FC<ProgressCardProps> = ({
   progress,
   color = colors.primary,
   icon = '📚',
-  onPress,
 }) => {
   const progressWidth = Math.max(0, Math.min(100, progress));
 

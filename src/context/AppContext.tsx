@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import { Alert } from 'react-native';
 import { http } from '../api';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -47,7 +48,7 @@ interface AppContextType {
   addToFavorites: (challenge: Challenge) => void;
   removeFromFavorites: (challengeId: number) => void;
 
-  completeChallenge: () => void;
+  completeChallenge: (challenge?: Challenge) => void;
   skipChallenge: () => void;
   canSkip: () => boolean;
   canTakeNewChallenge: () => boolean;
@@ -59,6 +60,7 @@ interface AppContextType {
 const AppContext = createContext<AppContextType | undefined>(undefined);
 
 export function AppProvider({ children }: { children: ReactNode }) {
+  const queryClient = useQueryClient();
   const [activeChallenge, setActiveChallenge] = useState<Challenge | null>(null);
   const [streak, setStreak] = useState(0);
   const [completedCount, setCompletedCount] = useState(0);
@@ -180,19 +182,24 @@ export function AppProvider({ children }: { children: ReactNode }) {
     setFavorites(favorites.filter(fav => fav.id !== challengeId));
   };
 
-  const completeChallenge = async () => {
-    if (!activeChallenge) return;
+  const completeChallenge = async (challenge?: Challenge) => {
+    const target = challenge || activeChallenge;
+    if (!target) return;
     try {
-      await http.post(`/api/challenges/${activeChallenge.id}/complete`);
+      await http.post(`/api/challenges/${target.id}/complete`);
 
       const { data } = await http.get('/api/profile/stats');
+      queryClient.setQueryData(
+        ['progress-stats'],
+        data
+      );
 
       setCompletedToday(true);
       setStreak(typeof data?.streak === 'number' ? data.streak : streak + 1);
       setCompletedCount(typeof data?.total_completed === 'number' ? data.total_completed : completedCount + 1);
 
-      setSelectedChallenges(prev => prev.filter(id => id !== activeChallenge.id));
-      markAsViewed(activeChallenge.id);
+      setSelectedChallenges(prev => prev.filter(id => id !== target.id));
+      markAsViewed(target.id);
       setActiveChallenge(null);
 
       const today = new Date().toDateString();

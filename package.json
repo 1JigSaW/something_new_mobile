@@ -15,6 +15,7 @@
     "@notifee/react-native": "^9.1.8",
     "@react-native-async-storage/async-storage": "^1.24.0",
     "@react-native-firebase/app": "^23.1.2",
+    "@react-native-firebase/messaging": "^23.4.0",
     "@react-native-google-signin/google-signin": "^15.0.0",
     "@react-native/new-app-screen": "0.81.0",
     "@react-navigation/bottom-tabs": "^7.4.6",

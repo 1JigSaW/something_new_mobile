@@ -1,7 +1,7 @@
 import React from 'react';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import { NavigationContainer } from '@react-navigation/native';
-import { BottomTabNavigation } from '../navigation/BottomTabNavigation';
+import { BottomTabNavigation } from '../navigation';
 import { useAuth } from '../context/AuthContext';
 import AuthScreen from '../screens/AuthScreen';
 
@@ -12,7 +12,6 @@ export function AppContent() {
     return (
       <SafeAreaProvider>
         <SafeAreaView style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-          {/* Can add loader here */}
         </SafeAreaView>
       </SafeAreaProvider>
     );

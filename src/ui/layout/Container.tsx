@@ -8,7 +8,6 @@ type ContainerProps = {
 
 export default function Container({
   children,
-  className = '',
 }: PropsWithChildren<ContainerProps>) {
   return (
     <View style={{ width: '100%', paddingHorizontal: spacing.lg }}>

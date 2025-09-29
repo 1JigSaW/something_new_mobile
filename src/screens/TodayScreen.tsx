@@ -86,7 +86,7 @@ export default function TodayScreen() {
     
     markAsSelected(challenge.id);
     setActiveChallenge(challenge);
-    completeChallenge();
+    completeChallenge(challenge);
     useSwipe();
   };
 

@@ -6,7 +6,3 @@ export const getTodayKey = (prefix?: string): string => {
   const dateKey = `${yyyy}-${mm}-${dd}`;
   return prefix ? `${prefix}:${dateKey}` : dateKey;
 };
-
-export const getTodayString = (): string => {
-  return new Date().toDateString();
-};

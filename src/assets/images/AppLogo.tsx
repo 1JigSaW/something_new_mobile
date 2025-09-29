@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Image, ImageStyle } from 'react-native';
+import { View, Image, ImageStyle, StyleSheet } from 'react-native';
 import { colors } from '../../styles';
 
 interface AppLogoProps {
@@ -19,14 +19,18 @@ const AppLogo: React.FC<AppLogoProps> = ({
     resizeMode: 'contain',
   };
 
-  return (
-    <View style={{ 
+  const containerStyle = StyleSheet.create({
+    container: {
       width: size, 
       height: size, 
       backgroundColor,
       borderRadius: size / 8,
       overflow: 'hidden',
-    }}>
+    },
+  });
+
+  return (
+    <View style={containerStyle.container}>
       <Image
         source={require('./logo.png')}
         style={imageStyle}

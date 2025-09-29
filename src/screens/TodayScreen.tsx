@@ -5,7 +5,6 @@ import EmptyState from '../ui/molecules/EmptyState';
 import ErrorState from '../ui/molecules/ErrorState';
 import ResetButton from '../ui/atoms/ResetButton';
 import { useFocusEffect } from '@react-navigation/native';
-import { TabScreenProps } from '../types/navigation';
 import { useApp } from '../context/AppContext';
 import { useRandomChallengesQuery } from '../features';
 import { SwipeDeck } from '../ui/organisms/SwipeDeck';

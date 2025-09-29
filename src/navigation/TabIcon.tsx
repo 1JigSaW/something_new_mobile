@@ -1,5 +1,5 @@
 import React from 'react';
-import { Text } from 'react-native';
+import { Text, StyleSheet } from 'react-native';
 import { Home, Grid3X3, Heart, User } from 'lucide-react-native';
 
 interface TabIconProps {
@@ -33,8 +33,16 @@ export function TabIcon({ name, color, size = 24, useLucide = true }: TabIconPro
   }
 
   const icon = UNICODE_ICONS[name as keyof typeof UNICODE_ICONS];
+  const textStyle = StyleSheet.create({
+    text: {
+      fontSize: size,
+      color,
+      fontWeight: 'bold',
+    },
+  });
+
   return (
-    <Text style={{ fontSize: size, color, fontWeight: 'bold' }}>
+    <Text style={textStyle.text}>
       {icon}
     </Text>
   );

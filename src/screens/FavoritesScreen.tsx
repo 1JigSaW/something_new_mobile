@@ -31,7 +31,10 @@ export default function FavoritesScreen() {
     );
   };
 
-  const handleRemoveFromFavorites = (challenge: Challenge) => {
+  const handleRemoveFromFavorites = (challengeId: number) => {
+    const challenge = favorites.find(fav => fav.id === challengeId);
+    if (!challenge) return;
+    
     Alert.alert(
       'Remove from Favorites?',
       `Are you sure you want to remove "${challenge.title}" from favorites?`,
@@ -43,7 +46,7 @@ export default function FavoritesScreen() {
         {
           text: 'Delete',
           style: 'destructive',
-          onPress: () => removeFromFavorites(challenge.id),
+          onPress: () => removeFromFavorites(challengeId),
         },
       ]
     );
@@ -80,6 +83,7 @@ export default function FavoritesScreen() {
             challenge={challenge}
             variant="favorite"
             onSelect={handleSelectChallenge}
+            onRemoveFromFavorites={handleRemoveFromFavorites}
           />
         ))}
       </ScrollView>

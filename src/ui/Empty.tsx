@@ -1,22 +1,35 @@
 import React from 'react';
-import { View } from 'react-native';
+import { View, StyleSheet } from 'react-native';
 import Text from './atoms/Text';
+import { spacing } from '../styles';
 
-type EmptyProps = {
-  title?: string,
-  subtitle?: string,
-};
+interface EmptyProps {
+  title?: string;
+  subtitle?: string;
+}
 
 export default function Empty({
   title = 'Nothing here yet',
   subtitle = 'Try adjusting filters or come back later.',
 }: EmptyProps) {
   return (
-    <View className="w-full items-center justify-center py-10">
+    <View style={styles.container}>
       <Text variant="subtitle">{title}</Text>
-      <Text color="muted" className="mt-1">{subtitle}</Text>
+      <Text color="muted" style={styles.subtitle}>{subtitle}</Text>
     </View>
   );
 }
+
+const styles = StyleSheet.create({
+  container: {
+    width: '100%',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: spacing.xl,
+  },
+  subtitle: {
+    marginTop: spacing.xs,
+  },
+});
 
 

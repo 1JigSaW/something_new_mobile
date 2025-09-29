@@ -1,19 +1,31 @@
 import React from 'react';
-import { ActivityIndicator, View } from 'react-native';
+import { ActivityIndicator, View, StyleSheet } from 'react-native';
 import Text from './atoms/Text';
-import { colors } from '../styles';
+import { colors, spacing } from '../styles';
 
-type LoaderProps = {
-  label?: string,
-};
+interface LoaderProps {
+  label?: string;
+}
 
 export default function Loader({ label = 'Loading…' }: LoaderProps) {
   return (
-    <View className="w-full items-center justify-center py-6">
+    <View style={styles.container}>
       <ActivityIndicator color={colors.primary} />
-      <Text color="muted" className="mt-2">{label}</Text>
+      <Text color="muted" style={styles.label}>{label}</Text>
     </View>
   );
 }
+
+const styles = StyleSheet.create({
+  container: {
+    width: '100%',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: spacing.xl,
+  },
+  label: {
+    marginTop: spacing.sm,
+  },
+});
 
 

@@ -16,19 +16,6 @@ export function useDailyData() {
   const [dailyData, saveDailyData] = useAsyncStorage<DailyData>(STORAGE_KEYS.DAILY_DATA, initialDailyData);
   const todayKey = getTodayKey();
 
-  const loadDailyData = useCallback(async () => {
-    try {
-      const lastDayDate = await AsyncStorage.getItem(STORAGE_KEYS.LAST_DAY_DATE);
-      
-      if (lastDayDate && lastDayDate !== todayKey) {
-        await resetForNewDay();
-        return;
-      }
-    } catch (error) {
-      console.error('Error loading daily data:', error);
-    }
-  }, [todayKey]);
-
   const updateDailyData = useCallback(async (updates: Partial<DailyData>) => {
     const newData = { ...dailyData, ...updates };
     await saveDailyData(newData);
@@ -58,8 +45,20 @@ export function useDailyData() {
   }, [saveDailyData]);
 
   useEffect(() => {
+    const loadDailyData = async () => {
+      try {
+        const lastDayDate = await AsyncStorage.getItem(STORAGE_KEYS.LAST_DAY_DATE);
+        
+        if (lastDayDate && lastDayDate !== todayKey) {
+          await resetForNewDay();
+        }
+      } catch (error) {
+        console.error('Error loading daily data:', error);
+      }
+    };
+    
     loadDailyData();
-  }, [loadDailyData]);
+  }, [todayKey, resetForNewDay]);
 
   useEffect(() => {
     const interval = setInterval(async () => {

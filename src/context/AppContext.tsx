@@ -60,21 +60,17 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   // Синхронизация с сервером при загрузке
   useEffect(() => {
-    const syncWithServer = async () => {
-      if (shouldUseFallback()) return; // Пропускаем в fallback режиме
-      
-      try {
-        // Синхронизируем статистику
-        queryClient.invalidateQueries({ queryKey: ['progress-stats'] });
-        
-        // Здесь можно добавить синхронизацию других данных
-        // например, избранных, просмотренных челленджей и т.д.
-      } catch (error) {
-        console.error('Sync error:', error);
-      }
-    };
+    if (shouldUseFallback()) return; // Пропускаем в fallback режиме
     
-    syncWithServer();
+    try {
+      // Синхронизируем статистику
+      queryClient.invalidateQueries({ queryKey: ['progress-stats'] });
+      
+      // Здесь можно добавить синхронизацию других данных
+      // например, избранных, просмотренных челленджей и т.д.
+    } catch (error) {
+      console.error('Sync error:', error);
+    }
   }, [queryClient]);
 
   const maxSkipsPerDay = userStats.isPremium ? 999 : 5;

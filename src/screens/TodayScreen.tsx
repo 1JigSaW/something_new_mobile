@@ -57,17 +57,6 @@ export default function TodayScreen({ navigation }: Props) {
     }, [checkAndResetForNewDay])
   );
 
-  // const handleTakeNewChallenge = () => {
-    if (!canTakeNewChallenge()) {
-      Alert.alert(
-        'Limit reached',
-        isPremium ? 'Something went wrong' : 'You have already taken 5 challenges today. Come back tomorrow!'
-      );
-      return;
-    }
-
-    navigation.navigate(TAB_SCREENS.CATEGORIES);
-  // };
 
   const handleSwipeRight = (challenge: any) => {
     if (!canSwipe()) {

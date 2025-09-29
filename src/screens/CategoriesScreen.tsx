@@ -3,7 +3,7 @@ import { View, ScrollView, Text, StyleSheet, TouchableOpacity, Alert, Dimensions
 import PageHeader from '../ui/layout/PageHeader';
 import EmptyState from '../ui/molecules/EmptyState';
 import ErrorState from '../ui/molecules/ErrorState';
-import { SwipeDeck } from '../components/SwipeDeck';
+import { SwipeDeck } from '../ui/organisms/SwipeDeck';
 import { useApp } from '../context/AppContext';
 import { useRandomChallengesQuery } from '../features/challenges/useRandomChallengesQuery';
 import { colors } from '../styles/colors';

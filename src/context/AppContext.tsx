@@ -2,6 +2,7 @@ import React, { createContext, useContext, useState, useEffect, ReactNode } from
 import { useQueryClient } from '@tanstack/react-query';
 import { Alert } from 'react-native';
 import { http } from '../api';
+import { API } from '../api/endpoints';
 import { shouldUseFallback } from '../config/authFallback';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
@@ -192,8 +193,12 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
       if (!useFallback) {
         try {
-          await http.post(`/api/challenges/${target.id}/complete`);
-          const { data } = await http.get('/api/profile/stats');
+          await http.post(
+            API.challenges.complete({ id: target.id }),
+          );
+          const { data } = await http.get(
+            API.profile.stats(),
+          );
           stats = data;
         } catch (e) {
           stats = null;

@@ -1,9 +1,9 @@
 import React from 'react';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import { NavigationContainer } from '@react-navigation/native';
-import { BottomTabNavigation } from '../navigation';
-import { useAuth } from '../context/AuthContext';
-import AuthScreen from '../screens/AuthScreen';
+import { BottomTabNavigation } from '../../navigation';
+import { useAuth } from '../../context/AuthContext';
+import AuthScreen from '../../screens/AuthScreen';
 
 export function AppContent() {
   const { isAuthenticated, isLoading } = useAuth();
@@ -31,3 +31,4 @@ export function AppContent() {
     </SafeAreaProvider>
   );
 }
+

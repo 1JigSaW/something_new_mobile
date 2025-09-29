@@ -1,3 +1,30 @@
+## Something New Mobile
+
+### API Client
+- Base URL: `src/config/index.ts` (`API_BASE_URL`)
+- Axios instance: `src/api/httpClient.ts`
+- Endpoint constants: `src/api/endpoints.ts`
+
+### How to call API
+```ts
+import { http } from './src/api';
+import { API } from './src/api/endpoints';
+
+async function example() {
+  const { data } = await http.get(API.profile.stats());
+  return data;
+}
+```
+
+### Auth flow
+- `src/services/authService.ts`
+  - `signInWithGoogle()` / `signInWithApple()` → backend `POST /api/auth/login`
+  - `signInWithEmailCode()` → `POST /api/auth/verify`
+  - `getCurrentUser()` → `GET /api/auth/me`
+
+### State and contexts
+- App state: `src/context/AppContext.tsx`
+- React Query usage for progress: `src/features/progress/useProgressStats.ts`
 This is a new [**React Native**](https://reactnative.dev) project, bootstrapped using [`@react-native-community/cli`](https://github.com/react-native-community/cli).
 
 # Getting Started

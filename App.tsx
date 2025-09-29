@@ -3,7 +3,7 @@ import { StatusBar } from 'react-native';
 import { QueryClient } from '@tanstack/react-query';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { AppProviders } from './src/providers/AppProviders';
-import { AppContent } from './src/components/AppContent';
+import { AppContent } from './src/ui/layout/AppContent';
 
 const queryClient = new QueryClient({
   defaultOptions: {

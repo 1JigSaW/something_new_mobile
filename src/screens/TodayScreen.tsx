@@ -9,7 +9,7 @@ import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useApp } from '../context/AppContext';
 import { useRandomChallengesQuery, Challenge } from '../features/challenges/useRandomChallengesQuery';
-import { SwipeDeck } from '../components/SwipeDeck';
+import { SwipeDeck } from '../ui/organisms/SwipeDeck';
 import { colors } from '../styles/colors';
 
 export default function TodayScreen() {

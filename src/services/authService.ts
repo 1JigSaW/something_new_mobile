@@ -4,6 +4,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { AUTH_CONFIG } from '../config/auth';
 import { shouldUseFallback } from '../config/authFallback';
 import { http } from '../api';
+import { API } from '../api/endpoints';
 
 export interface AuthTokens {
   access_token: string;
@@ -63,10 +64,13 @@ class AuthService {
 
   private async authenticateWithBackend(provider: string, idToken: string, userData?: any): Promise<AuthUser> {
     try {
-      const response = await http.post('/api/auth/login', {
-        provider,
-        id_token: idToken,
-      });
+      const response = await http.post(
+        API.auth.login(),
+        {
+          provider,
+          id_token: idToken,
+        },
+      );
 
       const { user, tokens } = response.data;
       
@@ -115,10 +119,13 @@ class AuthService {
 
   async signInWithEmailCode({ email, code }: { email: string, code: string }): Promise<AuthUser> {
     try {
-      const { data } = await http.post('/api/auth/verify', {
-        email,
-        code,
-      });
+      const { data } = await http.post(
+        API.auth.verify(),
+        {
+          email,
+          code,
+        },
+      );
       const tokens: AuthTokens = {
         access_token: data.access_token,
         refresh_token: data.refresh_token,
@@ -239,11 +246,14 @@ class AuthService {
       }
 
       try {
-        const response = await http.get('/api/auth/me', {
-          headers: {
-            Authorization: `Bearer ${tokens.access_token}`,
+        const response = await http.get(
+          API.auth.me(),
+          {
+            headers: {
+              Authorization: `Bearer ${tokens.access_token}`,
+            },
           },
-        });
+        );
 
         return {
           ...response.data.user,

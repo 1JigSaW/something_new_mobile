@@ -1,12 +1,15 @@
 import { useQuery } from '@tanstack/react-query';
 import { http } from '../../api';
+import { API } from '../../api/endpoints';
 
 export function useProgressStats() {
   return useQuery({
     queryKey: ['progress-stats'],
     queryFn: async () => {
       try {
-        const { data } = await http.get('/api/profile/stats');
+        const { data } = await http.get(
+          API.profile.stats(),
+        );
         return data as {
           daily_stats: Array<{ date: string; completed: number }>,
           streak: number,

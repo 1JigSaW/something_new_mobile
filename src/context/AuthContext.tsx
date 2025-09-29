@@ -17,15 +17,28 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, saveUser] = useAsyncStorage<AuthUser | null>(STORAGE_KEYS.AUTH_USER, null);
   const [isLoading, setIsLoading] = useState(true);
+  const [isChecking, setIsChecking] = useState(false);
 
   useEffect(() => {
-    checkCurrentUser();
-  }, [user]);
+    if (!isChecking) {
+      checkCurrentUser();
+    }
+  }, []);
 
   const checkCurrentUser = async () => {
+    if (isChecking) {
+      console.log('checkCurrentUser: already checking, skipping...');
+      return;
+    }
+
+    setIsChecking(true);
     try {
+      console.log('checkCurrentUser: starting, shouldUseFallback:', shouldUseFallback());
+      
       if (!shouldUseFallback()) {
+        console.log('checkCurrentUser: not in fallback mode, checking auth...');
         const currentUser = await authService.getCurrentUser();
+        console.log('checkCurrentUser: currentUser from authService:', currentUser);
         
         await saveUser(currentUser);
         setIsLoading(false);
@@ -51,6 +64,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       await saveUser(null);
     } finally {
       setIsLoading(false);
+      setIsChecking(false);
     }
   };
 

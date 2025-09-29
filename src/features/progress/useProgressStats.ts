@@ -8,8 +8,15 @@ export function useProgressStats() {
   return useQuery<ProgressStats>({
     queryKey: ['progress-stats'],
     queryFn: async () => {
-      const { data } = await http.get(API.profile.stats());
-      return data as ProgressStats;
+      console.log('Fetching progress stats...');
+      try {
+        const { data } = await http.get(API.profile.stats());
+        console.log('Progress stats fetched successfully:', data);
+        return data as ProgressStats;
+      } catch (error) {
+        console.error('Error fetching progress stats:', error);
+        throw error;
+      }
     },
     staleTime: ENV.QUERY_STALE_TIME,
     refetchOnWindowFocus: false,

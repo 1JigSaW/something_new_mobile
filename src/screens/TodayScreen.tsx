@@ -29,6 +29,7 @@ export default function TodayScreen() {
     markAsSelected,
   } = useApp();
 
+
   const { 
     data: randomChallenges = [], 
     isLoading: loadingChallenges,
@@ -79,7 +80,6 @@ export default function TodayScreen() {
     }
     
     markAsViewed(challenge.id);
-    
     handleSwipe();
   };
 

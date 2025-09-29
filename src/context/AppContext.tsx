@@ -1,4 +1,4 @@
-import React, { createContext, useContext, ReactNode, useEffect } from 'react';
+import React, { createContext, useContext, ReactNode, useEffect, useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { Alert } from 'react-native';
 import { http } from '../api';
@@ -57,6 +57,14 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const { favorites, addToFavorites, removeFromFavorites } = useFavorites(userStats.isPremium);
   const { viewedChallenges, markAsViewed, getUnviewedChallenges } = useViewedChallenges();
   const { selectedChallenges, markAsSelected, isSelected, removeFromSelected } = useSelectedChallenges();
+  
+  // Локальное состояние для счетчика свайпов (для мгновенного обновления UI)
+  const [localSwipesUsedToday, setLocalSwipesUsedToday] = useState(dailyData.swipesUsedToday);
+
+  // Синхронизация локального состояния с dailyData
+  useEffect(() => {
+    setLocalSwipesUsedToday(dailyData.swipesUsedToday);
+  }, [dailyData.swipesUsedToday]);
 
   // Синхронизация с сервером при загрузке
   useEffect(() => {
@@ -81,11 +89,17 @@ export function AppProvider({ children }: { children: ReactNode }) {
   };
 
   const canSwipe = () => {
-    return dailyData.swipesUsedToday < maxSwipesPerDay;
+    return localSwipesUsedToday < maxSwipesPerDay;
   };
 
   const handleSwipe = async () => {
-    await updateDailyData({ swipesUsedToday: dailyData.swipesUsedToday + 1 });
+    const newSwipeCount = localSwipesUsedToday + 1;
+    
+    // Сначала обновляем локальное состояние (мгновенно)
+    setLocalSwipesUsedToday(newSwipeCount);
+    
+    // Затем сохраняем в AsyncStorage
+    await updateDailyData({ swipesUsedToday: newSwipeCount });
   };
 
   const canTakeNewChallenge = () => {
@@ -101,10 +115,44 @@ export function AppProvider({ children }: { children: ReactNode }) {
       const useFallback = shouldUseFallback();
 
       if (!useFallback) {
-        // Отправляем на сервер
         await http.post(API.challenges.complete({ id: target.id }));
-        
-        // Перезагружаем статистику с сервера
+
+        // Немедленно обновляем локальный кэш статистики
+        const today = new Date();
+        const todayStr = today.toISOString().split('T')[0];
+        const existing: any = queryClient.getQueryData(['progress-stats']);
+        const days = 30;
+        const start = new Date(today);
+        start.setDate(today.getDate() - (days - 1));
+        const baseStats = existing || {
+          daily_stats: Array.from({ length: days }).map((_, i) => {
+            const d = new Date(today);
+            d.setDate(today.getDate() - (days - 1 - i));
+            return { date: d.toISOString().split('T')[0], completed: 0 };
+          }),
+          streak: 0,
+          total_completed: 0,
+          period: {
+            start_date: start.toISOString().split('T')[0],
+            end_date: todayStr,
+          },
+        };
+        const updatedDaily = (baseStats.daily_stats || []).map((s: any) => (
+          s.date === todayStr ? { ...s, completed: Math.max(1, Number(s.completed || 0)) } : s
+        ));
+        const updatedTotal = updatedDaily.reduce((acc: number, s: any) => acc + Number(s.completed || 0), 0);
+        let updatedStreak = 0;
+        for (let i = updatedDaily.length - 1; i >= 0; i -= 1) {
+          if (Number(updatedDaily[i].completed || 0) > 0) updatedStreak += 1; else break;
+        }
+        queryClient.setQueryData(['progress-stats'], {
+          daily_stats: updatedDaily,
+          streak: updatedStreak,
+          total_completed: updatedTotal,
+          period: baseStats.period,
+        });
+
+        // И параллельно попросим свежие данные с сервера
         queryClient.invalidateQueries({ queryKey: ['progress-stats'] });
       } else {
         // Fallback режим - только локальные данные
@@ -113,6 +161,41 @@ export function AppProvider({ children }: { children: ReactNode }) {
         // Обновляем локальную статистику только в fallback режиме
         await incrementStreak();
         await incrementCompletedCount();
+
+        // Немедленно обновляем локальный кэш статистики
+        const today = new Date();
+        const todayStr = today.toISOString().split('T')[0];
+        const existing: any = queryClient.getQueryData(['progress-stats']);
+        const days = 30;
+        const start = new Date(today);
+        start.setDate(today.getDate() - (days - 1));
+        const baseStats = existing || {
+          daily_stats: Array.from({ length: days }).map((_, i) => {
+            const d = new Date(today);
+            d.setDate(today.getDate() - (days - 1 - i));
+            return { date: d.toISOString().split('T')[0], completed: 0 };
+          }),
+          streak: 0,
+          total_completed: 0,
+          period: {
+            start_date: start.toISOString().split('T')[0],
+            end_date: todayStr,
+          },
+        };
+        const updatedDaily = (baseStats.daily_stats || []).map((s: any) => (
+          s.date === todayStr ? { ...s, completed: Math.max(1, Number(s.completed || 0)) } : s
+        ));
+        const updatedTotal = updatedDaily.reduce((acc: number, s: any) => acc + Number(s.completed || 0), 0);
+        let updatedStreak = 0;
+        for (let i = updatedDaily.length - 1; i >= 0; i -= 1) {
+          if (Number(updatedDaily[i].completed || 0) > 0) updatedStreak += 1; else break;
+        }
+        queryClient.setQueryData(['progress-stats'], {
+          daily_stats: updatedDaily,
+          streak: updatedStreak,
+          total_completed: updatedTotal,
+          period: baseStats.period,
+        });
       }
 
       // Локальные дневные данные (всегда)
@@ -149,6 +232,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const checkAndResetForNewDay = async (): Promise<boolean> => {
     try {
       await resetForNewDay();
+      setLocalSwipesUsedToday(0); // Сброс локального счетчика
       return true;
     } catch (error) {
       console.error('Error checking new day:', error);
@@ -156,6 +240,12 @@ export function AppProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  const resetTodayDataWrapper = async () => {
+    await resetTodayData();
+    setLocalSwipesUsedToday(0); // Сброс локального счетчика
+  };
+
+  
   return (
     <AppContext.Provider value={{
       activeChallenge: dailyData.activeChallenge,
@@ -167,7 +257,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       setIsPremium: setPremium,
       skipsUsedToday: dailyData.skipsUsedToday,
       maxSkipsPerDay,
-      swipesUsedToday: dailyData.swipesUsedToday,
+      swipesUsedToday: localSwipesUsedToday,
       maxSwipesPerDay,
     canSwipe,
     handleSwipe,
@@ -186,7 +276,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       canTakeNewChallenge,
       resetToNewDay: resetForNewDay,
       checkAndResetForNewDay,
-      resetTodayData,
+      resetTodayData: resetTodayDataWrapper,
     }}>
       {children}
     </AppContext.Provider>

@@ -7,7 +7,9 @@ import { useAuth } from '../../context/AuthContext';
 import AuthScreen from '../../screens/AuthScreen';
 
 export function AppContent() {
-  const { isAuthenticated, isLoading } = useAuth();
+  const { isAuthenticated, isLoading, user } = useAuth();
+
+  console.log('AppContent: isAuthenticated:', isAuthenticated, 'isLoading:', isLoading, 'user:', user);
 
   if (isLoading) {
     return (
@@ -18,6 +20,7 @@ export function AppContent() {
   }
 
   if (!isAuthenticated) {
+    console.log('AppContent: User not authenticated, showing AuthScreen');
     return <AuthScreen />;
   }
 

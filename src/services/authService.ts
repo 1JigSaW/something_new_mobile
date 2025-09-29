@@ -61,16 +61,39 @@ class AuthService {
     }
   }
 
+  async clearAllAppData(): Promise<void> {
+    try {
+      console.log('Clearing all app data...');
+      await AsyncStorage.multiRemove([
+        'auth_tokens',
+        'auth_user',
+        'dailyData',
+        'lastDayDate', 
+        'userStats',
+        'favorites',
+        'viewedChallenges',
+        'selectedChallenges'
+      ]);
+      console.log('All app data cleared');
+    } catch (error) {
+      console.error('Error clearing app data:', error);
+    }
+  }
+
   private async authenticateWithBackend(provider: string, idToken: string, userData?: any): Promise<AuthUser> {
     try {
+      console.log('authenticateWithBackend: sending request to', API.auth.login());
+      console.log('authenticateWithBackend: payload', { provider, id_token: idToken });
+      
       const response = await http.post(
-        API.auth.verify(),
+        API.auth.login(),
         {
           provider,
           id_token: idToken,
         },
       );
 
+      console.log('authenticateWithBackend: response received', response.data);
       const { user, tokens } = response.data;
       
       await this.saveTokens(tokens);
@@ -79,8 +102,10 @@ class AuthService {
         ...user,
         tokens,
       };
-    } catch (error) {
+    } catch (error: any) {
       console.error('Backend authentication failed:', error);
+      console.error('Error details:', error.response?.data);
+      console.error('Error status:', error.response?.status);
       
       const useFallback = shouldUseFallback();
       
@@ -224,11 +249,24 @@ class AuthService {
   async getCurrentUser(): Promise<AuthUser | null> {
     try {
       const tokens = await this.getTokens();
+      console.log('getCurrentUser: tokens:', tokens);
+      
       if (!tokens) {
+        console.log('getCurrentUser: no tokens found');
         return null;
       }
 
       if (tokens.access_token.startsWith('mock_')) {
+        console.log('getCurrentUser: mock token found');
+        
+        // Если fallback режим выключен, но есть mock токены - это ошибка
+        if (!shouldUseFallback()) {
+          console.log('getCurrentUser: fallback disabled but mock token found, clearing tokens');
+          await this.clearTokens();
+          return null;
+        }
+        
+        console.log('getCurrentUser: returning mock user');
         return {
           id: tokens.access_token.split('_')[2],
           email: tokens.access_token.includes('google') ? 'test@gmail.com' : 'test@icloud.com',

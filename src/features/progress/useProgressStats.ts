@@ -2,6 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 import { http } from '../../api';
 import { API } from '../../api/endpoints';
 import { ProgressStats } from '../../types/challenge';
+import { ENV } from '../../config/env';
 
 export function useProgressStats() {
   return useQuery<ProgressStats>({
@@ -10,9 +11,9 @@ export function useProgressStats() {
       const { data } = await http.get(API.profile.stats());
       return data as ProgressStats;
     },
-    staleTime: 60 * 1000,
+    staleTime: ENV.QUERY_STALE_TIME,
     refetchOnWindowFocus: false,
-    retry: 2,
+    retry: ENV.QUERY_RETRY_COUNT,
   });
 }
 

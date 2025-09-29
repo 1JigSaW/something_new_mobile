@@ -4,12 +4,13 @@ import { QueryClient } from '@tanstack/react-query';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { AppProviders } from './src/providers/AppProviders';
 import { AppContent } from './src/ui/layout/AppContent';
+import { ENV } from './src/config/env';
 
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      retry: 1,
-      staleTime: 5 * 60 * 1000, // 5 minutes
+      retry: ENV.QUERY_RETRY_COUNT,
+      staleTime: ENV.QUERY_STALE_TIME,
     },
   },
 });

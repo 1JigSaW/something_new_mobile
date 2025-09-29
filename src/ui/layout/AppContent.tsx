@@ -12,8 +12,7 @@ export function AppContent() {
   if (isLoading) {
     return (
       <SafeAreaProvider>
-        <SafeAreaView style={styles.loadingContainer}>
-        </SafeAreaView>
+        <SafeAreaView style={styles.loadingContainer} />
       </SafeAreaProvider>
     );
   }

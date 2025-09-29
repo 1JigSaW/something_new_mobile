@@ -1,11 +1,14 @@
 import axios, { AxiosError, AxiosInstance } from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { shouldUseFallback } from '../config';
+import { ENV } from '../config/env';
 
 export function createHttpClient({ baseURL }: { baseURL: string }): AxiosInstance {
+  console.log('Creating HTTP client with baseURL:', baseURL);
+  
   const instance = axios.create({
     baseURL,
-    timeout: 15000,
+    timeout: ENV.HTTP_TIMEOUT,
   });
 
   instance.interceptors.request.use(async (config) => {

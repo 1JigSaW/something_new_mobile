@@ -57,7 +57,6 @@ export default function TodayScreen({ navigation }: Props) {
       const checkNewDay = async () => {
         const wasNewDay = await checkAndResetForNewDay();
         if (wasNewDay) {
-          console.log('New day! State reset.');
         }
       };
       
@@ -103,13 +102,9 @@ export default function TodayScreen({ navigation }: Props) {
     
     markAsViewed(challenge.id);
     
-    console.log('Skipped card:', challenge.title);
     useSwipe();
   };
 
-  const handleSwipe = () => {
-    console.log('Swipe completed, counter:', swipesUsedToday + 1);
-  };
 
   if (loadingChallenges) {
     return (
@@ -181,7 +176,6 @@ export default function TodayScreen({ navigation }: Props) {
           challenges={getUnviewedChallenges(randomChallenges)}
           onSwipeRight={handleSwipeRight}
           onSwipeLeft={handleSwipeLeft}
-          onSwipe={handleSwipe}
           onAddToFavorites={(challenge) => {
             addToFavorites(challenge);
             Alert.alert('Added to Favorites', `"${challenge.title}" added to favorites`);
@@ -198,7 +192,6 @@ export default function TodayScreen({ navigation }: Props) {
             );
           }}
           onReset={async () => {
-            console.log('🔥 RESET FROM SWIPEDECK...');
             Alert.alert(
               'Reset Today',
               'Reset all limits and data for today?',
@@ -209,9 +202,7 @@ export default function TodayScreen({ navigation }: Props) {
                   style: 'destructive',
                   onPress: async () => {
                     try {
-                      console.log('🔥 RESET - calling resetTodayData...');
                       await resetTodayData();
-                      console.log('✅ RESET COMPLETE!');
                       Alert.alert('SUCCESS!', 'ALL DATA CLEARED!');
                     } catch (error) {
                       console.error('RESET ERROR:', error);

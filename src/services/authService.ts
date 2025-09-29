@@ -83,12 +83,8 @@ class AuthService {
       console.error('Backend authentication failed:', error);
       
       const useFallback = shouldUseFallback();
-      console.log('Should use fallback:', useFallback);
-      console.log('Environment:', __DEV__ ? 'development' : 'production');
-      console.log('__DEV__:', __DEV__);
       
       if (useFallback) {
-        console.log('Using fallback authentication for development');
         
         const mockTokens: AuthTokens = {
           access_token: `mock_${provider}_${Date.now()}`,
@@ -110,7 +106,6 @@ class AuthService {
         
         return mockUser;
       } else {
-        console.log('Fallback disabled - failing authentication');
         throw new Error('Authentication server is not available. Please try again later.');
       }
     }
@@ -234,7 +229,6 @@ class AuthService {
       }
 
       if (tokens.access_token.startsWith('mock_')) {
-        console.log('Using mock user for development');
         return {
           id: tokens.access_token.split('_')[2],
           email: tokens.access_token.includes('google') ? 'test@gmail.com' : 'test@icloud.com',

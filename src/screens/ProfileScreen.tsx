@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, ScrollView, Text, StyleSheet, TouchableOpacity, Switch, Alert, Dimensions } from 'react-native';
+import { View, ScrollView, Text, StyleSheet, TouchableOpacity, Alert } from 'react-native';
 import { useApp } from '../context/AppContext';
 import { useAuth } from '../context/AuthContext';
 import { useProgressStats } from '../features';
@@ -11,7 +11,6 @@ import WeeklyBarChart from '../ui/molecules/WeeklyBarChart';
 import CalendarGrid from '../ui/molecules/CalendarGrid';
 import StatCard from '../ui/molecules/StatCard';
 
-const { width } = Dimensions.get('window');
 
 export default function ProfileScreen() {
   const {
@@ -22,7 +21,6 @@ export default function ProfileScreen() {
 
   const { signOut, user } = useAuth();
 
-  const [selectedPeriod, setSelectedPeriod] = useState('week');
   const [progressData, setProgressData] = useState<Array<{
     date: string;
     day: string;
@@ -121,7 +119,6 @@ export default function ProfileScreen() {
           onPress: async () => {
             try {
               await signOut();
-              console.log('User logged out successfully');
             } catch (error) {
               console.error('Logout error:', error);
               Alert.alert('Error', 'Failed to logout. Please try again.');

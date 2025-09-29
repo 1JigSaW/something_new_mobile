@@ -155,7 +155,6 @@ export default function CategoriesScreen() {
     }
     
     markAsViewed(challenge.id);
-    console.log('Skipped challenge:', challenge.title);
     useSwipe();
   };
 

@@ -25,9 +25,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const checkCurrentUser = async () => {
     try {
       if (!shouldUseFallback()) {
-        console.log('Fallback disabled - checking only with auth service');
         const currentUser = await authService.getCurrentUser();
-        console.log('Current user check result:', currentUser);
         
         await saveUser(currentUser);
         setIsLoading(false);
@@ -37,10 +35,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (user) {
         const currentUser = await authService.getCurrentUser();
         if (currentUser) {
-          console.log('Found valid saved user:', currentUser);
           await saveUser(currentUser);
         } else {
-          console.log('Saved user is no longer valid, clearing');
           await saveUser(null);
         }
         setIsLoading(false);
@@ -48,7 +44,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
 
       const currentUser = await authService.getCurrentUser();
-      console.log('Current user check result:', currentUser);
       
       await saveUser(currentUser);
     } catch (error) {
@@ -79,10 +74,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       console.error('Auth error:', error);
       
       if (error.code === 'SIGN_IN_CANCELLED' || error.message?.includes('cancelled')) {
-        console.log('User cancelled authentication');
         
         if (user) {
-          console.log('User is already authenticated, keeping current session');
           return;
         }
         

@@ -21,7 +21,6 @@ const AuthScreen: React.FC = () => {
       console.error('Google Sign In failed:', error);
       
       if (error.code === 'SIGN_IN_CANCELLED' || error.message?.includes('cancelled')) {
-        console.log('User cancelled Google Sign In');
         setIsSigningIn(false);
         return;
       }
@@ -40,7 +39,6 @@ const AuthScreen: React.FC = () => {
       console.error('Apple Sign In failed:', error);
       
       if (error.code === 'SIGN_IN_CANCELLED' || error.message?.includes('cancelled')) {
-        console.log('User cancelled Apple Sign In');
         setIsSigningIn(false);
         return;
       }

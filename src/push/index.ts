@@ -64,7 +64,6 @@ export async function showLocalNotification(config: PushNotificationConfig): Pro
 
 export function setupPushNotificationListeners(): void {
   messaging().onMessage(async (remoteMessage) => {
-    console.log('Received foreground message:', remoteMessage);
     
     await showLocalNotification({
       title: remoteMessage.notification?.title || 'New Message',
@@ -74,7 +73,6 @@ export function setupPushNotificationListeners(): void {
   });
 
   messaging().setBackgroundMessageHandler(async (remoteMessage) => {
-    console.log('Message handled in the background:', remoteMessage);
   });
 }
 

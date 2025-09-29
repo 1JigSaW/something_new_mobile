@@ -1,6 +1,6 @@
 import { useEffect, useCallback } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { getTodayKey } from '../utils/dateUtils';
+import { getTodayKey } from '../utils';
 import { useAsyncStorage } from './useAsyncStorage';
 import { DailyData, STORAGE_KEYS } from '../types/hooks';
 

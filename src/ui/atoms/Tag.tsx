@@ -1,17 +1,27 @@
 import React from 'react';
-import { View } from 'react-native';
+import { View, StyleSheet } from 'react-native';
 import Text from './Text';
+import { colors, spacing, borderRadius } from '../../styles';
 
-type TagProps = {
-  label: string,
-};
+interface TagProps {
+  label: string;
+}
 
 export default function Tag({ label }: TagProps) {
   return (
-    <View className="px-2 py-1 rounded-full bg-gray-100">
+    <View style={styles.container}>
       <Text variant="caption" color="muted">{label}</Text>
     </View>
   );
 }
+
+const styles = StyleSheet.create({
+  container: {
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.xs,
+    borderRadius: borderRadius.full,
+    backgroundColor: colors.surfaceSecondary,
+  },
+});
 
 

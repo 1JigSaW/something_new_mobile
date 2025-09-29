@@ -1,4 +1,3 @@
-import { NavigatorScreenParams } from '@react-navigation/native';
 import { BottomTabScreenProps } from '@react-navigation/bottom-tabs';
 
 export type RootTabParamList = {
@@ -16,5 +15,3 @@ export const TAB_SCREENS = {
   FAVORITES: 'Favorites',
   PROFILE: 'Profile',
 } as const;
-
-export type TabScreenName = typeof TAB_SCREENS[keyof typeof TAB_SCREENS];

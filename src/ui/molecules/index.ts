@@ -1,5 +1,4 @@
 export { default as CalendarGrid } from './CalendarGrid';
-export { default as ChallengeCard as ChallengeCardOld } from './ChallengeCard';
 export { ChallengeCard } from './ChallengeCard';
 export { default as EmptyState } from './EmptyState';
 export { default as ErrorState } from './ErrorState';

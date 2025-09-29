@@ -1,16 +1,27 @@
 import React, { PropsWithChildren } from 'react';
-import { View } from 'react-native';
+import { View, StyleSheet } from 'react-native';
+import { colors, spacing, borderRadius, shadows } from '../../styles';
 
-type CardProps = {
-  className?: string,
-};
+interface CardProps {
+  style?: any;
+}
 
 export default function Card({
   children,
-  className = '',
+  style,
 }: PropsWithChildren<CardProps>) {
-  const cls = `bg-white rounded-2xl p-4 shadow-md border border-gray-100 ${className}`;
-  return <View className={cls}>{children}</View>;
+  return <View style={[styles.card, style]}>{children}</View>;
 }
+
+const styles = StyleSheet.create({
+  card: {
+    backgroundColor: colors.surface,
+    borderRadius: borderRadius.xl,
+    padding: spacing.lg,
+    ...shadows.md,
+    borderWidth: 1,
+    borderColor: colors.borderLight,
+  },
+});
 
 

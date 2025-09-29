@@ -6,7 +6,7 @@ import FavoritesScreen from '../screens/FavoritesScreen';
 import ProfileScreen from '../screens/ProfileScreen';
 import { TabIcon } from './TabIcon';
 import { TAB_BAR_CONFIG, TAB_LABELS } from './config';
-import { TAB_SCREENS, RootTabParamList } from '../types/navigation';
+import { RootTabParamList } from '../types/navigation';
 
 const Tab = createBottomTabNavigator<RootTabParamList>();
 

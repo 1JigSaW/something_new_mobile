@@ -13,7 +13,6 @@ export function useProgressStats() {
     staleTime: 60 * 1000,
     refetchOnWindowFocus: false,
     retry: 2,
-    // Не скрываем ошибки - пусть React Query обработает их
   });
 }
 

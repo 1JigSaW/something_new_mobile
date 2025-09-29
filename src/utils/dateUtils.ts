@@ -10,7 +10,3 @@ export const getTodayKey = (prefix?: string): string => {
 export const getTodayString = (): string => {
   return new Date().toDateString();
 };
-
-export const isToday = (dateString: string): boolean => {
-  return getTodayString() === dateString;
-};

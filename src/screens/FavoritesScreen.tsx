@@ -80,7 +80,6 @@ export default function FavoritesScreen() {
             challenge={challenge}
             variant="favorite"
             onSelect={handleSelectChallenge}
-            onRemoveFromFavorites={handleRemoveFromFavorites}
           />
         ))}
       </ScrollView>

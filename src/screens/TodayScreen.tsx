@@ -5,19 +5,16 @@ import EmptyState from '../ui/molecules/EmptyState';
 import ErrorState from '../ui/molecules/ErrorState';
 import ResetButton from '../ui/atoms/ResetButton';
 import { useFocusEffect } from '@react-navigation/native';
-import { TabScreenProps, TAB_SCREENS } from '../types/navigation';
+import { TabScreenProps } from '../types/navigation';
 import { useApp } from '../context/AppContext';
 import { useRandomChallengesQuery } from '../features';
 import { SwipeDeck } from '../ui/organisms/SwipeDeck';
 import { colors } from '../styles';
 
-type Props = TabScreenProps<'Today'>;
-
-export default function TodayScreen({ navigation }: Props) {
+export default function TodayScreen() {
   const {
     setActiveChallenge,
     completeChallenge,
-    canTakeNewChallenge,
     streak,
     completedToday,
     isPremium,

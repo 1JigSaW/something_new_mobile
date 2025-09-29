@@ -1,52 +1,78 @@
 import React, { PropsWithChildren } from 'react';
-import { Text as RNText } from 'react-native';
+import { Text as RNText, StyleSheet } from 'react-native';
 import { colors, typography } from '../../styles';
 
-type TextProps = {
-  variant?: 'title' | 'subtitle' | 'body' | 'caption',
-  color?: 'default' | 'muted' | 'success' | 'warning' | 'error',
-  className?: string,
-};
+interface TextProps {
+  variant?: 'title' | 'subtitle' | 'body' | 'caption';
+  color?: 'default' | 'muted' | 'success' | 'warning' | 'error';
+  style?: any;
+}
 
 export default function Text({
   children,
   variant = 'body',
   color = 'default',
-  className = '',
+  style,
 }: PropsWithChildren<TextProps>) {
   const getTextStyle = () => {
     switch (variant) {
       case 'title':
-        return typography.title;
+        return styles.title;
       case 'subtitle':
-        return typography.subtitle;
+        return styles.subtitle;
       case 'body':
-        return { fontSize: 16, lineHeight: 24, fontWeight: '400' as const };
+        return styles.body;
       case 'caption':
-        return typography.caption;
+        return styles.caption;
       default:
-        return { fontSize: 16, lineHeight: 24, fontWeight: '400' as const };
+        return styles.body;
     }
   };
 
   const getColorStyle = () => {
     switch (color) {
       case 'default':
-        return { color: colors.textPrimary };
+        return styles.defaultColor;
       case 'muted':
-        return { color: colors.textSecondary };
+        return styles.mutedColor;
       case 'success':
-        return { color: colors.success };
+        return styles.successColor;
       case 'warning':
-        return { color: colors.warning };
+        return styles.warningColor;
       case 'error':
-        return { color: colors.error };
+        return styles.errorColor;
       default:
-        return { color: colors.textPrimary };
+        return styles.defaultColor;
     }
   };
 
-  return <RNText style={{ ...getTextStyle(), ...getColorStyle() }}>{children}</RNText>;
+  return <RNText style={[getTextStyle(), getColorStyle(), style]}>{children}</RNText>;
 }
+
+const styles = StyleSheet.create({
+  title: typography.title,
+  subtitle: typography.subtitle,
+  body: {
+    fontSize: 16,
+    lineHeight: 24,
+    fontWeight: '400',
+  },
+  caption: typography.caption,
+  defaultColor: {
+    color: colors.textPrimary,
+  },
+  mutedColor: {
+    color: colors.textSecondary,
+  },
+  successColor: {
+    color: colors.success,
+  },
+  warningColor: {
+    color: colors.warning,
+  },
+  errorColor: {
+    color: colors.error,
+  },
+});
 
 

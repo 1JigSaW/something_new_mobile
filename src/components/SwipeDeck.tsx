@@ -5,7 +5,7 @@ import SwipeHints from '../ui/molecules/SwipeHints';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { PanGestureHandler, PanGestureHandlerGestureEvent } from 'react-native-gesture-handler';
 import { HeartIcon } from '../assets/icons';
-import { colors } from '../styles/colors';
+import { colors } from '../styles';
 
 interface Challenge {
   id: number;

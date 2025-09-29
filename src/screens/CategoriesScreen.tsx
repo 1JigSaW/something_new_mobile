@@ -1,5 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { View, ScrollView, Text, StyleSheet, TouchableOpacity, Alert, Dimensions } from 'react-native';
+import PageHeader from '../ui/layout/PageHeader';
+import EmptyState from '../ui/molecules/EmptyState';
+import ErrorState from '../ui/molecules/ErrorState';
 import { SwipeDeck } from '../components/SwipeDeck';
 import { useApp } from '../context/AppContext';
 import { useRandomChallengesQuery } from '../features/challenges/useRandomChallengesQuery';
@@ -191,18 +194,8 @@ export default function CategoriesScreen() {
   if (completedToday) {
     return (
       <View style={styles.container}>
-        <View style={styles.header}>
-          <Text style={styles.title}>Categories</Text>
-          <Text style={styles.subtitle}>Daily limit reached</Text>
-        </View>
-        <View style={styles.limitReachedContainer}>
-          <Text style={styles.limitReachedText}>
-            🎉 You've completed your daily challenge!
-          </Text>
-          <Text style={styles.limitReachedSubtext}>
-            Come back tomorrow for new ideas
-          </Text>
-        </View>
+        <PageHeader title="Categories" subtitle="Daily limit reached" />
+        <EmptyState title="Great!" subtitle="You've completed your daily challenge. Come back tomorrow." />
       </View>
     );
   }
@@ -210,12 +203,8 @@ export default function CategoriesScreen() {
   if (loading) {
     return (
       <View style={styles.container}>
-        <View style={styles.header}>
-          <Text style={styles.title}>Categories</Text>
-        </View>
-        <View style={styles.loadingContainer}>
-          <Text style={styles.loadingText}>Loading categories...</Text>
-        </View>
+        <PageHeader title="Categories" subtitle="Loading" />
+        <EmptyState title="Loading categories..." />
       </View>
     );
   }
@@ -223,22 +212,10 @@ export default function CategoriesScreen() {
   if (queryError) {
     return (
       <View style={styles.container}>
-        <View style={styles.header}>
-          <Text style={styles.title}>Categories</Text>
-        </View>
-        <View style={styles.errorContainer}>
-          <Text style={styles.errorText}>
-            Error: {queryError instanceof Error ? queryError.message : 'Unknown error'}
-          </Text>
-          <TouchableOpacity 
-            style={styles.retryButton} 
-            onPress={() => {
-              console.log('Reloading app...');
-            }}
-          >
-            <Text style={styles.retryText}>Try Again</Text>
-          </TouchableOpacity>
-        </View>
+        <PageHeader title="Categories" subtitle="Error" />
+        <ErrorState 
+          message={queryError instanceof Error ? queryError.message : 'Unknown error'}
+        />
       </View>
     );
   }
@@ -321,10 +298,7 @@ export default function CategoriesScreen() {
 
   return (
     <View style={styles.container}>
-      <View style={styles.header}>
-        <Text style={styles.title}>Explore</Text>
-        <Text style={styles.subtitle}>Discover amazing ideas</Text>
-      </View>
+      <PageHeader title="Explore" subtitle="Discover amazing ideas" />
 
       <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
         <View style={[styles.section, styles.firstSection]}>
@@ -342,11 +316,11 @@ export default function CategoriesScreen() {
             ].map((size) => (
               <TouchableOpacity
                 key={size.key}
-                style={[styles.categoryCard, { backgroundColor: size.color + '15' }]}
+                style={[styles.categoryCard, { backgroundColor: colors.categorySmall && size.key === 'small' ? colors.categorySmall + '15' : size.key === 'medium' ? colors.categoryMedium + '15' : colors.categoryLarge + '15' }]}
                 onPress={() => handleSizeSelect(size.key)}
               >
                 <View style={styles.categoryCardContent}>
-                  <Text style={[styles.categoryIcon, { color: size.color }]}>{size.icon}</Text>
+                  <Text style={[styles.categoryIcon, { color: size.key === 'small' ? colors.categorySmall : size.key === 'medium' ? colors.categoryMedium : colors.categoryLarge }]}>{size.icon}</Text>
                   <Text style={styles.categoryCardTitle}>{size.label}</Text>
                   <Text style={styles.categoryCardCount}>
                     {challenges.filter(c => c.size === size.key).length} ideas

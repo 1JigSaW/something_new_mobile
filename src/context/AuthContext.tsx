@@ -7,7 +7,7 @@ interface AuthContextType {
   user: AuthUser | null;
   isAuthenticated: boolean;
   isLoading: boolean;
-  signIn: (provider: 'apple' | 'google' | 'email', userData?: { email: string; name?: string }) => Promise<void>;
+  signIn: (provider: 'apple' | 'google' | 'email', userData?: { email: string; name?: string; code?: string }) => Promise<void>;
   signOut: () => Promise<void>;
 }
 
@@ -96,7 +96,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  const signIn = async (provider: 'apple' | 'google' | 'email', userData?: { email: string; name?: string }) => {
+  const signIn = async (provider: 'apple' | 'google' | 'email', userData?: { email: string; name?: string; code?: string }) => {
     setIsLoading(true);
     try {
       let authUser: AuthUser;
@@ -105,13 +105,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         authUser = await authService.signInWithGoogle();
       } else if (provider === 'apple') {
         authUser = await authService.signInWithApple();
-      } else if (provider === 'email' && userData) {
-        authUser = {
-          id: userData.email,
-          email: userData.email,
-          name: userData.name,
-          provider: 'email'
-        };
+      } else if (provider === 'email' && userData?.email && userData?.code) {
+        authUser = await authService.signInWithEmailCode({ email: userData.email, code: userData.code });
       } else {
         throw new Error('Unsupported provider or missing user data');
       }

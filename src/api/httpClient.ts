@@ -1,5 +1,6 @@
 import axios, { AxiosError, AxiosInstance } from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { shouldUseFallback } from '../config/authFallback';
 
 export function createHttpClient({ baseURL }: { baseURL: string }): AxiosInstance {
   const instance = axios.create({
@@ -27,6 +28,12 @@ export function createHttpClient({ baseURL }: { baseURL: string }): AxiosInstanc
     async (error: AxiosError) => {
       if (error.response?.status === 401) {
         try {
+          const tokensData = await AsyncStorage.getItem('auth_tokens');
+          const tokens = tokensData ? JSON.parse(tokensData) : null;
+          const isMock = tokens?.access_token?.startsWith('mock_');
+          if (isMock || shouldUseFallback()) {
+            return Promise.reject(error);
+          }
           await AsyncStorage.removeItem('auth_tokens');
           await AsyncStorage.removeItem('auth_user');
         } catch (storageError) {

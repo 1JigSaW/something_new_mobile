@@ -2,7 +2,7 @@
 // Set to false to disable mock authentication in development
 
 export const AUTH_FALLBACK_CONFIG = {
-  enabled: true,
+  enabled: false,
   
   strict: false,
 };

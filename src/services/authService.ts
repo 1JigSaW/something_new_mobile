@@ -113,6 +113,35 @@ class AuthService {
     }
   }
 
+  async signInWithEmailCode({ email, code }: { email: string, code: string }): Promise<AuthUser> {
+    try {
+      const { data } = await http.post('/api/auth/verify', {
+        email,
+        code,
+      });
+      const tokens: AuthTokens = {
+        access_token: data.access_token,
+        refresh_token: data.refresh_token,
+        token_type: data.token_type,
+        expires_in: data.expires_in ?? 3600,
+      };
+      await this.saveTokens(tokens);
+      const user = await this.getCurrentUser();
+      if (user) {
+        return user;
+      }
+      return {
+        id: email,
+        email,
+        provider: 'email',
+        tokens,
+      };
+    } catch (error) {
+      await this.clearTokens();
+      throw error;
+    }
+  }
+
   async signInWithGoogle(): Promise<AuthUser> {
     try {
       await GoogleSignin.hasPlayServices();

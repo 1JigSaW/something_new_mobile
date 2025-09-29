@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { View, FlatList, Text as RNText, Alert } from 'react-native';
 import Screen from '../ui/Screen';
 import Container from '../ui/layout/Container';
-import Header from '../ui/layout/Header';
+import PageHeader from '../ui/layout/PageHeader';
 import Text from '../ui/atoms/Text';
 import Button from '../ui/atoms/Button';
 import { useChallengesQuery } from '../features/challenges/useChallengesQuery';
@@ -108,7 +108,7 @@ export default function ChooseScreen() {
   return (
     <Screen>
       <Container>
-        <Header 
+        <PageHeader 
           title="Explore" 
           subtitle="Challenges"
         />

@@ -20,9 +20,9 @@ export default function ResetButton({ title = 'Reset', onPress, style }: ResetBu
 const styles = StyleSheet.create({
   button: {
     backgroundColor: colors.error,
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-    borderRadius: 12,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 10,
     flexDirection: 'row',
     alignItems: 'center',
     shadowColor: colors.shadow,
@@ -32,12 +32,12 @@ const styles = StyleSheet.create({
     elevation: 3,
   },
   icon: {
-    fontSize: 16,
-    marginRight: 6,
+    fontSize: 14,
+    marginRight: 4,
   },
   text: {
     color: 'white',
-    fontSize: 14,
+    fontSize: 12,
     fontWeight: '600',
   },
 });

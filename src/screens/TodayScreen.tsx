@@ -1,43 +1,36 @@
-import React, { useEffect, useState } from 'react';
-import { View, ScrollView, Text, StyleSheet, TouchableOpacity, Alert } from 'react-native';
+import React from 'react';
+import { View, Text, StyleSheet, Alert } from 'react-native';
 import PageHeader from '../ui/layout/PageHeader';
-import Section from '../ui/layout/Section';
 import EmptyState from '../ui/molecules/EmptyState';
 import ErrorState from '../ui/molecules/ErrorState';
 import ResetButton from '../ui/atoms/ResetButton';
-import { useNavigation, useFocusEffect } from '@react-navigation/native';
+import { useFocusEffect } from '@react-navigation/native';
 import { TabScreenProps, TAB_SCREENS } from '../types/navigation';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useApp } from '../context/AppContext';
-import { useRandomChallengesQuery, Challenge } from '../features';
+import { useRandomChallengesQuery } from '../features';
 import { SwipeDeck } from '../ui/organisms/SwipeDeck';
-import { colors } from '../styles/colors';
+import { colors } from '../styles';
 
 type Props = TabScreenProps<'Today'>;
 
 export default function TodayScreen({ navigation }: Props) {
   const {
-    activeChallenge,
     setActiveChallenge,
     completeChallenge,
-    skipChallenge,
-    canSkip,
     canTakeNewChallenge,
     streak,
     completedToday,
     isPremium,
-    resetToNewDay,
     checkAndResetForNewDay,
     resetTodayData,
     addToFavorites,
     swipesUsedToday,
     maxSwipesPerDay,
     canSwipe,
-    useSwipe,
+    handleSwipe,
     markAsViewed,
     getUnviewedChallenges,
     markAsSelected,
-    isSelected,
   } = useApp();
 
   const { 
@@ -64,7 +57,7 @@ export default function TodayScreen({ navigation }: Props) {
     }, [checkAndResetForNewDay])
   );
 
-  const handleTakeNewChallenge = () => {
+  // const handleTakeNewChallenge = () => {
     if (!canTakeNewChallenge()) {
       Alert.alert(
         'Limit reached',
@@ -74,7 +67,7 @@ export default function TodayScreen({ navigation }: Props) {
     }
 
     navigation.navigate(TAB_SCREENS.CATEGORIES);
-  };
+  // };
 
   const handleSwipeRight = (challenge: any) => {
     if (!canSwipe()) {
@@ -88,7 +81,7 @@ export default function TodayScreen({ navigation }: Props) {
     markAsSelected(challenge.id);
     setActiveChallenge(challenge);
     completeChallenge(challenge);
-    useSwipe();
+    handleSwipe();
   };
 
   const handleSwipeLeft = (challenge: any) => {
@@ -102,7 +95,7 @@ export default function TodayScreen({ navigation }: Props) {
     
     markAsViewed(challenge.id);
     
-    useSwipe();
+    handleSwipe();
   };
 
 

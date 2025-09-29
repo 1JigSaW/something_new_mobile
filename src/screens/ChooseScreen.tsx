@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, FlatList, Alert } from 'react-native';
+import { View, FlatList, Alert, StyleSheet } from 'react-native';
 import Screen from '../ui/Screen';
 import Container from '../ui/layout/Container';
 import PageHeader from '../ui/layout/PageHeader';
@@ -59,14 +59,14 @@ export default function ChooseScreen() {
           subtitle="Challenges"
         />
         
-        <View style={{ flex: 1 }}>
-          <View style={{ marginBottom: spacing.lg }}>
-            <View style={{ marginBottom: spacing.md }}>
+        <View style={styles.contentContainer}>
+          <View style={styles.filtersContainer}>
+            <View style={styles.filtersTitle}>
               <Text variant="subtitle" color="muted">
                 Duration
               </Text>
             </View>
-            <View style={{ flexDirection: 'row', gap: spacing.sm, flexWrap: 'wrap' }}>
+            <View style={styles.filtersRow}>
               {filters.map((filter) => (
                 <Button
                   key={filter.key}
@@ -100,7 +100,7 @@ export default function ChooseScreen() {
               renderItem={renderChallenge}
               keyExtractor={(item) => item.id.toString()}
               showsVerticalScrollIndicator={false}
-              contentContainerStyle={{ paddingBottom: spacing.xl }}
+              contentContainerStyle={styles.listContainer}
             />
           )}
         </View>
@@ -108,3 +108,23 @@ export default function ChooseScreen() {
     </Screen>
   );
 }
+
+const styles = StyleSheet.create({
+  contentContainer: {
+    flex: 1,
+  },
+  filtersContainer: {
+    marginBottom: spacing.lg,
+  },
+  filtersTitle: {
+    marginBottom: spacing.md,
+  },
+  filtersRow: {
+    flexDirection: 'row',
+    gap: spacing.sm,
+    flexWrap: 'wrap',
+  },
+  listContainer: {
+    paddingBottom: spacing.xl,
+  },
+});

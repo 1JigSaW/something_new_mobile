@@ -11,8 +11,6 @@ export default function FavoritesScreen() {
   const {
     favorites,
     removeFromFavorites,
-    addToFavorites,
-    activeChallenge,
     setActiveChallenge,
   } = useApp();
 

@@ -11,7 +11,6 @@ import { Challenge } from '../types/challenge';
 
 export default function CategoriesScreen() {
   const {
-    activeChallenge,
     setActiveChallenge,
     addToFavorites,
     canTakeNewChallenge,
@@ -20,11 +19,10 @@ export default function CategoriesScreen() {
     swipesUsedToday,
     maxSwipesPerDay,
     canSwipe,
-    useSwipe,
+    handleSwipe,
     markAsViewed,
     getUnviewedChallenges,
     markAsSelected,
-    isSelected,
   } = useApp();
 
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
@@ -61,17 +59,8 @@ export default function CategoriesScreen() {
     setActiveFilter(null);
   };
 
-  const handleBackToCategories = () => {
-    setSelectedCategory(null);
-    setActiveFilter(null);
-  };
-
   const handleBackToFilters = () => {
     setActiveFilter(null);
-  };
-
-  const clearAllFilters = () => {
-    setSelectedCategory(null);
   };
 
   const handleSwipeRight = (challenge: Challenge) => {
@@ -106,7 +95,7 @@ export default function CategoriesScreen() {
           onPress: () => {
             setActiveChallenge(challenge);
             markAsSelected(challenge.id);
-            useSwipe();
+            handleSwipe();
           },
         },
       ]
@@ -123,7 +112,7 @@ export default function CategoriesScreen() {
     }
     
     markAsViewed(challenge.id);
-    useSwipe();
+    handleSwipe();
   };
 
   const handleAddToFavorites = (challenge: Challenge) => {

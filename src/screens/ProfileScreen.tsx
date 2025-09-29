@@ -6,7 +6,7 @@ import { useProgressStats } from '../features';
 import PageHeader from '../ui/layout/PageHeader';
 import Section from '../ui/layout/Section';
 import ResetButton from '../ui/atoms/ResetButton';
-import { colors } from '../styles/colors';
+import { colors } from '../styles';
 import WeeklyBarChart from '../ui/molecules/WeeklyBarChart';
 import CalendarGrid from '../ui/molecules/CalendarGrid';
 import StatCard from '../ui/molecules/StatCard';
@@ -15,11 +15,10 @@ import StatCard from '../ui/molecules/StatCard';
 export default function ProfileScreen() {
   const {
     streak,
-    completedCount,
     resetToNewDay,
   } = useApp();
 
-  const { signOut, user } = useAuth();
+  const { signOut } = useAuth();
 
   const [progressData, setProgressData] = useState<Array<{
     date: string;
@@ -186,7 +185,7 @@ export default function ProfileScreen() {
               value={progressStats?.total_completed || 0} 
               label="Completed" 
               message={getCompletedMessage(progressStats?.total_completed || 0)} 
-              style={{ marginLeft: 12 }} 
+                     style={styles.secondStatCard}
             />
           </View>
         </Section>
@@ -420,5 +419,8 @@ const styles = StyleSheet.create({
     color: colors.surface,
     fontSize: 14,
     fontWeight: '600',
+  },
+  secondStatCard: {
+    marginLeft: 12,
   },
 });

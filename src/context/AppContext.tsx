@@ -24,7 +24,7 @@ interface AppContextType {
   swipesUsedToday: number;
   maxSwipesPerDay: number;
   canSwipe: () => boolean;
-  useSwipe: () => void;
+  handleSwipe: () => Promise<void>;
 
   viewedChallenges: number[];
   markAsViewed: (challengeId: number) => void;
@@ -88,7 +88,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     return dailyData.swipesUsedToday < maxSwipesPerDay;
   };
 
-  const useSwipe = async () => {
+  const handleSwipe = async () => {
     await updateDailyData({ swipesUsedToday: dailyData.swipesUsedToday + 1 });
   };
 
@@ -173,8 +173,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
       maxSkipsPerDay,
       swipesUsedToday: dailyData.swipesUsedToday,
       maxSwipesPerDay,
-      canSwipe,
-      useSwipe,
+    canSwipe,
+    handleSwipe,
       viewedChallenges,
       markAsViewed,
       getUnviewedChallenges,

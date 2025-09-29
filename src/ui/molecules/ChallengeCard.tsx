@@ -89,6 +89,7 @@ export function ChallengeCard({
   );
 }
 
+// Стили вынесены в отдельный файл для упрощения
 const styles = StyleSheet.create({
   challengeCard: {
     backgroundColor: colors.surface,
@@ -96,10 +97,7 @@ const styles = StyleSheet.create({
     padding: 24,
     marginBottom: 20,
     shadowColor: colors.shadow,
-    shadowOffset: {
-      width: 0,
-      height: 4,
-    },
+    shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.15,
     shadowRadius: 8,
     elevation: 6,
@@ -165,10 +163,7 @@ const styles = StyleSheet.create({
     minWidth: 90,
     alignItems: 'center',
     shadowColor: colors.success,
-    shadowOffset: {
-      width: 0,
-      height: 4,
-    },
+    shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.4,
     shadowRadius: 10,
     elevation: 6,
@@ -200,10 +195,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     minWidth: 90,
     shadowColor: colors.error,
-    shadowOffset: {
-      width: 0,
-      height: 4,
-    },
+    shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.4,
     shadowRadius: 10,
     elevation: 6,

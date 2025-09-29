@@ -12,3 +12,4 @@ export { default as SwipeHints } from './SwipeHints';
 export { default as WeeklyBarChart } from './WeeklyBarChart';
 export { ScreenHeader } from './ScreenHeader';
 export { ScreenEmptyState } from './ScreenEmptyState';
+export { FilterSection } from './FilterSection';

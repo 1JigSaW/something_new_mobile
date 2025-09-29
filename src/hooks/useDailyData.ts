@@ -61,12 +61,16 @@ export function useDailyData() {
     loadDailyData();
   }, [loadDailyData]);
 
+  // Проверка нового дня каждую минуту
   useEffect(() => {
     const interval = setInterval(async () => {
-      const lastDayDate = await AsyncStorage.getItem(STORAGE_KEYS.LAST_DAY_DATE);
-      
-      if (lastDayDate && lastDayDate !== todayKey) {
-        await resetForNewDay();
+      try {
+        const lastDayDate = await AsyncStorage.getItem(STORAGE_KEYS.LAST_DAY_DATE);
+        if (lastDayDate && lastDayDate !== todayKey) {
+          await resetForNewDay();
+        }
+      } catch (error) {
+        console.error('Error checking new day:', error);
       }
     }, 60000);
 

@@ -1,2 +1,2 @@
 export { useRandomChallengesQuery } from './useRandomChallengesQuery';
-export { Challenge, ChallengeFilters, ProgressStats } from '../../types/challenge';
+export type { Challenge, ChallengeFilters, ProgressStats } from '../../types/challenge';

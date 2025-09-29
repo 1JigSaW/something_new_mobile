@@ -88,19 +88,19 @@ export default function ProfileScreen() {
   };
 
 
-  const getStreakMessage = () => {
-    if (streak === 0) return 'Start your journey!';
-    if (streak < 7) return 'Great start!';
-    if (streak < 30) return 'Excellent habit!';
-    if (streak < 100) return 'Incredible!';
+  const getStreakMessage = (currentStreak: number) => {
+    if (currentStreak === 0) return 'Start your journey!';
+    if (currentStreak < 7) return 'Great start!';
+    if (currentStreak < 30) return 'Excellent habit!';
+    if (currentStreak < 100) return 'Incredible!';
     return 'Legend! 🔥';
   };
 
-  const getCompletedMessage = () => {
-    if (completedCount === 0) return 'First step ahead';
-    if (completedCount < 10) return 'Great start!';
-    if (completedCount < 50) return 'You\'re on the right track!';
-    if (completedCount < 100) return 'Impressive!';
+  const getCompletedMessage = (currentCompleted: number) => {
+    if (currentCompleted === 0) return 'First step ahead';
+    if (currentCompleted < 10) return 'Great start!';
+    if (currentCompleted < 50) return 'You\'re on the right track!';
+    if (currentCompleted < 100) return 'Impressive!';
     return 'Incredible achievements!';
   };
 
@@ -177,8 +177,17 @@ export default function ProfileScreen() {
       <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
         <Section title="Progress Overview">
           <View style={styles.statsGrid}>
-            <StatCard value={progressStats?.streak || streak} label="Day Streak" message={getStreakMessage()} />
-            <StatCard value={progressStats?.total_completed || completedCount} label="Completed" message={getCompletedMessage()} style={{ marginLeft: 12 }} />
+            <StatCard 
+              value={progressStats?.streak || 0} 
+              label="Day Streak" 
+              message={getStreakMessage(progressStats?.streak || 0)} 
+            />
+            <StatCard 
+              value={progressStats?.total_completed || 0} 
+              label="Completed" 
+              message={getCompletedMessage(progressStats?.total_completed || 0)} 
+              style={{ marginLeft: 12 }} 
+            />
           </View>
         </Section>
 

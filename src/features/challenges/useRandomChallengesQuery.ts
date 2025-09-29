@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { http } from '../../api';
+import { API } from '../../api/endpoints';
 import { Challenge, ChallengeFilters } from '../../types/challenge';
 
 export function useRandomChallengesQuery({
@@ -12,7 +13,7 @@ export function useRandomChallengesQuery({
     queryKey: ['random-challenges', { limit, category, size, freeOnly }],
     queryFn: async () => {
       const { data } = await http.get<Challenge[]>(
-        '/api/challenges/random',
+        API.challenges.random(),
         { 
           params: { 
             limit,

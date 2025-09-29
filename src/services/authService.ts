@@ -64,7 +64,7 @@ class AuthService {
   private async authenticateWithBackend(provider: string, idToken: string, userData?: any): Promise<AuthUser> {
     try {
       const response = await http.post(
-        API.auth.login(),
+        API.auth.verify(),
         {
           provider,
           id_token: idToken,

@@ -1,4 +1,4 @@
-import { colors } from '../styles/colors';
+import { colors } from '../styles';
 
 export const TAB_BAR_CONFIG = {
   tabBarStyle: {

@@ -1,6 +1,6 @@
 export const API = {
   auth: {
-    login: () => `/api/v1/auth/login`,
+    requestCode: () => `/api/v1/auth/request-code`,
     verify: () => `/api/v1/auth/verify`,
     me: () => `/api/v1/auth/me`,
   },

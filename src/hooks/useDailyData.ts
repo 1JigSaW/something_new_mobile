@@ -61,7 +61,6 @@ export function useDailyData() {
     loadDailyData();
   }, [loadDailyData]);
 
-  // Проверка нового дня каждую минуту
   useEffect(() => {
     const interval = setInterval(async () => {
       try {

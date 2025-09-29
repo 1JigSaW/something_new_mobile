@@ -5,11 +5,11 @@ import Container from '../ui/layout/Container';
 import PageHeader from '../ui/layout/PageHeader';
 import Text from '../ui/atoms/Text';
 import Button from '../ui/atoms/Button';
-import { ChallengeCard } from '../ui/molecules/ChallengeCard';
-import { ScreenEmptyState } from '../ui/molecules/ScreenEmptyState';
+import { ChallengeCard } from '../ui/molecules';
+import { ScreenEmptyState } from '../ui/molecules';
 import { useChallengesQuery } from '../features';
 import { useApp } from '../context/AppContext';
-import { colors, spacing, borderRadius } from '../styles';
+import { spacing, borderRadius } from '../styles';
 
 export default function ChooseScreen() {
   const { data, isLoading } = useChallengesQuery({ freeOnly: true });
@@ -27,15 +27,6 @@ export default function ChooseScreen() {
     { key: 'medium', label: '30 min to 2h' },
     { key: 'large', label: '2h+' },
   ];
-
-  const getEmoji = (size: string) => {
-    switch (size) {
-      case 'small': return '⚡';
-      case 'medium': return '🎯';
-      case 'large': return '🚀';
-      default: return '⭐';
-    }
-  };
 
   const handleSelectChallenge = (challenge: any) => {
     if (!canTakeNewChallenge()) {
@@ -69,7 +60,6 @@ export default function ChooseScreen() {
         />
         
         <View style={{ flex: 1 }}>
-          {/* Filter Buttons */}
           <View style={{ marginBottom: spacing.lg }}>
             <View style={{ marginBottom: spacing.md }}>
               <Text variant="subtitle" color="muted">
@@ -93,7 +83,6 @@ export default function ChooseScreen() {
             </View>
           </View>
 
-          {/* Challenges List */}
           {isLoading ? (
             <ScreenEmptyState 
               title="Loading challenges..." 

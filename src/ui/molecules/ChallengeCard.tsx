@@ -89,7 +89,6 @@ export function ChallengeCard({
   );
 }
 
-// Стили вынесены в отдельный файл для упрощения
 const styles = StyleSheet.create({
   challengeCard: {
     backgroundColor: colors.surface,

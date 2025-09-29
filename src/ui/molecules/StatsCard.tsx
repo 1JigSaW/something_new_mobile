@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text as RNText } from 'react-native';
+import { View, Text as RNText, StyleSheet } from 'react-native';
 import { colors, spacing, borderRadius, shadows, typography } from '../../styles';
 
 interface StatsCardProps {
@@ -38,69 +38,28 @@ const StatsCard: React.FC<StatsCardProps> = ({
   };
 
   return (
-    <View
-      style={{
-        backgroundColor: colors.surface,
-        borderRadius: borderRadius.xl,
-        padding: spacing.xl,
-        flex: 1,
-        marginHorizontal: spacing.sm,
-        ...shadows.md,
-      }}
-    >
-      <View style={{ alignItems: 'center', marginBottom: spacing.sm }}>
-        <View style={{ 
-          width: 32, 
-          height: 32, 
-          borderRadius: 16, 
-          backgroundColor: color + '20',
-          alignItems: 'center',
-          justifyContent: 'center',
-          marginBottom: spacing.sm,
-        }}>
-          <RNText style={{ fontSize: 16 }}>{icon}</RNText>
+    <View style={[styles.container, { backgroundColor: color + '20' }]}>
+      <View style={styles.content}>
+        <View style={[styles.iconContainer, { backgroundColor: color + '20' }]}>
+          <RNText style={styles.icon}>{icon}</RNText>
         </View>
-        <RNText style={{ 
-          fontSize: typography.sm.fontSize, 
-          color: colors.textSecondary,
-          marginBottom: 4,
-        }}>
+        <RNText style={styles.title}>
           {title}
         </RNText>
-        <RNText style={{ 
-          fontSize: 24, 
-          fontWeight: typography.weights.bold,
-          color: colors.textPrimary,
-          marginBottom: 2,
-        }}>
+        <RNText style={styles.value}>
           {value}
         </RNText>
-        <RNText style={{ 
-          fontSize: 12, 
-          color: colors.textSecondary,
-        }}>
+        <RNText style={styles.subtitle}>
           {subtitle}
         </RNText>
       </View>
 
       {trend !== 'neutral' && trendValue && (
-        <View style={{ 
-          flexDirection: 'row', 
-          alignItems: 'center',
-          marginTop: spacing.sm,
-        }}>
-          <RNText style={{ 
-            fontSize: typography.sm.fontSize, 
-            color: getTrendColor(),
-            marginRight: spacing.xs,
-          }}>
+        <View style={styles.trendContainer}>
+          <RNText style={[styles.trendIcon, { color: getTrendColor() }]}>
             {getTrendIcon()}
           </RNText>
-          <RNText style={{ 
-            fontSize: typography.sm.fontSize, 
-            color: getTrendColor(),
-            fontWeight: typography.weights.medium,
-          }}>
+          <RNText style={[styles.trendValue, { color: getTrendColor() }]}>
             {trendValue}
           </RNText>
         </View>
@@ -110,3 +69,57 @@ const StatsCard: React.FC<StatsCardProps> = ({
 };
 
 export default StatsCard;
+
+const styles = StyleSheet.create({
+  container: {
+    backgroundColor: colors.surface,
+    borderRadius: borderRadius.xl,
+    padding: spacing.xl,
+    flex: 1,
+    marginHorizontal: spacing.sm,
+    ...shadows.md,
+  },
+  content: {
+    alignItems: 'center',
+    marginBottom: spacing.sm,
+  },
+  iconContainer: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: spacing.sm,
+  },
+  icon: {
+    fontSize: 16,
+  },
+  title: {
+    fontSize: typography.sm.fontSize,
+    color: colors.textSecondary,
+    marginBottom: 4,
+  },
+  value: {
+    fontSize: 24,
+    fontWeight: typography.weights.bold,
+    color: colors.textPrimary,
+    marginBottom: 2,
+  },
+  subtitle: {
+    fontSize: 12,
+    color: colors.textSecondary,
+  },
+  trendContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: spacing.sm,
+  },
+  trendIcon: {
+    fontSize: typography.sm.fontSize,
+    marginRight: spacing.xs,
+  },
+  trendValue: {
+    fontSize: typography.sm.fontSize,
+    fontWeight: typography.weights.medium,
+  },
+});

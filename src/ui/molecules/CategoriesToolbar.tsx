@@ -1,8 +1,8 @@
 import React from 'react';
-import { View, TouchableOpacity, Text as RNText } from 'react-native';
+import { View, StyleSheet } from 'react-native';
 import Text from '../atoms/Text';
 import Button from '../atoms/Button';
-import { colors, spacing, borderRadius } from '../../styles';
+import { spacing, borderRadius } from '../../styles';
 
 type CategoriesToolbarProps = {
   selectedSize: string | null,
@@ -38,79 +38,59 @@ export default function CategoriesToolbar({
   ];
 
   return (
-    <View style={{ gap: spacing.md }}>
-      <View>
+    <View style={styles.container}>
+      <View style={styles.section}>
         <Text variant="subtitle" color="muted">Size</Text>
-        <View style={{ flexDirection: 'row', gap: spacing.sm, flexWrap: 'wrap', marginTop: spacing.sm }}>
+        <View style={styles.optionsContainer}>
           {sizeOptions.map(option => (
             <Button
               key={option.key}
               title={option.label}
               onPress={() => onSelectSize(selectedSize === option.key ? null : option.key)}
               variant={selectedSize === option.key ? 'primary' : 'secondary'}
-              style={{
-                borderRadius: borderRadius.lg,
-                paddingHorizontal: spacing.md,
-                paddingVertical: spacing.sm,
-              }}
+              style={styles.optionButton}
             />
           ))}
         </View>
       </View>
 
-      <View>
+      <View style={styles.section}>
         <Text variant="subtitle" color="muted">Duration</Text>
-        <View style={{ flexDirection: 'row', gap: spacing.sm, flexWrap: 'wrap', marginTop: spacing.sm }}>
+        <View style={styles.optionsContainer}>
           {durationOptions.map(option => (
             <Button
               key={option.key}
               title={option.label}
               onPress={() => onSelectDuration(selectedDuration === option.key ? null : option.key)}
               variant={selectedDuration === option.key ? 'primary' : 'secondary'}
-              style={{
-                borderRadius: borderRadius.lg,
-                paddingHorizontal: spacing.md,
-                paddingVertical: spacing.sm,
-              }}
+              style={styles.optionButton}
             />
           ))}
         </View>
       </View>
 
       {isPremium ? (
-        <View style={{ flexDirection: 'row', gap: spacing.sm }}>
+        <View style={styles.actionsContainer}>
           <Button
             title={showPremiumOnly ? 'Premium: On' : 'Premium: Off'}
             onPress={onTogglePremium}
             variant={showPremiumOnly ? 'primary' : 'secondary'}
-            style={{
-              borderRadius: borderRadius.lg,
-              paddingHorizontal: spacing.md,
-              paddingVertical: spacing.sm,
-            }}
+            style={styles.actionButton}
           />
           <Button
             title="Clear"
             onPress={onClear}
             variant="ghost"
-            style={{
-              borderRadius: borderRadius.lg,
-              paddingHorizontal: spacing.md,
-              paddingVertical: spacing.sm,
-            }}
+            style={styles.actionButton}
           />
         </View>
       ) : (
-        <View style={{ flexDirection: 'row', gap: spacing.sm }}>
+        <View style={styles.actionsContainer}>
           <Button
             title="Clear"
             onPress={onClear}
             variant="ghost"
-            style={{
-              borderRadius: borderRadius.lg,
-              paddingHorizontal: spacing.md,
-              paddingVertical: spacing.sm,
-            }}
+            style={styles.actionButton}
           />
         </View>
       )}

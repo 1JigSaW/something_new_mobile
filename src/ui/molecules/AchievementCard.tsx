@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text as RNText } from 'react-native';
+import { View, Text as RNText, StyleSheet } from 'react-native';
 import { colors, spacing, borderRadius, shadows, typography } from '../../styles';
 
 interface AchievementCardProps {

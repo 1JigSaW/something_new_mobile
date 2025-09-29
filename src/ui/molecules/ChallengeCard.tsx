@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { Challenge } from '../../types/challenge';
-import { colors } from '../../styles/colors';
+import { colors } from '../../styles';
 
 interface ChallengeCardProps {
   challenge: Challenge;

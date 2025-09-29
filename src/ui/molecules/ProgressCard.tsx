@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text as RNText } from 'react-native';
+import { View, Text as RNText, StyleSheet } from 'react-native';
 import { colors, spacing, borderRadius, shadows, typography } from '../../styles';
 
 interface ProgressCardProps {
@@ -21,71 +21,30 @@ const ProgressCard: React.FC<ProgressCardProps> = ({
   const progressWidth = Math.max(0, Math.min(100, progress));
 
   return (
-    <View
-      style={{
-        backgroundColor: colors.surface,
-        borderRadius: borderRadius.xl,
-        padding: spacing.xl,
-        marginBottom: spacing.lg,
-        ...shadows.md,
-      }}
-    >
-      <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: spacing.md }}>
-        <View style={{ 
-          width: 40, 
-          height: 40, 
-          borderRadius: 20, 
-          backgroundColor: color + '20',
-          alignItems: 'center',
-          justifyContent: 'center',
-          marginRight: spacing.md,
-        }}>
-          <RNText style={{ fontSize: 20 }}>{icon}</RNText>
+    <View style={styles.container}>
+      <View style={styles.header}>
+        <View style={[styles.iconContainer, { backgroundColor: color + '20' }]}>
+          <RNText style={styles.icon}>{icon}</RNText>
         </View>
-        <View style={{ flex: 1 }}>
-          <RNText style={{ 
-            fontSize: typography.lg.fontSize, 
-            fontWeight: typography.weights.semibold,
-            color: colors.textPrimary,
-            marginBottom: 4,
-          }}>
+        <View style={styles.textContainer}>
+          <RNText style={styles.title}>
             {title}
           </RNText>
-          <RNText style={{ 
-            fontSize: typography.sm.fontSize, 
-            color: colors.textSecondary,
-          }}>
+          <RNText style={styles.subtitle}>
             {subtitle}
           </RNText>
         </View>
       </View>
 
-      <View style={{ 
-        height: 8, 
-        backgroundColor: colors.surfaceSecondary, 
-        borderRadius: 4,
-        marginBottom: spacing.sm,
-      }}>
-        <View style={{
-          height: '100%',
-          width: `${progressWidth}%`,
-          backgroundColor: color,
-          borderRadius: 4,
-        }} />
+      <View style={styles.progressBar}>
+        <View style={[styles.progressFill, { width: `${progressWidth}%`, backgroundColor: color }]} />
       </View>
 
-      <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-        <RNText style={{ 
-          fontSize: typography.sm.fontSize, 
-          color: colors.textSecondary,
-        }}>
+      <View style={styles.footer}>
+        <RNText style={styles.progressText}>
           {progressWidth}% complete
         </RNText>
-        <RNText style={{ 
-          fontSize: typography.sm.fontSize, 
-          color: color,
-          fontWeight: typography.weights.semibold,
-        }}>
+        <RNText style={[styles.progressPercent, { color }]}>
           {Math.round(progressWidth)}%
         </RNText>
       </View>
@@ -94,3 +53,65 @@ const ProgressCard: React.FC<ProgressCardProps> = ({
 };
 
 export default ProgressCard;
+
+const styles = StyleSheet.create({
+  container: {
+    backgroundColor: colors.surface,
+    borderRadius: borderRadius.xl,
+    padding: spacing.xl,
+    marginBottom: spacing.lg,
+    ...shadows.md,
+  },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: spacing.md,
+  },
+  iconContainer: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: spacing.md,
+  },
+  icon: {
+    fontSize: 20,
+  },
+  textContainer: {
+    flex: 1,
+  },
+  title: {
+    fontSize: typography.lg.fontSize,
+    fontWeight: typography.weights.semibold,
+    color: colors.textPrimary,
+    marginBottom: 4,
+  },
+  subtitle: {
+    fontSize: typography.sm.fontSize,
+    color: colors.textSecondary,
+  },
+  progressBar: {
+    height: 8,
+    backgroundColor: colors.surfaceSecondary,
+    borderRadius: 4,
+    marginBottom: spacing.sm,
+  },
+  progressFill: {
+    height: '100%',
+    borderRadius: 4,
+  },
+  footer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  progressText: {
+    fontSize: typography.sm.fontSize,
+    color: colors.textSecondary,
+  },
+  progressPercent: {
+    fontSize: typography.sm.fontSize,
+    fontWeight: typography.weights.semibold,
+  },
+});

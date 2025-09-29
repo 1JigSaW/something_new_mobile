@@ -5,11 +5,6 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { AppProviders } from './src/providers/AppProviders';
 import { AppContent } from './src/components/AppContent';
 
-// Import clear today script for Metro console
-import './clear_today';
-import './force_reset';
-import './force_clear_all';
-
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {

@@ -8,7 +8,6 @@ type ScreenProps = {
 
 export default function Screen({
   children,
-  className = '',
 }: PropsWithChildren<ScreenProps>) {
   return (
     <SafeAreaView

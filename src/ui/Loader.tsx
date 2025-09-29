@@ -1,6 +1,7 @@
 import React from 'react';
 import { ActivityIndicator, View } from 'react-native';
 import Text from './atoms/Text';
+import { colors } from '../styles';
 
 type LoaderProps = {
   label?: string,

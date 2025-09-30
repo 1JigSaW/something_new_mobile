@@ -26,7 +26,6 @@ export default function CategoriesScreen() {
   } = useApp();
 
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
-  const [activeFilter, setActiveFilter] = useState<string | null>(null);
 
   const { 
     data: challenges = [], 
@@ -56,11 +55,6 @@ export default function CategoriesScreen() {
 
   const handleCategorySelect = (category: string) => {
     setSelectedCategory(selectedCategory === category ? null : category);
-    setActiveFilter(null);
-  };
-
-  const handleBackToFilters = () => {
-    setActiveFilter(null);
   };
 
   const handleSwipeRight = (challenge: Challenge) => {
@@ -155,12 +149,15 @@ export default function CategoriesScreen() {
       return (
         <View style={styles.container}>
           <PageHeader 
-            title={selectedCategory} 
-            subtitle="All viewed"
+            title={selectedCategory}
           />
+          <TouchableOpacity style={styles.backButton} onPress={() => setSelectedCategory(null)}>
+            <Text style={styles.backButtonText}>← Back</Text>
+          </TouchableOpacity>
           <EmptyState 
             title="All viewed!" 
             subtitle={`You've seen all ${selectedCategory} challenges. Try another category.`} 
+            style={styles.emptyCentered}
           />
         </View>
       );
@@ -169,8 +166,7 @@ export default function CategoriesScreen() {
     return (
       <View style={styles.container}>
         <PageHeader 
-          title={selectedCategory} 
-          subtitle={`${unviewedCategoryChallenges.length} challenges`}
+          title={selectedCategory}
         />
         
         <SwipeDeck
@@ -179,6 +175,9 @@ export default function CategoriesScreen() {
           onSwipeLeft={handleSwipeLeft}
           onAddToFavorites={handleAddToFavorites}
         />
+        <TouchableOpacity style={styles.backButton} onPress={() => setSelectedCategory(null)}>
+          <Text style={styles.backButtonText}>← Back</Text>
+        </TouchableOpacity>
       </View>
     );
   }
@@ -186,7 +185,7 @@ export default function CategoriesScreen() {
   if (filteredChallenges.length === 0) {
     return (
       <View style={styles.container}>
-        <PageHeader title="Categories" subtitle="All viewed" />
+        <PageHeader title="Categories" />
         <EmptyState 
           title="All viewed!" 
           subtitle="You've seen all available challenges. Come back tomorrow for new ones!" 
@@ -197,57 +196,97 @@ export default function CategoriesScreen() {
 
   return (
     <View style={styles.container}>
-      <PageHeader title="Categories" subtitle="Choose your challenge" />
-      
+      <PageHeader title="Categories" />
+
       <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
-        <View style={styles.categoriesGrid}>
-          {Object.entries(categories).map(([category, categoryChallenges]) => {
-            const unviewedCount = getUnviewedChallenges(categoryChallenges).length;
-            const totalCount = categoryChallenges.length;
-            
-            if (unviewedCount === 0) return null;
-
-            return (
+        <View style={[styles.section, styles.firstSection]}>
+          <Text style={styles.sectionTitle}>Size</Text>
+          <ScrollView 
+            horizontal 
+            showsHorizontalScrollIndicator={false}
+            style={styles.horizontalScroll}
+            contentContainerStyle={styles.horizontalContent}
+          >
+            {[
+              { key: 'small', label: 'Small', color: colors.categorySmall },
+              { key: 'medium', label: 'Medium', color: colors.categoryMedium },
+              { key: 'large', label: 'Large', color: colors.categoryLarge },
+            ].map((size) => (
               <TouchableOpacity
-                key={category}
-                style={styles.categoryCard}
-                onPress={() => handleCategorySelect(category)}
+                key={size.key}
+                style={[styles.categoryCard, { backgroundColor: `${size.color}15` }]}
+                onPress={() => handleCategorySelect(size.key)}
               >
-                <Text style={styles.categoryIcon}>
-                  {category === 'health' ? '💪' : 
-                   category === 'learning' ? '🧠' : 
-                   category === 'productivity' ? '⚡' : 
-                   category === 'social' ? '👥' : 
-                   category === 'creative' ? '🎨' : 
-                   category === 'mindfulness' ? '🧘' : '⭐'}
-                </Text>
-                <Text style={styles.categoryTitle}>{category}</Text>
-                <Text style={styles.categoryCount}>
-                  {unviewedCount}/{totalCount} left
-                </Text>
+                <View style={styles.categoryCardContent}>
+                  <Text style={[styles.categoryCardTitle]}>{size.label}</Text>
+                  <Text style={styles.categoryCardCount}>
+                    {challenges.filter(c => c.size === size.key).length} ideas
+                  </Text>
+                </View>
+                <Text style={styles.categoryCardArrow}>→</Text>
               </TouchableOpacity>
-            );
-          })}
+            ))}
+          </ScrollView>
         </View>
 
-        <TouchableOpacity style={styles.randomButton} onPress={() => setActiveFilter('random')}>
-          <Text style={styles.randomButtonText}>🎲 Random Challenge</Text>
-        </TouchableOpacity>
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Duration</Text>
+          <ScrollView 
+            horizontal 
+            showsHorizontalScrollIndicator={false}
+            style={styles.horizontalScroll}
+            contentContainerStyle={styles.horizontalContent}
+          >
+            {[
+              { key: 'quick', label: 'Quick', color: colors.categoryQuick, duration: '≤30m' },
+              { key: 'medium', label: 'Medium', color: colors.categoryMedium, duration: '30-90m' },
+              { key: 'long', label: 'Long', color: colors.categoryLong, duration: '90m+' },
+            ].map((duration) => (
+              <TouchableOpacity
+                key={duration.key}
+                style={[styles.categoryCard, { backgroundColor: `${duration.color}15` }]}
+                onPress={() => {}}
+              >
+                <View style={styles.categoryCardContent}>
+                  <Text style={[styles.categoryCardTitle]}>{duration.label}</Text>
+                  <Text style={styles.categoryCardDuration}>{duration.duration}</Text>
+                </View>
+                <Text style={styles.categoryCardArrow}>→</Text>
+              </TouchableOpacity>
+            ))}
+          </ScrollView>
+        </View>
+
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Categories</Text>
+          <ScrollView 
+            horizontal 
+            showsHorizontalScrollIndicator={false}
+            style={styles.horizontalScroll}
+            contentContainerStyle={styles.horizontalContent}
+          >
+            {Object.entries(categories).map(([categoryName, categoryChallenges]) => {
+              const unviewedCount = getUnviewedChallenges(categoryChallenges).length;
+              if (unviewedCount === 0) return null;
+              return (
+                <TouchableOpacity
+                  key={categoryName}
+                  style={[styles.categoryCard, { backgroundColor: `${colors.primary}15` }]}
+                  onPress={() => handleCategorySelect(categoryName)}
+                >
+                  <View style={styles.categoryCardContent}>
+                    <Text style={styles.categoryCardTitle}>{categoryName}</Text>
+                    <Text style={styles.categoryCardCount}>
+                      {unviewedCount} left
+                    </Text>
+                  </View>
+                  <Text style={styles.categoryCardArrow}>→</Text>
+                </TouchableOpacity>
+              );
+            })}
+          </ScrollView>
+        </View>
       </ScrollView>
-
-      {activeFilter === 'random' && (
-        <View style={styles.swipeContainer}>
-          <SwipeDeck
-            challenges={filteredChallenges}
-            onSwipeRight={handleSwipeRight}
-            onSwipeLeft={handleSwipeLeft}
-            onAddToFavorites={handleAddToFavorites}
-          />
-          <TouchableOpacity style={styles.backButton} onPress={handleBackToFilters}>
-            <Text style={styles.backButtonText}>← Back to Categories</Text>
-          </TouchableOpacity>
-        </View>
-      )}
     </View>
   );
 }
@@ -259,7 +298,14 @@ const styles = StyleSheet.create({
   },
   scrollView: {
     flex: 1,
-    padding: 20,
+    padding: 12,
+  },
+  horizontalScroll: {
+    paddingVertical: 8,
+  },
+  horizontalContent: {
+    paddingHorizontal: 0,
+    paddingRight: 0,
   },
   categoriesGrid: {
     flexDirection: 'row',
@@ -267,13 +313,26 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     marginBottom: 30,
   },
+  section: {
+    marginBottom: 20,
+    paddingHorizontal: 0,
+  },
+  firstSection: {
+    marginTop: 20,
+  },
+  sectionTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: colors.textPrimary,
+    marginBottom: 12,
+    marginLeft: 12,
+  },
   categoryCard: {
-    width: '48%',
+    width: 180,
     backgroundColor: colors.surface,
     borderRadius: 16,
-    padding: 20,
-    marginBottom: 16,
-    alignItems: 'center',
+    padding: 14,
+    marginRight: 12,
     shadowColor: colors.shadow,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.08,
@@ -282,32 +341,50 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: colors.borderLight,
   },
-  categoryIcon: {
-    fontSize: 32,
-    marginBottom: 8,
+  categoryCardContent: {
+    flex: 1,
   },
-  categoryTitle: {
+  categoryCardTitle: {
     fontSize: 16,
     fontWeight: 'bold',
     color: colors.textPrimary,
-    textTransform: 'capitalize',
     marginBottom: 4,
+    textTransform: 'capitalize',
+    textAlign: 'left',
   },
-  categoryCount: {
-    fontSize: 12,
+  categoryCardDuration: {
+    fontSize: 13,
+    color: colors.primary,
+    fontWeight: '600',
+    marginBottom: 8,
+  },
+  categoryCardCount: {
+    fontSize: 14,
     color: colors.textSecondary,
   },
-  randomButton: {
-    backgroundColor: colors.primary,
-    borderRadius: 16,
-    padding: 20,
-    alignItems: 'center',
-    marginBottom: 20,
-  },
-  randomButtonText: {
-    color: colors.surface,
-    fontSize: 18,
+  categoryCardArrow: {
+    fontSize: 24,
+    color: colors.primary,
     fontWeight: 'bold',
+    textAlign: 'right',
+  },
+  // removed old grid styles
+  categoryPill: {
+    paddingVertical: 14,
+    paddingHorizontal: 18,
+    borderRadius: 16,
+    borderWidth: 1,
+    marginRight: 10,
+  },
+  pillTitle: {
+    fontSize: 16,
+    fontWeight: '700',
+    textTransform: 'capitalize',
+  },
+  pillCount: {
+    fontSize: 12,
+    fontWeight: '600',
+    opacity: 0.8,
   },
   swipeContainer: {
     position: 'absolute',
@@ -334,4 +411,26 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '600',
   },
+  emptyCentered: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
 });
+
+function getCategoryColor(category: string, alpha: number): string {
+  const base = {
+    health: '#16a34a',
+    learning: '#2563eb',
+    productivity: '#7c3aed',
+    social: '#f59e0b',
+    creative: '#ec4899',
+    mindfulness: '#06b6d4',
+    other: '#64748b',
+  }[category as keyof Record<string, string>] || '#64748b';
+  if (alpha >= 1) return base;
+  const a = Math.round(Math.min(Math.max(alpha, 0), 1) * 255)
+    .toString(16)
+    .padStart(2, '0');
+  return `${base}${a}`;
+}

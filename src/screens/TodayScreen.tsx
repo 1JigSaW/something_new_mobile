@@ -127,7 +127,6 @@ export default function TodayScreen() {
     <View style={styles.container}>
       <PageHeader
         title="Today"
-        subtitle="Swipe to choose"
         right={(
           <ResetButton onPress={async () => {
             Alert.alert(
@@ -160,7 +159,7 @@ export default function TodayScreen() {
             Alert.alert('Added to Favorites', `"${challenge.title}" added to favorites`);
           }}
           disabled={!canSwipe()}
-          swipeCount={swipesUsedToday}
+          swipeCount={undefined as unknown as number}
           maxSwipes={maxSwipesPerDay}
           isPremium={isPremium}
           onUpgradePremium={() => {

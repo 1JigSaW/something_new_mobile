@@ -93,13 +93,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
   };
 
   const handleSwipe = async () => {
-    const newSwipeCount = localSwipesUsedToday + 1;
-    
-    // Сначала обновляем локальное состояние (мгновенно)
-    setLocalSwipesUsedToday(newSwipeCount);
-    
-    // Затем сохраняем в AsyncStorage
-    await updateDailyData({ swipesUsedToday: newSwipeCount });
+    setLocalSwipesUsedToday((prev) => prev + 1);
+    const persistedCount = (dailyData.swipesUsedToday || 0) + 1;
+    await updateDailyData({ swipesUsedToday: persistedCount });
   };
 
   const canTakeNewChallenge = () => {

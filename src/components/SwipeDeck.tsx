@@ -3,7 +3,7 @@ import { View, Text, StyleSheet, Animated, Dimensions, TouchableOpacity } from '
 import UIButton from '../ui/atoms/Button';
 import SwipeHints from '../ui/molecules/SwipeHints';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { PanGestureHandler, PanGestureHandlerGestureEvent } from 'react-native-gesture-handler';
+import { PanGestureHandler, PanGestureHandlerGestureEvent, State } from 'react-native-gesture-handler';
 import { HeartIcon } from '../assets/icons';
 import { colors } from '../styles';
 
@@ -56,6 +56,7 @@ export function SwipeDeck({
   const [pendingChallenge, setPendingChallenge] = useState<Challenge | null>(null);
   const [isStopped, setIsStopped] = useState(false);
   const [completedToday, setCompletedToday] = useState(false);
+  const [internalSwipeCount, setInternalSwipeCount] = useState(0);
 
   const translateX = useRef(new Animated.Value(0)).current;
   const translateY = useRef(new Animated.Value(0)).current;
@@ -164,7 +165,7 @@ export function SwipeDeck({
     if (disabled || isStopped || pendingChallenge || completedToday) return;
   
     const { translationX, state } = event.nativeEvent;
-    if (state === 5) {
+    if (state === (State as any).END || state === 5) {
       const currentChallenge = challenges[currentIndex];
   
       if (translationX < -SWIPE_THRESHOLD) {
@@ -175,6 +176,7 @@ export function SwipeDeck({
         }).start(() => {
           onSwipeLeft(currentChallenge);
           onSwipe?.();
+          setInternalSwipeCount(prev => prev + 1);
           setCurrentIndex(prev => prev + 1);
           translateX.setValue(0);
           translateY.setValue(0);
@@ -188,6 +190,8 @@ export function SwipeDeck({
         ]).start(() => {
           setPendingChallenge(currentChallenge);
           savePendingToStorage(currentChallenge);
+          onSwipe?.();
+          setInternalSwipeCount(prev => prev + 1);
           translateX.setValue(0);
           translateY.setValue(0);
           rotate.setValue(0);
@@ -296,7 +300,7 @@ export function SwipeDeck({
       {!pendingChallenge && (
         <View style={styles.swipeCounter}>
           <Text style={styles.swipeCounterText}>
-            Swipes: {swipeCount}/{maxSwipes}
+            Swipes: {internalSwipeCount}/{maxSwipes}
           </Text>
         </View>
       )}

@@ -154,6 +154,7 @@ export default function TodayScreen() {
           challenges={getUnviewedChallenges(randomChallenges)}
           onSwipeRight={handleSwipeRight}
           onSwipeLeft={handleSwipeLeft}
+          onSwipe={handleSwipe}
           onAddToFavorites={(challenge) => {
             addToFavorites(challenge);
             Alert.alert('Added to Favorites', `"${challenge.title}" added to favorites`);

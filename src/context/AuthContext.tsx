@@ -3,6 +3,7 @@ import { authService, AuthUser } from '../services/authService';
 import { shouldUseFallback } from '../config';
 import { useAsyncStorage } from '../hooks/useAsyncStorage';
 import { STORAGE_KEYS } from '../types/hooks';
+import { onUnauthorized } from '../api/authEvents';
 
 interface AuthContextType {
   user: AuthUser | null;
@@ -24,6 +25,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       checkCurrentUser();
     }
   }, []);
+
+  useEffect(() => {
+    const off = onUnauthorized(async () => {
+      await saveUser(null);
+    });
+    return () => {
+      off();
+    };
+  }, [saveUser]);
 
   const checkCurrentUser = async () => {
     if (isChecking) {

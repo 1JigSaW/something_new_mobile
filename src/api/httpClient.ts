@@ -1,6 +1,7 @@
 import axios, { AxiosError, AxiosInstance } from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { shouldUseFallback } from '../config';
+import { emitUnauthorized } from './authEvents';
 import { ENV } from '../config/env';
 
 export function createHttpClient({ baseURL }: { baseURL: string }): AxiosInstance {
@@ -39,6 +40,7 @@ export function createHttpClient({ baseURL }: { baseURL: string }): AxiosInstanc
           }
           await AsyncStorage.removeItem('auth_tokens');
           await AsyncStorage.removeItem('auth_user');
+          emitUnauthorized();
         } catch (storageError) {
           console.error('Error clearing auth data:', storageError);
         }

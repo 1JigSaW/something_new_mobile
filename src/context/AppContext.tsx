@@ -207,7 +207,48 @@ export function AppProvider({ children }: { children: ReactNode }) {
       if (error?.response?.status === 429) {
         Alert.alert('Limit reached', 'You can complete only one challenge per day. Come back tomorrow!');
       } else {
-        Alert.alert('Error', 'Failed to save completion. Please try again.');
+        // Graceful fallback to local completion to keep UX responsive
+        try {
+          await updateDailyData({ completedToday: true, activeChallenge: null });
+          await incrementStreak();
+          await incrementCompletedCount();
+          const today = new Date();
+          const todayStr = today.toISOString().split('T')[0];
+          const existing: any = queryClient.getQueryData(['progress-stats']);
+          const days = 30;
+          const start = new Date(today);
+          start.setDate(today.getDate() - (days - 1));
+          const baseStats = existing || {
+            daily_stats: Array.from({ length: days }).map((_, i) => {
+              const d = new Date(today);
+              d.setDate(today.getDate() - (days - 1 - i));
+              return { date: d.toISOString().split('T')[0], completed: 0 };
+            }),
+            streak: 0,
+            total_completed: 0,
+            period: {
+              start_date: start.toISOString().split('T')[0],
+              end_date: todayStr,
+            },
+          };
+          const updatedDaily = (baseStats.daily_stats || []).map((s: any) => (
+            s.date === todayStr ? { ...s, completed: Math.max(1, Number(s.completed || 0)) } : s
+          ));
+          const updatedTotal = updatedDaily.reduce((acc: number, s: any) => acc + Number(s.completed || 0), 0);
+          let updatedStreak = 0;
+          for (let i = updatedDaily.length - 1; i >= 0; i -= 1) {
+            if (Number(updatedDaily[i].completed || 0) > 0) updatedStreak += 1; else break;
+          }
+          queryClient.setQueryData(['progress-stats'], {
+            daily_stats: updatedDaily,
+            streak: updatedStreak,
+            total_completed: updatedTotal,
+            period: baseStats.period,
+          });
+          Alert.alert('Saved locally', 'Server error. Your completion is saved locally for now.');
+        } catch (e) {
+          Alert.alert('Error', 'Failed to save completion. Please try again.');
+        }
         console.error('completeChallenge error:', error);
       }
     }

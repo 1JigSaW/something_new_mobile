@@ -150,10 +150,12 @@ export default function CategoriesScreen() {
         <View style={styles.container}>
           <PageHeader 
             title={selectedCategory}
+            left={(
+              <TouchableOpacity onPress={() => setSelectedCategory(null)}>
+                <Text style={{ color: colors.primary, fontSize: 16 }}>← Back</Text>
+              </TouchableOpacity>
+            )}
           />
-          <TouchableOpacity style={styles.backButton} onPress={() => setSelectedCategory(null)}>
-            <Text style={styles.backButtonText}>← Back</Text>
-          </TouchableOpacity>
           <EmptyState 
             title="All viewed!" 
             subtitle={`You've seen all ${selectedCategory} challenges. Try another category.`} 
@@ -167,17 +169,19 @@ export default function CategoriesScreen() {
       <View style={styles.container}>
         <PageHeader 
           title={selectedCategory}
+          left={(
+            <TouchableOpacity onPress={() => setSelectedCategory(null)}>
+              <Text style={{ color: colors.primary, fontSize: 16 }}>← Back</Text>
+            </TouchableOpacity>
+          )}
         />
-        
+
         <SwipeDeck
           challenges={unviewedCategoryChallenges}
           onSwipeRight={handleSwipeRight}
           onSwipeLeft={handleSwipeLeft}
           onAddToFavorites={handleAddToFavorites}
         />
-        <TouchableOpacity style={styles.backButton} onPress={() => setSelectedCategory(null)}>
-          <Text style={styles.backButtonText}>← Back</Text>
-        </TouchableOpacity>
       </View>
     );
   }
@@ -196,7 +200,16 @@ export default function CategoriesScreen() {
 
   return (
     <View style={styles.container}>
-      <PageHeader title="Categories" />
+      <PageHeader 
+        title="Categories"
+        left={(
+          selectedCategory ? (
+            <TouchableOpacity onPress={() => setSelectedCategory(null)}>
+              <Text style={{ color: colors.primary, fontSize: 16 }}>← Back</Text>
+            </TouchableOpacity>
+          ) : null
+        )}
+      />
 
       <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
         <View style={[styles.section, styles.firstSection]}>
@@ -212,6 +225,7 @@ export default function CategoriesScreen() {
               { key: 'medium', label: 'Medium', color: colors.categoryMedium },
               { key: 'large', label: 'Large', color: colors.categoryLarge },
             ].map((size) => (
+              <View key={`wrap-${size.key}`} style={styles.cardWrapper}>
               <TouchableOpacity
                 key={size.key}
                 style={[styles.categoryCard, { backgroundColor: `${size.color}15` }]}
@@ -225,6 +239,7 @@ export default function CategoriesScreen() {
                 </View>
                 <Text style={styles.categoryCardArrow}>→</Text>
               </TouchableOpacity>
+              </View>
             ))}
           </ScrollView>
         </View>
@@ -242,6 +257,7 @@ export default function CategoriesScreen() {
               { key: 'medium', label: 'Medium', color: colors.categoryMedium, duration: '30-90m' },
               { key: 'long', label: 'Long', color: colors.categoryLong, duration: '90m+' },
             ].map((duration) => (
+              <View key={`wrap-${duration.key}`} style={styles.cardWrapper}>
               <TouchableOpacity
                 key={duration.key}
                 style={[styles.categoryCard, { backgroundColor: `${duration.color}15` }]}
@@ -253,6 +269,7 @@ export default function CategoriesScreen() {
                 </View>
                 <Text style={styles.categoryCardArrow}>→</Text>
               </TouchableOpacity>
+              </View>
             ))}
           </ScrollView>
         </View>
@@ -269,6 +286,7 @@ export default function CategoriesScreen() {
               const unviewedCount = getUnviewedChallenges(categoryChallenges).length;
               if (unviewedCount === 0) return null;
               return (
+                <View key={`wrap-${categoryName}`} style={styles.cardWrapper}>
                 <TouchableOpacity
                   key={categoryName}
                   style={[styles.categoryCard, { backgroundColor: `${colors.primary}15` }]}
@@ -282,6 +300,7 @@ export default function CategoriesScreen() {
                   </View>
                   <Text style={styles.categoryCardArrow}>→</Text>
                 </TouchableOpacity>
+                </View>
               );
             })}
           </ScrollView>
@@ -304,8 +323,8 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
   },
   horizontalContent: {
-    paddingHorizontal: 0,
-    paddingRight: 0,
+    paddingHorizontal: 12,
+    paddingRight: 12,
   },
   categoriesGrid: {
     flexDirection: 'row',
@@ -332,7 +351,8 @@ const styles = StyleSheet.create({
     backgroundColor: colors.surface,
     borderRadius: 16,
     padding: 14,
-    marginRight: 12,
+    height: 140,
+    marginRight: 0,
     shadowColor: colors.shadow,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.08,
@@ -367,6 +387,9 @@ const styles = StyleSheet.create({
     color: colors.primary,
     fontWeight: 'bold',
     textAlign: 'right',
+  },
+  cardWrapper: {
+    paddingRight: 12,
   },
   // removed old grid styles
   categoryPill: {

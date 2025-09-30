@@ -6,18 +6,20 @@ type PageHeaderProps = {
   title: string,
   subtitle?: string,
   right?: React.ReactNode,
+  left?: React.ReactNode,
   style?: ViewStyle,
 };
 
-export default function PageHeader({ title, subtitle, right, style }: PageHeaderProps) {
+export default function PageHeader({ title, subtitle, right, left, style }: PageHeaderProps) {
   return (
     <View style={[styles.header, style]}>
-      <View style={styles.content}>
-        <View>
+      <View style={styles.row}>
+        <View style={styles.left}>{left}</View>
+        <View style={styles.center}>
           <Text style={styles.title}>{title}</Text>
           {subtitle ? <Text style={styles.subtitle}>{subtitle}</Text> : null}
         </View>
-        {right ? <View style={styles.right}>{right}</View> : null}
+        <View style={styles.right}>{right}</View>
       </View>
     </View>
   );
@@ -32,10 +34,19 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: colors.border,
   },
-  content: {
+  row: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
+  },
+  left: {
+    width: 64,
+    alignItems: 'flex-start',
+    justifyContent: 'center',
+  },
+  center: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   title: {
     fontSize: 28,
@@ -48,9 +59,9 @@ const styles = StyleSheet.create({
     color: colors.textSecondary,
   },
   right: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
+    width: 64,
+    alignItems: 'flex-end',
+    justifyContent: 'center',
   },
 });
 

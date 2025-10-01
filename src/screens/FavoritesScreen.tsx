@@ -1,5 +1,7 @@
 import React from 'react';
 import { View, ScrollView, StyleSheet, Alert } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useNavigation } from '@react-navigation/native';
 import { useApp } from '../context/AppContext';
 import { Challenge } from '../types/challenge';
 import { ScreenHeader } from '../ui/molecules';
@@ -12,21 +14,44 @@ export default function FavoritesScreen() {
     favorites,
     removeFromFavorites,
     setActiveChallenge,
+    completedToday,
+    canTakeNewChallenge,
+    completeChallenge,
+    markAsSelected,
   } = useApp();
+  const navigation = useNavigation();
+
+  const getTodayKey = () => {
+    const d = new Date();
+    const yyyy = d.getFullYear();
+    const mm = String(d.getMonth() + 1).padStart(2, '0');
+    const dd = String(d.getDate()).padStart(2, '0');
+    return `pending_challenge:${yyyy}-${mm}-${dd}`;
+  };
 
   const handleSelectChallenge = (challenge: Challenge) => {
+    if (completedToday || (typeof canTakeNewChallenge === 'function' && !canTakeNewChallenge())) {
+      Alert.alert(
+        'Daily limit reached',
+        'You already completed a task today. Come back tomorrow!',
+      );
+      return;
+    }
     Alert.alert(
       'Select this idea?',
       `Are you sure you want to select "${challenge.title}"?`,
       [
-        {
-          text: 'Cancel',
-          style: 'cancel',
-        },
-        {
-          text: 'Select',
-          onPress: () => setActiveChallenge(challenge),
-        },
+        { text: 'Cancel', style: 'cancel' },
+        { text: 'Select', onPress: async () => {
+            setActiveChallenge(challenge);
+            markAsSelected(challenge.id);
+            removeFromFavorites(challenge.id);
+            try {
+              await AsyncStorage.setItem(getTodayKey(), JSON.stringify(challenge));
+            } catch {}
+            // @ts-ignore
+            navigation.navigate('Today');
+          } },
       ]
     );
   };

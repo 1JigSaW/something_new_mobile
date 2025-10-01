@@ -6,7 +6,7 @@ type CelebrationProps = {
   visible: boolean,
 };
 
-const EMOJIS = ['🎉', '✨', '🎊', '⭐', '💥'];
+const EMOJIS = ['🎉', '✨', '🎊', '⭐', '✅', '🍀', '💚'];
 const { width, height } = Dimensions.get('window');
 
 export default function Celebration({ visible }: CelebrationProps) {
@@ -84,18 +84,21 @@ const styles = StyleSheet.create({
     bottom: 0,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: 'rgba(0,0,0,0.15)',
+    backgroundColor: colors.success,
     zIndex: 1000,
   },
   title: {
     fontSize: 32,
     fontWeight: '800',
-    color: colors.textPrimary,
+    color: colors.surface,
+    textAlign: 'center',
   },
   subtitle: {
     marginTop: 6,
     fontSize: 16,
-    color: colors.textSecondary,
+    color: colors.surface,
+    fontWeight: '600',
+    textAlign: 'center',
   },
   particle: {
     position: 'absolute',

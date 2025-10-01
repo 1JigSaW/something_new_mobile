@@ -113,6 +113,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
       if (!useFallback) {
         await http.post(API.challenges.complete({ id: target.id }));
+        await updateDailyData({ completedToday: true });
+        await incrementStreak();
+        await incrementCompletedCount();
 
         // Немедленно обновляем локальный кэш статистики
         const today = new Date();

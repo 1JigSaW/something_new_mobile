@@ -19,6 +19,7 @@ export default function ProfileScreen() {
   } = useApp();
 
   const { signOut } = useAuth();
+  const { resetAllUserData } = useApp();
 
   const [progressData, setProgressData] = useState<Array<{
     date: string;
@@ -146,19 +147,18 @@ export default function ProfileScreen() {
     <View style={styles.container}>
       <PageHeader
         title="Profile"
-        subtitle="Your progress and statistics"
         right={(
           <View style={styles.headerButtons}>
             <ResetButton onPress={async () => {
               Alert.alert(
                 'Reset All Data',
-                'Reset all progress and data? This cannot be undone.',
+                'Reset all progress and saved data? This cannot be undone.',
                 [
                   { text: 'Cancel', style: 'cancel' },
                   { text: 'Reset', style: 'destructive', onPress: async () => {
                     try {
-                      await resetToNewDay();
-                      Alert.alert('Success!', 'All data has been reset.');
+                      await resetAllUserData();
+                      Alert.alert('Success!', 'All local user data has been reset.');
                     } catch (error) {
                       Alert.alert('Error', 'Reset failed: ' + (error instanceof Error ? error.message : String(error)));
                     }
@@ -166,9 +166,6 @@ export default function ProfileScreen() {
                 ]
               );
             }} />
-            <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
-              <Text style={styles.logoutButtonText}>Logout</Text>
-            </TouchableOpacity>
           </View>
         )}
       />
@@ -198,6 +195,11 @@ export default function ProfileScreen() {
           <CalendarGrid items={calendarData} />
         </Section>
 
+        <View style={styles.footer}>
+          <TouchableOpacity style={styles.logoutFullButton} onPress={handleLogout}>
+            <Text style={styles.logoutFullText}>Logout</Text>
+          </TouchableOpacity>
+        </View>
       </ScrollView>
     </View>
   );
@@ -422,5 +424,23 @@ const styles = StyleSheet.create({
   },
   secondStatCard: {
     marginLeft: 12,
+  },
+  footer: {
+    paddingHorizontal: 5,
+    paddingVertical: 8,
+    backgroundColor: 'transparent',
+    borderTopWidth: 0,
+    marginTop: 0,
+  },
+  logoutFullButton: {
+    backgroundColor: colors.error,
+    paddingVertical: 14,
+    borderRadius: 12,
+    alignItems: 'center',
+  },
+  logoutFullText: {
+    color: colors.surface,
+    fontSize: 16,
+    fontWeight: '700',
   },
 });

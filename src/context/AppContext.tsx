@@ -45,6 +45,7 @@ interface AppContextType {
   resetToNewDay: () => Promise<void>;
   checkAndResetForNewDay: () => Promise<boolean>;
   resetTodayData: () => Promise<void>;
+  resetAllUserData: () => Promise<void>;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -53,7 +54,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const queryClient = useQueryClient();
   
   const { dailyData, updateDailyData, resetForNewDay, resetTodayData } = useDailyData();
-  const { userStats, incrementStreak, incrementCompletedCount, setPremium } = useUserData();
+  const { userStats, incrementStreak, incrementCompletedCount, setPremium, updateStats } = useUserData() as any;
   const { favorites, addToFavorites, removeFromFavorites } = useFavorites(userStats.isPremium);
   const { viewedChallenges, markAsViewed, getUnviewedChallenges } = useViewedChallenges();
   const { selectedChallenges, markAsSelected, isSelected, removeFromSelected } = useSelectedChallenges();
@@ -282,6 +283,19 @@ export function AppProvider({ children }: { children: ReactNode }) {
     setLocalSwipesUsedToday(0); // Сброс локального счетчика
   };
 
+  const resetAllUserData = async () => {
+    try {
+      await resetTodayDataWrapper();
+      await updateStats({ streak: 0, completedCount: 0, isPremium: false });
+      for (const fav of favorites) {
+        await removeFromFavorites(fav.id);
+      }
+      queryClient.removeQueries({ queryKey: ['progress-stats'] });
+    } catch (error) {
+      console.error('resetAllUserData error:', error);
+    }
+  };
+
   
   return (
     <AppContext.Provider value={{
@@ -314,6 +328,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       resetToNewDay: resetForNewDay,
       checkAndResetForNewDay,
       resetTodayData: resetTodayDataWrapper,
+      resetAllUserData,
     }}>
       {children}
     </AppContext.Provider>

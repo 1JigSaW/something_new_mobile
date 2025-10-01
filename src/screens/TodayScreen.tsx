@@ -9,6 +9,7 @@ import { useApp } from '../context/AppContext';
 import { useRandomChallengesQuery } from '../features';
 import { SwipeDeck } from '../ui/organisms/SwipeDeck';
 import { colors } from '../styles';
+import Celebration from '../ui/molecules/Celebration';
 
 export default function TodayScreen() {
   const {
@@ -28,6 +29,7 @@ export default function TodayScreen() {
     getUnviewedChallenges,
     markAsSelected,
   } = useApp();
+  const [showCelebration, setShowCelebration] = React.useState(false);
 
 
   const { 
@@ -67,6 +69,8 @@ export default function TodayScreen() {
     markAsSelected(challenge.id);
     setActiveChallenge(challenge);
     completeChallenge(challenge);
+    setShowCelebration(true);
+    setTimeout(() => setShowCelebration(false), 1200);
     handleSwipe();
   };
 
@@ -193,6 +197,8 @@ export default function TodayScreen() {
           }}
         />
       </View>
+
+      <Celebration visible={showCelebration} />
 
     </View>
   );

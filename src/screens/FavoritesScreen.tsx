@@ -57,7 +57,6 @@ export default function FavoritesScreen() {
       <View style={styles.container}>
         <ScreenHeader 
           title="Favorites" 
-          subtitle="Saved ideas" 
         />
         
         <ScreenEmptyState 
@@ -73,7 +72,6 @@ export default function FavoritesScreen() {
     <View style={styles.container}>
       <ScreenHeader 
         title="Favorites" 
-        subtitle={`${favorites.length} ${favorites.length === 1 ? 'idea' : 'ideas'}`}
       />
 
       <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>

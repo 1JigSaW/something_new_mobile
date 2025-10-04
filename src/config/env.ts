@@ -3,7 +3,7 @@
 
 export const ENV = {
   // API Configuration
-  API_BASE_URL_DEV_IOS: 'http://localhost:8001',
+  API_BASE_URL_DEV_IOS: 'http://192.168.13.229:8001',
   API_BASE_URL_DEV_ANDROID: 'http://10.0.2.2:8001',
   API_BASE_URL_PROD: 'https://your-production-api.com',
 

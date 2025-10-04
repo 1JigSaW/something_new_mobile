@@ -5,7 +5,7 @@ require Pod::Executable.execute_command('node', ['-p',
     {paths: [process.argv[1]]},
   )', __dir__]).strip
 
-platform :ios, '13.0'
+platform :ios, '15.1'
 prepare_react_native_project!
 
 linkage = ENV['USE_FRAMEWORKS']
@@ -26,6 +26,11 @@ target 'something_new_mobile' do
   # Enable modular headers only for GoogleUtilities to satisfy FirebaseCoreInternal Swift import
   pod 'GoogleUtilities', :modular_headers => true
 
+  # Explicit Firebase pods to resolve "Module 'FirebaseCore' not found" in FirebaseInstallations
+  pod 'FirebaseCore', '12.3.0', :modular_headers => true
+  pod 'FirebaseCoreInternal', '12.3.0', :modular_headers => true
+  pod 'FirebaseInstallations', '12.3.0', :modular_headers => true
+
   # RNWorklets подтянется автоматически из пакета `react-native-worklets` через autolinking
 
   post_install do |installer|
@@ -38,7 +43,15 @@ target 'something_new_mobile' do
     )
     installer.pods_project.targets.each do |t|
       t.build_configurations.each do |config|
-        config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = '13.0'
+        config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = '15.1'
+        paths = config.build_settings['HEADER_SEARCH_PATHS'] || ['$(inherited)']
+        unless paths.is_a?(Array)
+          paths = [paths]
+        end
+        unless paths.include?('$(SRCROOT)/../node_modules/react-native/ReactCommon/**')
+          paths << '$(SRCROOT)/../node_modules/react-native/ReactCommon/**'
+        end
+        config.build_settings['HEADER_SEARCH_PATHS'] = paths
       end
     end
   end

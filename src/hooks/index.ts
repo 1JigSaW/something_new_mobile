@@ -4,3 +4,4 @@ export { useUserData } from './useUserData';
 export { useFavorites } from './useFavorites';
 export { useViewedChallenges } from './useViewedChallenges';
 export { useSelectedChallenges } from './useSelectedChallenges';
+export { useCompletedChallenges } from './useCompletedChallenges';

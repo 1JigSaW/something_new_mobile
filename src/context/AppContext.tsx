@@ -4,7 +4,7 @@ import { Alert } from 'react-native';
 import { http } from '../api';
 import { API } from '../api/endpoints';
 import { shouldUseFallback } from '../config';
-import { useDailyData, useUserData, useFavorites, useViewedChallenges, useSelectedChallenges } from '../hooks';
+import { useDailyData, useUserData, useFavorites, useViewedChallenges, useSelectedChallenges, useCompletedChallenges } from '../hooks';
 import { Challenge } from '../types/challenge';
 
 interface AppContextType {
@@ -29,6 +29,15 @@ interface AppContextType {
   viewedChallenges: number[];
   markAsViewed: (challengeId: number) => void;
   getUnviewedChallenges: (challenges: Challenge[]) => Challenge[];
+
+  completedChallenges: number[];
+  isCompleted: (challengeId: number) => boolean;
+  getDisplayChallenges: (
+    challenges: Challenge[],
+    options: {
+      allowRepeatsOnExhausted: boolean,
+    }
+  ) => Challenge[];
 
   selectedChallenges: number[];
   markAsSelected: (challengeId: number) => void;
@@ -58,6 +67,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const { favorites, addToFavorites, removeFromFavorites } = useFavorites(userStats.isPremium);
   const { viewedChallenges, markAsViewed, getUnviewedChallenges } = useViewedChallenges();
   const { selectedChallenges, markAsSelected, isSelected, removeFromSelected } = useSelectedChallenges();
+  const { completedChallenges, markAsCompleted, isCompleted } = useCompletedChallenges();
   
   // Локальное состояние для счетчика свайпов (для мгновенного обновления UI)
   const [localSwipesUsedToday, setLocalSwipesUsedToday] = useState(dailyData.swipesUsedToday);
@@ -202,6 +212,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       await updateDailyData({ activeChallenge: null });
       await removeFromSelected(target.id);
       await markAsViewed(target.id);
+      await markAsCompleted(target.id);
       
     } catch (error: any) {
       if (error?.response?.status === 429) {
@@ -252,6 +263,22 @@ export function AppProvider({ children }: { children: ReactNode }) {
         console.error('completeChallenge error:', error);
       }
     }
+  };
+  const getDisplayChallenges = (
+    challenges: Challenge[],
+    options: {
+      allowRepeatsOnExhausted: boolean,
+    }
+  ) => {
+    const notCompleted = challenges.filter((c) => !completedChallenges.includes(c.id));
+    const notCompletedAndNotViewed = notCompleted.filter((c) => !viewedChallenges.includes(c.id));
+    if (notCompletedAndNotViewed.length > 0) {
+      return notCompletedAndNotViewed;
+    }
+    if (options.allowRepeatsOnExhausted) {
+      return notCompleted;
+    }
+    return notCompletedAndNotViewed;
   };
 
   const skipChallenge = async () => {
@@ -318,6 +345,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
       viewedChallenges,
       markAsViewed,
       getUnviewedChallenges,
+      completedChallenges,
+      isCompleted,
+      getDisplayChallenges,
       selectedChallenges,
       markAsSelected,
       isSelected,

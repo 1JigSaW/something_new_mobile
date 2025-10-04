@@ -72,7 +72,8 @@ class AuthService {
         'userStats',
         'favorites',
         'viewedChallenges',
-        'selectedChallenges'
+        'selectedChallenges',
+        'completedChallenges'
       ]);
       console.log('All app data cleared');
     } catch (error) {

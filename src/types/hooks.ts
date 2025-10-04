@@ -17,6 +17,7 @@ export interface StorageKeys {
   USER_STATS: 'userStats';
   FAVORITES: 'favorites';
   VIEWED_CHALLENGES: 'viewedChallenges';
+  COMPLETED_CHALLENGES: 'completedChallenges';
   SELECTED_CHALLENGES: 'selectedChallenges';
   LAST_DAY_DATE: 'lastDayDate';
   AUTH_USER: 'auth_user';
@@ -27,6 +28,7 @@ export const STORAGE_KEYS: StorageKeys = {
   USER_STATS: 'userStats',
   FAVORITES: 'favorites',
   VIEWED_CHALLENGES: 'viewedChallenges',
+  COMPLETED_CHALLENGES: 'completedChallenges',
   SELECTED_CHALLENGES: 'selectedChallenges',
   LAST_DAY_DATE: 'lastDayDate',
   AUTH_USER: 'auth_user',

@@ -26,7 +26,7 @@ export default function TodayScreen() {
     canSwipe,
     handleSwipe,
     markAsViewed,
-    getUnviewedChallenges,
+    getDisplayChallenges,
     markAsSelected,
   } = useApp();
   const [showCelebration, setShowCelebration] = React.useState(false);
@@ -154,7 +154,7 @@ export default function TodayScreen() {
 
       <View style={styles.deckContainer}>
         <SwipeDeck
-          challenges={getUnviewedChallenges(randomChallenges)}
+          challenges={getDisplayChallenges(randomChallenges, { allowRepeatsOnExhausted: true })}
           onSwipeRight={handleSwipeRight}
           onSwipeLeft={handleSwipeLeft}
           onSwipe={handleSwipe}

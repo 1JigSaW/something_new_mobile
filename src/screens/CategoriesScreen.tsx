@@ -21,7 +21,7 @@ export default function CategoriesScreen() {
     canSwipe,
     handleSwipe,
     markAsViewed,
-    getUnviewedChallenges,
+    getDisplayChallenges,
     markAsSelected,
   } = useApp();
 
@@ -51,7 +51,7 @@ export default function CategoriesScreen() {
     filteredChallenges = filteredChallenges.filter(challenge => challenge.category === selectedCategory);
   }
 
-  filteredChallenges = getUnviewedChallenges(filteredChallenges);
+  filteredChallenges = getDisplayChallenges(filteredChallenges, { allowRepeatsOnExhausted: false });
 
   const handleCategorySelect = (category: string) => {
     setSelectedCategory(selectedCategory === category ? null : category);
@@ -143,7 +143,7 @@ export default function CategoriesScreen() {
 
   if (selectedCategory) {
     const categoryChallenges = categories[selectedCategory] || [];
-    const unviewedCategoryChallenges = getUnviewedChallenges(categoryChallenges);
+    const unviewedCategoryChallenges = getDisplayChallenges(categoryChallenges, { allowRepeatsOnExhausted: true });
 
     if (unviewedCategoryChallenges.length === 0) {
       return (
@@ -283,7 +283,7 @@ export default function CategoriesScreen() {
             contentContainerStyle={styles.horizontalContent}
           >
             {Object.entries(categories).map(([categoryName, categoryChallenges]) => {
-              const unviewedCount = getUnviewedChallenges(categoryChallenges).length;
+              const unviewedCount = getDisplayChallenges(categoryChallenges, { allowRepeatsOnExhausted: false }).length;
               if (unviewedCount === 0) return null;
               return (
                 <View key={`wrap-${categoryName}`} style={styles.cardWrapper}>

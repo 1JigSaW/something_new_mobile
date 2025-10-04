@@ -45,13 +45,17 @@ export default function CategoriesScreen() {
     return acc;
   }, {} as Record<string, Challenge[]>);
 
+  const sizeKeys = ['small', 'medium', 'large'];
   let filteredChallenges = challenges;
   
   if (selectedCategory) {
-    filteredChallenges = filteredChallenges.filter(challenge => challenge.category === selectedCategory);
+    if (sizeKeys.includes(selectedCategory)) {
+      filteredChallenges = filteredChallenges.filter(challenge => challenge.size === selectedCategory);
+    } else {
+      filteredChallenges = filteredChallenges.filter(challenge => challenge.category === selectedCategory);
+    }
   }
-
-  filteredChallenges = getDisplayChallenges(filteredChallenges, { allowRepeatsOnExhausted: false });
+  // On categories root we don't need to compute empty state; keep full list
 
   const handleCategorySelect = (category: string) => {
     setSelectedCategory(selectedCategory === category ? null : category);
@@ -61,7 +65,7 @@ export default function CategoriesScreen() {
     if (!canSwipe()) {
       Alert.alert(
         'Swipe limit reached',
-        `You've used ${swipesUsedToday}/${maxSwipesPerDay} swipes today. Upgrade to Premium for unlimited swipes.`
+        `You've used ${swipesUsedToday}/${maxSwipesPerDay} swipes today.`
       );
       return;
     }
@@ -100,7 +104,7 @@ export default function CategoriesScreen() {
     if (!canSwipe()) {
       Alert.alert(
         'Swipe limit reached',
-        `You've used ${swipesUsedToday}/${maxSwipesPerDay} swipes today. Upgrade to Premium for unlimited swipes.`
+        `You've used ${swipesUsedToday}/${maxSwipesPerDay} swipes today.`
       );
       return;
     }
@@ -145,26 +149,6 @@ export default function CategoriesScreen() {
     const categoryChallenges = categories[selectedCategory] || [];
     const unviewedCategoryChallenges = getDisplayChallenges(categoryChallenges, { allowRepeatsOnExhausted: true });
 
-    if (unviewedCategoryChallenges.length === 0) {
-      return (
-        <View style={styles.container}>
-          <PageHeader 
-            title={selectedCategory}
-            left={(
-              <TouchableOpacity onPress={() => setSelectedCategory(null)}>
-                <Text style={{ color: colors.primary, fontSize: 16 }}>← Back</Text>
-              </TouchableOpacity>
-            )}
-          />
-          <EmptyState 
-            title="All viewed!" 
-            subtitle={`You've seen all ${selectedCategory} challenges. Try another category.`} 
-            style={styles.emptyCentered}
-          />
-        </View>
-      );
-    }
-
     return (
       <View style={styles.container}>
         <PageHeader 
@@ -177,7 +161,7 @@ export default function CategoriesScreen() {
         />
 
         <SwipeDeck
-          challenges={unviewedCategoryChallenges}
+          challenges={unviewedCategoryChallenges.length > 0 ? unviewedCategoryChallenges : getDisplayChallenges(categoryChallenges, { allowRepeatsOnExhausted: true })}
           onSwipeRight={handleSwipeRight}
           onSwipeLeft={handleSwipeLeft}
           onAddToFavorites={handleAddToFavorites}
@@ -294,9 +278,7 @@ export default function CategoriesScreen() {
                 >
                   <View style={styles.categoryCardContent}>
                     <Text style={styles.categoryCardTitle}>{categoryName}</Text>
-                    <Text style={styles.categoryCardCount}>
-                      {unviewedCount} left
-                    </Text>
+          {/* removed left counter */}
                   </View>
                   <Text style={styles.categoryCardArrow}>→</Text>
                 </TouchableOpacity>

@@ -270,15 +270,17 @@ export function AppProvider({ children }: { children: ReactNode }) {
       allowRepeatsOnExhausted: boolean,
     }
   ) => {
-    const notCompleted = challenges.filter((c) => !completedChallenges.includes(c.id));
-    const notCompletedAndNotViewed = notCompleted.filter((c) => !viewedChallenges.includes(c.id));
-    if (notCompletedAndNotViewed.length > 0) {
-      return notCompletedAndNotViewed;
+    const notCompletedAndNotSelected = challenges.filter(
+      (c) => !completedChallenges.includes(c.id) && !selectedChallenges.includes(c.id)
+    );
+    const unviewed = notCompletedAndNotSelected.filter((c) => !viewedChallenges.includes(c.id));
+    if (unviewed.length > 0) {
+      return unviewed;
     }
     if (options.allowRepeatsOnExhausted) {
-      return notCompleted;
+      return notCompletedAndNotSelected;
     }
-    return notCompletedAndNotViewed;
+    return unviewed;
   };
 
   const skipChallenge = async () => {

@@ -270,15 +270,12 @@ export function SwipeDeck({
     return (
       <View style={styles.emptyContainer}>
         <Text style={styles.emptyText}>
-          {completedToday ? 'All done for today!' : (isPremium ? 'No new ideas available' : 'Cards finished!')}
+          {completedToday ? 'All done for today!' : 'Cards finished!'}
         </Text>
         <Text style={styles.emptySubtext}>
           {completedToday 
             ? 'Come back tomorrow for a new challenge.'
-            : (isPremium 
-              ? 'You\'ve seen all available ideas in this category. New ones will appear soon!'
-              : 'Upgrade to Premium for unlimited access to ideas')
-          }
+            : 'You\'ve seen all available ideas here.'}
         </Text>
         <View style={styles.buttonContainer}>
           {onReset && (

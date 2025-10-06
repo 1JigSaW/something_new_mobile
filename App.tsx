@@ -19,7 +19,7 @@ export default function App() {
   return (
     <GestureHandlerRootView style={styles.container}>
       <AppProviders queryClient={queryClient}>
-        <StatusBar barStyle="dark-content" backgroundColor="transparent" translucent />
+        <StatusBar barStyle="dark-content" backgroundColor="#ffffff" translucent={false} />
         <AppContent />
       </AppProviders>
     </GestureHandlerRootView>

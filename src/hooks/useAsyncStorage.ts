@@ -18,6 +18,7 @@ export function useAsyncStorage<T>(
       if (item !== null) {
         setStoredValue(JSON.parse(item));
       }
+      try { console.log('[Storage] load', { key, hasValue: item !== null }); } catch {}
     } catch (error) {
       console.error(`Error loading ${key}:`, error);
     } finally {
@@ -29,6 +30,7 @@ export function useAsyncStorage<T>(
     try {
       setStoredValue(value);
       await AsyncStorage.setItem(key, JSON.stringify(value));
+      try { console.log('[Storage] set', { key, value }); } catch {}
     } catch (error) {
       console.error(`Error saving ${key}:`, error);
     }
@@ -38,6 +40,7 @@ export function useAsyncStorage<T>(
     try {
       setStoredValue(initialValue);
       await AsyncStorage.removeItem(key);
+      try { console.log('[Storage] remove', { key }); } catch {}
     } catch (error) {
       console.error(`Error removing ${key}:`, error);
     }

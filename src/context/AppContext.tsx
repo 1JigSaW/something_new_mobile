@@ -4,6 +4,9 @@ import { Alert } from 'react-native';
 import { http } from '../api';
 import { API } from '../api/endpoints';
 import { shouldUseFallback } from '../config';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { STORAGE_KEYS } from '../types/hooks';
+import { getTodayKey } from '../utils';
 import { useDailyData, useUserData, useFavorites, useViewedChallenges, useSelectedChallenges, useCompletedChallenges } from '../hooks';
 import { Challenge } from '../types/challenge';
 
@@ -71,9 +74,11 @@ export function AppProvider({ children }: { children: ReactNode }) {
   
   // Локальное состояние для счетчика свайпов (для мгновенного обновления UI)
   const [localSwipesUsedToday, setLocalSwipesUsedToday] = useState(dailyData.swipesUsedToday);
+  try { console.log('[Ctx] init', { dailySwipes: dailyData.swipesUsedToday }); } catch {}
 
   // Синхронизация локального состояния с dailyData
   useEffect(() => {
+    console.log('[Ctx] dailyData.swipesUsedToday changed', { daily: dailyData.swipesUsedToday });
     setLocalSwipesUsedToday(dailyData.swipesUsedToday);
   }, [dailyData.swipesUsedToday]);
 
@@ -100,13 +105,28 @@ export function AppProvider({ children }: { children: ReactNode }) {
   };
 
   const canSwipe = () => {
-    return localSwipesUsedToday < maxSwipesPerDay;
+    const result = localSwipesUsedToday < maxSwipesPerDay;
+    try { console.log('[Ctx] canSwipe', { local: localSwipesUsedToday, max: maxSwipesPerDay, result }); } catch {}
+    return result;
   };
 
   const handleSwipe = async () => {
-    setLocalSwipesUsedToday((prev) => prev + 1);
-    const persistedCount = (dailyData.swipesUsedToday || 0) + 1;
-    await updateDailyData({ swipesUsedToday: persistedCount });
+    setLocalSwipesUsedToday((prev) => {
+      const next = prev + 1;
+      try { console.log('[Ctx] handleSwipe local++', { prev, next }); } catch {}
+      return next;
+    });
+    try {
+      const raw = await AsyncStorage.getItem(STORAGE_KEYS.DAILY_DATA);
+      const base = raw ? JSON.parse(raw) : dailyData;
+      const persistedCount = (base?.swipesUsedToday || 0) + 1;
+      try { console.log('[Ctx] handleSwipe persist (merged)', { from: base?.swipesUsedToday || 0, to: persistedCount }); } catch {}
+      await updateDailyData({ swipesUsedToday: persistedCount });
+    } catch (e) {
+      const fallback = (dailyData.swipesUsedToday || 0) + 1;
+      try { console.log('[Ctx] handleSwipe persist (fallback)', { to: fallback }); } catch {}
+      await updateDailyData({ swipesUsedToday: fallback });
+    }
   };
 
   const canTakeNewChallenge = () => {
@@ -301,9 +321,18 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   const checkAndResetForNewDay = async (): Promise<boolean> => {
     try {
-      await resetForNewDay();
-      setLocalSwipesUsedToday(0); // Сброс локального счетчика
-      return true;
+      const today = getTodayKey();
+      const last = await AsyncStorage.getItem(STORAGE_KEYS.LAST_DAY_DATE);
+      if (!last) {
+        await AsyncStorage.setItem(STORAGE_KEYS.LAST_DAY_DATE, today);
+        return false;
+      }
+      if (last !== today) {
+        await resetForNewDay();
+        setLocalSwipesUsedToday(0);
+        return true;
+      }
+      return false;
     } catch (error) {
       console.error('Error checking new day:', error);
       return false;

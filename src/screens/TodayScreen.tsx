@@ -23,13 +23,15 @@ export default function TodayScreen() {
     addToFavorites,
     swipesUsedToday,
     maxSwipesPerDay,
-    canSwipe,
     handleSwipe,
     markAsViewed,
     getDisplayChallenges,
     markAsSelected,
   } = useApp();
   const [showCelebration, setShowCelebration] = React.useState(false);
+  const [swipeDisplayCount, setSwipeDisplayCount] = React.useState(swipesUsedToday);
+
+  try { console.log('[Today] render', { swipeDisplayCount, swipesUsedToday, maxSwipesPerDay }); } catch {}
 
 
   const { 
@@ -40,6 +42,26 @@ export default function TodayScreen() {
     limit: 15,
     freeOnly: !isPremium,
   });
+
+  const displayChallenges = React.useMemo(() => (
+    getDisplayChallenges(
+      randomChallenges,
+      { allowRepeatsOnExhausted: true },
+    )
+  ), [getDisplayChallenges, randomChallenges]);
+
+  React.useEffect(() => {
+    console.log('[Today] sync from context', { swipesUsedToday });
+    setSwipeDisplayCount((prev) => {
+      if (swipesUsedToday === 0) return 0;
+      if (swipesUsedToday > prev) return swipesUsedToday;
+      return prev;
+    });
+  }, [swipesUsedToday]);
+
+  React.useEffect(() => {
+    console.log('[Today] swipeDisplayCount changed', { swipeDisplayCount, disabled: swipeDisplayCount >= maxSwipesPerDay });
+  }, [swipeDisplayCount, maxSwipesPerDay]);
 
   
   
@@ -58,32 +80,20 @@ export default function TodayScreen() {
 
 
   const handleSwipeRight = (challenge: any) => {
-    if (!canSwipe()) {
-      Alert.alert(
-        'Swipe limit reached',
-        `You've used ${swipesUsedToday}/${maxSwipesPerDay} swipes today. Upgrade to Premium for unlimited swipes.`
-      );
-      return;
-    }
-    
+    console.log('[Today] onSwipeRight', { id: challenge?.id, before: swipeDisplayCount });
     markAsSelected(challenge.id);
     setActiveChallenge(challenge);
     completeChallenge(challenge);
     setShowCelebration(true);
     setTimeout(() => setShowCelebration(false), 1200);
+    setSwipeDisplayCount((c) => c + 1);
     handleSwipe();
   };
 
   const handleSwipeLeft = (challenge: any) => {
-    if (!canSwipe()) {
-      Alert.alert(
-        'Swipe limit reached',
-        `You've used ${swipesUsedToday}/${maxSwipesPerDay} swipes today. Upgrade to Premium for unlimited swipes.`
-      );
-      return;
-    }
-    
+    console.log('[Today] onSwipeLeft', { id: challenge?.id, before: swipeDisplayCount });
     markAsViewed(challenge.id);
+    setSwipeDisplayCount((c) => c + 1);
     handleSwipe();
   };
 
@@ -131,76 +141,76 @@ export default function TodayScreen() {
     <View style={styles.container}>
       <PageHeader
         title="Today"
-        right={(
-          <ResetButton onPress={async () => {
-            Alert.alert(
-              'Reset Today',
-              'Reset all limits and data for today?',
-              [
-                { text: 'Cancel', style: 'cancel' },
-                { text: 'Reset', style: 'destructive', onPress: async () => {
-                  try {
-                    await resetTodayData();
-                    Alert.alert('SUCCESS!', 'ALL DATA CLEARED!');
-                  } catch (error) {
-                    Alert.alert('Error', 'Hard reset failed: ' + (error instanceof Error ? error.message : String(error)));
-                  }
-                }}
-              ]
-            );
-          }} />
-        )}
+        // right={(
+        //   <ResetButton onPress={async () => {
+        //     Alert.alert(
+        //       'Reset Today',
+        //       'Reset all limits and data for today?',
+        //       [
+        //         { text: 'Cancel', style: 'cancel' },
+        //         { text: 'Reset', style: 'destructive', onPress: async () => {
+        //           try {
+        //             await resetTodayData();
+        //             setSwipeDisplayCount(0);
+        //             Alert.alert('SUCCESS!', 'ALL DATA CLEARED!');
+        //           } catch (error) {
+        //             Alert.alert('Error', 'Hard reset failed: ' + (error instanceof Error ? error.message : String(error)));
+        //           }
+        //         }}
+        //       ]
+        //     );
+        //   }} />
+        // )}
       />
 
       <View style={styles.deckContainer}>
         <SwipeDeck
-          challenges={getDisplayChallenges(randomChallenges, { allowRepeatsOnExhausted: true })}
+          challenges={displayChallenges}
           onSwipeRight={handleSwipeRight}
           onSwipeLeft={handleSwipeLeft}
-          onSwipe={handleSwipe}
           onAddToFavorites={(challenge) => {
             addToFavorites(challenge);
             Alert.alert('Added to Favorites', `"${challenge.title}" added to favorites`);
           }}
-          disabled={!canSwipe()}
-          swipeCount={swipesUsedToday}
+          disabled={swipeDisplayCount >= maxSwipesPerDay}
+          swipeCount={swipeDisplayCount}
           maxSwipes={maxSwipesPerDay}
           isPremium={isPremium}
           onLimitReached={() => {
             Alert.alert(
               'Swipe limit reached',
-              `You've used ${swipesUsedToday}/${maxSwipesPerDay} swipes today.`
+              `You've used ${swipeDisplayCount}/${maxSwipesPerDay} swipes today.`
             );
           }}
-          onUpgradePremium={() => {
-            Alert.alert(
-              'Premium',
-              'Premium feature will be available in future versions!',
-              [{ text: 'Got it' }]
-            );
-          }}
-          onReset={async () => {
-            Alert.alert(
-              'Reset Today',
-              'Reset all limits and data for today?',
-              [
-                { text: 'Cancel', style: 'cancel' },
-                { 
-                  text: 'Reset', 
-                  style: 'destructive',
-                  onPress: async () => {
-                    try {
-                      await resetTodayData();
-                      Alert.alert('SUCCESS!', 'ALL DATA CLEARED!');
-                    } catch (error) {
-                      console.error('RESET ERROR:', error);
-                      Alert.alert('Error', 'Reset failed: ' + (error instanceof Error ? error.message : String(error)));
-                    }
-                  }
-                }
-              ]
-            );
-          }}
+          // onUpgradePremium={() => {
+          //   Alert.alert(
+          //     'Premium',
+          //     'Premium feature will be available in future versions!',
+          //     [{ text: 'Got it' }]
+          //   );
+          // }}
+          // onReset={async () => {
+          //   Alert.alert(
+          //     'Reset Today',
+          //     'Reset all limits and data for today?',
+          //     [
+          //       { text: 'Cancel', style: 'cancel' },
+          //       {
+          //         text: 'Reset',
+          //         style: 'destructive',
+          //         onPress: async () => {
+          //           try {
+          //             await resetTodayData();
+          //             Alert.alert('SUCCESS!', 'ALL DATA CLEARED!');
+          //           } catch (error) {
+          //             console.error('RESET ERROR:', error);
+          //             Alert.alert('Error', 'Reset failed: ' + (error instanceof Error ? error.message : String(error)));
+          //           }
+          //         }
+          //       }
+          //     ]
+          //   );
+          // }}
         />
       </View>
 

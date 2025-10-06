@@ -17,8 +17,18 @@ export function useDailyData() {
   const todayKey = getTodayKey();
 
   const updateDailyData = useCallback(async (updates: Partial<DailyData>) => {
-    const newData = { ...dailyData, ...updates };
-    await saveDailyData(newData);
+    try {
+      const raw = await AsyncStorage.getItem(STORAGE_KEYS.DAILY_DATA);
+      const current = raw ? JSON.parse(raw) as DailyData : dailyData;
+      const newData: DailyData = { ...current, ...updates } as DailyData;
+      try { console.log('[Daily] update merge', { from: current?.swipesUsedToday, to: newData?.swipesUsedToday, keys: Object.keys(updates) }); } catch {}
+      await saveDailyData(newData);
+    } catch (error) {
+      console.error('updateDailyData merge error:', error);
+      const fallback = { ...dailyData, ...updates } as DailyData;
+      try { console.log('[Daily] update fallback', { to: (fallback as any)?.swipesUsedToday }); } catch {}
+      await saveDailyData(fallback);
+    }
   }, [dailyData, saveDailyData]);
 
   const resetForNewDay = useCallback(async () => {

@@ -1,5 +1,5 @@
 import React, { useRef, useState, useEffect } from 'react';
-import { View, Text, StyleSheet, Animated, Dimensions, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, Animated, Dimensions, TouchableOpacity, Pressable } from 'react-native';
 import UIButton from '../ui/atoms/Button';
 import SwipeHints from '../ui/molecules/SwipeHints';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -58,7 +58,6 @@ export function SwipeDeck({
   const [pendingChallenge, setPendingChallenge] = useState<Challenge | null>(null);
   const [isStopped, setIsStopped] = useState(false);
   const [completedToday, setCompletedToday] = useState(false);
-  const [internalSwipeCount, setInternalSwipeCount] = useState(0);
 
   const translateX = useRef(new Animated.Value(0)).current;
   const translateY = useRef(new Animated.Value(0)).current;
@@ -70,6 +69,7 @@ export function SwipeDeck({
 
 
   useEffect(() => {
+    try { console.log('[Deck] challenges changed', { length: challenges.length }); } catch {}
     setCurrentIndex(0);
     setPendingChallenge(null);
     setIsStopped(false);
@@ -81,13 +81,17 @@ export function SwipeDeck({
     heartScale.setValue(1);
   }, [challenges, heartScale, opacity, rotate, scale, translateX, translateY]);
 
-  const hasShownLimitAlertRef = useRef<boolean>(false);
+  useEffect(() => {
+    try { console.log('[Deck] swipe props', { disabled, swipeCount, maxSwipes }); } catch {}
+  }, [disabled, swipeCount, maxSwipes]);
 
   useEffect(() => {
-    if (!disabled && swipeCount === 0) {
-      hasShownLimitAlertRef.current = false;
+    if (disabled) {
+      translateX.setValue(0);
+      translateY.setValue(0);
+      rotate.setValue(0);
     }
-  }, [disabled, swipeCount]);
+  }, [disabled, rotate, translateX, translateY]);
 
   const getTodayKey = () => {
     const d = new Date();
@@ -154,10 +158,12 @@ export function SwipeDeck({
     loadCompletedFromStorage();
   }, [loadCompletedFromStorage, loadPendingFromStorage]);
 
-  const onGestureEvent = Animated.event(
-    [{ nativeEvent: { translationX: translateX, translationY: translateY } }],
-    { useNativeDriver: true }
-  );
+  const onGestureEvent = disabled
+    ? undefined
+    : Animated.event(
+        [{ nativeEvent: { translationX: translateX, translationY: translateY } }],
+        { useNativeDriver: true }
+      );
 
   const rotateInterpolate = translateX.interpolate({
     inputRange: [-screenWidth, 0, screenWidth],
@@ -172,17 +178,28 @@ export function SwipeDeck({
   });
 
   const onHandlerStateChange = (event: PanGestureHandlerGestureEvent) => {
-    // Block interaction when disabled (limit reached): snap back and show alert once per day
+    try { console.log('[Deck] onHandlerStateChange', { disabled, pending: !!pendingChallenge, completedToday, state: (event as any)?.nativeEvent?.state, tx: (event as any)?.nativeEvent?.translationX }); } catch {}
     if (disabled) {
-      const { state } = event.nativeEvent as any;
-      if ((state === (State as any).END || state === 5) && !hasShownLimitAlertRef.current) {
-        hasShownLimitAlertRef.current = true;
-        Animated.parallel([
-          Animated.spring(translateX, { toValue: 0, useNativeDriver: true, tension: 150, friction: 8 }),
-          Animated.spring(translateY, { toValue: 0, useNativeDriver: true, tension: 150, friction: 8 }),
-          Animated.spring(rotate, { toValue: 0, useNativeDriver: true, tension: 150, friction: 8 }),
-        ]).start();
-        onLimitReached?.();
+      const { state, translationX } = event.nativeEvent as any;
+      if (state === (State as any).END || state === 5) {
+        const currentChallenge = challenges[currentIndex];
+        if (translationX >= SWIPE_THRESHOLD) {
+          try { console.log('[Deck] DISABLED_RIGHT -> PENDING_SELECT', { currentIndex, id: currentChallenge?.id }); } catch {}
+          setPendingChallenge(currentChallenge);
+          savePendingToStorage(currentChallenge);
+          rotate.setValue(0);
+          translateX.setValue(0);
+          translateY.setValue(0);
+          Animated.timing(buttonsOpacity, { toValue: 1, duration: 180, useNativeDriver: true }).start();
+        } else {
+          try { console.log('[Deck] DISABLED_LEFT/BACK -> ALERT'); } catch {}
+          Animated.parallel([
+            Animated.spring(translateX, { toValue: 0, useNativeDriver: true, tension: 150, friction: 8 }),
+            Animated.spring(translateY, { toValue: 0, useNativeDriver: true, tension: 150, friction: 8 }),
+            Animated.spring(rotate, { toValue: 0, useNativeDriver: true, tension: 150, friction: 8 }),
+          ]).start();
+          onLimitReached?.();
+        }
       }
       return;
     }
@@ -193,6 +210,7 @@ export function SwipeDeck({
       const currentChallenge = challenges[currentIndex];
   
       if (translationX < -SWIPE_THRESHOLD) {
+        try { console.log('[Deck] SWIPE_LEFT confirmed', { currentIndex }); } catch {}
         Animated.timing(translateX, {
           toValue: -screenWidth * 2,
           duration: 300,
@@ -200,13 +218,13 @@ export function SwipeDeck({
         }).start(() => {
           onSwipeLeft(currentChallenge);
           onSwipe?.();
-          setInternalSwipeCount(prev => prev + 1);
           setCurrentIndex(prev => prev + 1);
           translateX.setValue(0);
           translateY.setValue(0);
           opacity.setValue(1);
         });
       } else if (translationX > SWIPE_THRESHOLD) {
+        try { console.log('[Deck] SWIPE_RIGHT pending set', { currentIndex }); } catch {}
         Animated.parallel([
           Animated.timing(translateX, { toValue: screenWidth * 1.5, duration: 220, useNativeDriver: true }),
           Animated.timing(rotate, { toValue: 0.6, duration: 220, useNativeDriver: true }),
@@ -215,7 +233,6 @@ export function SwipeDeck({
           setPendingChallenge(currentChallenge);
           savePendingToStorage(currentChallenge);
           onSwipe?.();
-          setInternalSwipeCount(prev => prev + 1);
           translateX.setValue(0);
           translateY.setValue(0);
           rotate.setValue(0);
@@ -227,6 +244,7 @@ export function SwipeDeck({
           ]).start();
         });
        } else {
+        try { console.log('[Deck] SWIPE_CANCEL snap back'); } catch {}
         Animated.parallel([
           Animated.spring(translateX, { toValue: 0, useNativeDriver: true, tension: 150, friction: 8 }),
           Animated.spring(translateY, { toValue: 0, useNativeDriver: true, tension: 150, friction: 8 }),
@@ -241,6 +259,7 @@ export function SwipeDeck({
   
 
   const handleAddToFavorites = (challenge: Challenge) => {
+    try { console.log('[Deck] addToFavorites', { id: challenge.id }); } catch {}
     Animated.sequence([
       Animated.timing(heartScale, { toValue: 1.2, duration: 100, useNativeDriver: true }),
       Animated.timing(heartScale, { toValue: 1, duration: 100, useNativeDriver: true }),
@@ -248,8 +267,14 @@ export function SwipeDeck({
     onAddToFavorites?.(challenge);
   };
 
+  const handleDisabledPress = () => {
+    try { console.log('[Deck] disabled press'); } catch {}
+    onLimitReached?.();
+  };
+
   const handleConfirm = () => {
     if (!pendingChallenge) return;
+    try { console.log('[Deck] confirm selection', { id: pendingChallenge.id }); } catch {}
     onSwipeRight(pendingChallenge);
     onSwipe?.();
     setPendingChallenge(null);
@@ -266,6 +291,7 @@ export function SwipeDeck({
 
   const handleSkip = () => {
     if (!pendingChallenge) return;
+    try { console.log('[Deck] skip selection', { id: pendingChallenge.id }); } catch {}
     onSwipeLeft(pendingChallenge);
     onSwipe?.();
     setPendingChallenge(null);
@@ -321,7 +347,7 @@ export function SwipeDeck({
       {!pendingChallenge && (
         <View style={styles.swipeCounter}>
           <Text style={styles.swipeCounterText}>
-            Swipes: {swipeCount}/{maxSwipes}
+            Swipes: {Math.min(swipeCount, maxSwipes)}/{maxSwipes}
           </Text>
         </View>
       )}
@@ -414,7 +440,7 @@ export function SwipeDeck({
               )}
 
               {!pendingChallenge && (
-                <SwipeHints leftLabel="Select" rightLabel="Skip" style={{ paddingBottom: 4 }} />
+                <SwipeHints leftLabel="Skip" rightLabel="Select" style={{ paddingBottom: 4 }} />
               )}
 
             </View>
@@ -441,6 +467,14 @@ const styles = StyleSheet.create({
     width: '100%',
     height: '100%',
     overflow: 'visible',
+  },
+  blockOverlay: {
+    position: 'absolute',
+    top: 0,
+    right: 0,
+    bottom: 0,
+    left: 0,
+    zIndex: 20,
   },
   swipeCounter: {
     position: 'absolute',

@@ -24,7 +24,7 @@ export default function Screen({
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.background,
+    backgroundColor: 'white',
   },
 });
 

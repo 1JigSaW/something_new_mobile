@@ -163,9 +163,15 @@ export default function TodayScreen() {
             Alert.alert('Added to Favorites', `"${challenge.title}" added to favorites`);
           }}
           disabled={!canSwipe()}
-          swipeCount={undefined as unknown as number}
+          swipeCount={swipesUsedToday}
           maxSwipes={maxSwipesPerDay}
           isPremium={isPremium}
+          onLimitReached={() => {
+            Alert.alert(
+              'Swipe limit reached',
+              `You've used ${swipesUsedToday}/${maxSwipesPerDay} swipes today.`
+            );
+          }}
           onUpgradePremium={() => {
             Alert.alert(
               'Premium',
@@ -198,7 +204,10 @@ export default function TodayScreen() {
         />
       </View>
 
-      <Celebration visible={showCelebration} />
+      <Celebration 
+        visible={showCelebration}
+        onClose={() => setShowCelebration(false)}
+      />
 
     </View>
   );

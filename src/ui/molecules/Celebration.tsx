@@ -1,15 +1,16 @@
 import React, { useEffect, useRef } from 'react';
-import { View, Text, StyleSheet, Animated, Dimensions } from 'react-native';
+import { View, Text, StyleSheet, Animated, Dimensions, Pressable } from 'react-native';
 import { colors } from '../../styles';
 
 type CelebrationProps = {
   visible: boolean,
+  onClose?: () => void,
 };
 
 const EMOJIS = ['🎉', '✨', '🎊', '⭐', '✅', '🍀', '💚'];
 const { width, height } = Dimensions.get('window');
 
-export default function Celebration({ visible }: CelebrationProps) {
+export default function Celebration({ visible, onClose }: CelebrationProps) {
   const opacity = useRef(new Animated.Value(0)).current;
   const scale = useRef(new Animated.Value(0.9)).current;
   const particles = useRef(
@@ -51,7 +52,11 @@ export default function Celebration({ visible }: CelebrationProps) {
   if (!visible) return null;
 
   return (
-    <Animated.View style={[styles.overlay, { opacity, transform: [{ scale }] }]}>
+    <Pressable
+      style={styles.overlay}
+      onPress={onClose}
+    >
+      <Animated.View style={[StyleSheet.absoluteFill, { opacity, transform: [{ scale }] }]}> 
       <Text style={styles.title}>Great!</Text>
       <Text style={styles.subtitle}>Challenge completed</Text>
       {particles.map((p, idx) => (
@@ -71,7 +76,8 @@ export default function Celebration({ visible }: CelebrationProps) {
           {p.emoji}
         </Animated.Text>
       ))}
-    </Animated.View>
+      </Animated.View>
+    </Pressable>
   );
 }
 

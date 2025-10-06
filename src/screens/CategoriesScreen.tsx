@@ -27,6 +27,10 @@ export default function CategoriesScreen() {
 
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
 
+  const sizeKeys = ['small', 'medium', 'large'];
+  const sizeParam = selectedCategory && sizeKeys.includes(selectedCategory) ? selectedCategory : undefined;
+  const categoryParam = selectedCategory && !sizeKeys.includes(selectedCategory) ? selectedCategory : undefined;
+
   const { 
     data: challenges = [], 
     isLoading: loading, 
@@ -34,6 +38,8 @@ export default function CategoriesScreen() {
   } = useRandomChallengesQuery({
     limit: 20,
     freeOnly: !isPremium,
+    size: sizeParam as any,
+    category: categoryParam as any,
   });
 
   const categories = challenges.reduce((acc, challenge) => {
@@ -45,7 +51,6 @@ export default function CategoriesScreen() {
     return acc;
   }, {} as Record<string, Challenge[]>);
 
-  const sizeKeys = ['small', 'medium', 'large'];
   let filteredChallenges = challenges;
   
   if (selectedCategory) {
@@ -146,7 +151,7 @@ export default function CategoriesScreen() {
   }
 
   if (selectedCategory) {
-    const categoryChallenges = categories[selectedCategory] || [];
+    const categoryChallenges = filteredChallenges;
     const unviewedCategoryChallenges = getDisplayChallenges(categoryChallenges, { allowRepeatsOnExhausted: true });
 
     return (
@@ -165,6 +170,16 @@ export default function CategoriesScreen() {
           onSwipeRight={handleSwipeRight}
           onSwipeLeft={handleSwipeLeft}
           onAddToFavorites={handleAddToFavorites}
+          onSwipe={handleSwipe}
+          disabled={!canSwipe()}
+          swipeCount={swipesUsedToday}
+          maxSwipes={maxSwipesPerDay}
+          onLimitReached={() => {
+            Alert.alert(
+              'Swipe limit reached',
+              `You've used ${swipesUsedToday}/${maxSwipesPerDay} swipes today.`
+            );
+          }}
         />
       </View>
     );

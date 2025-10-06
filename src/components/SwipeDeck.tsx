@@ -33,6 +33,7 @@ interface SwipeDeckProps {
   isPremium?: boolean;
   isSelected?: (challengeId: number) => boolean;
   onReset?: () => void;
+  onLimitReached?: () => void;
 }
 
 const { width: screenWidth } = Dimensions.get('window');
@@ -50,7 +51,8 @@ export function SwipeDeck({
   onUpgradePremium,
   isPremium = false,
   isSelected,
-  onReset
+  onReset,
+  onLimitReached
 }: SwipeDeckProps) {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [pendingChallenge, setPendingChallenge] = useState<Challenge | null>(null);
@@ -78,6 +80,14 @@ export function SwipeDeck({
     scale.setValue(1);
     heartScale.setValue(1);
   }, [challenges, heartScale, opacity, rotate, scale, translateX, translateY]);
+
+  const hasShownLimitAlertRef = useRef<boolean>(false);
+
+  useEffect(() => {
+    if (!disabled && swipeCount === 0) {
+      hasShownLimitAlertRef.current = false;
+    }
+  }, [disabled, swipeCount]);
 
   const getTodayKey = () => {
     const d = new Date();
@@ -162,7 +172,21 @@ export function SwipeDeck({
   });
 
   const onHandlerStateChange = (event: PanGestureHandlerGestureEvent) => {
-    if (disabled || isStopped || pendingChallenge || completedToday) return;
+    // Block interaction when disabled (limit reached): snap back and show alert once per day
+    if (disabled) {
+      const { state } = event.nativeEvent as any;
+      if ((state === (State as any).END || state === 5) && !hasShownLimitAlertRef.current) {
+        hasShownLimitAlertRef.current = true;
+        Animated.parallel([
+          Animated.spring(translateX, { toValue: 0, useNativeDriver: true, tension: 150, friction: 8 }),
+          Animated.spring(translateY, { toValue: 0, useNativeDriver: true, tension: 150, friction: 8 }),
+          Animated.spring(rotate, { toValue: 0, useNativeDriver: true, tension: 150, friction: 8 }),
+        ]).start();
+        onLimitReached?.();
+      }
+      return;
+    }
+    if (isStopped || pendingChallenge || completedToday) return;
   
     const { translationX, state } = event.nativeEvent;
     if (state === (State as any).END || state === 5) {
@@ -297,7 +321,7 @@ export function SwipeDeck({
       {!pendingChallenge && (
         <View style={styles.swipeCounter}>
           <Text style={styles.swipeCounterText}>
-            Swipes: {internalSwipeCount}/{maxSwipes}
+            Swipes: {swipeCount}/{maxSwipes}
           </Text>
         </View>
       )}
@@ -306,7 +330,7 @@ export function SwipeDeck({
         <PanGestureHandler
           onGestureEvent={onGestureEvent}
           onHandlerStateChange={onHandlerStateChange}
-          enabled={!disabled && !pendingChallenge}
+          enabled={!pendingChallenge}
         >
           <Animated.View
             style={[

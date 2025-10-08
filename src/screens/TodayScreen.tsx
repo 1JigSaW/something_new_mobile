@@ -3,7 +3,6 @@ import { View, Text, StyleSheet, Alert } from 'react-native';
 import PageHeader from '../ui/layout/PageHeader';
 import EmptyState from '../ui/molecules/EmptyState';
 import ErrorState from '../ui/molecules/ErrorState';
-import ResetButton from '../ui/atoms/ResetButton';
 import { useFocusEffect } from '@react-navigation/native';
 import { useApp } from '../context/AppContext';
 import { useRandomChallengesQuery } from '../features';
@@ -19,7 +18,6 @@ export default function TodayScreen() {
     completedToday,
     isPremium,
     checkAndResetForNewDay,
-    resetTodayData,
     addToFavorites,
     swipesUsedToday,
     maxSwipesPerDay,

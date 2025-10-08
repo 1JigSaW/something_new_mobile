@@ -260,7 +260,13 @@ export default function CategoriesScreen() {
               <TouchableOpacity
                 key={duration.key}
                 style={[styles.categoryCard, { backgroundColor: `${duration.color}15` }]}
-                onPress={() => {}}
+                onPress={() => {
+                  const map = { quick: 'small', medium: 'medium', long: 'large' } as const;
+                  const sizeKey = map[duration.key as keyof typeof map];
+                  if (sizeKey) {
+                    handleCategorySelect(sizeKey);
+                  }
+                }}
               >
                 <View style={styles.categoryCardContent}>
                   <Text style={[styles.categoryCardTitle]}>{duration.label}</Text>

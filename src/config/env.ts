@@ -4,8 +4,8 @@
 export const ENV = {
   // API Configuration
   API_BASE_URL_DEV_IOS: 'http://91.98.73.143:8000',
-  API_BASE_URL_DEV_ANDROID: 'http://10.0.2.2:8001',
-  API_BASE_URL_PROD: 'https://your-production-api.com',
+  API_BASE_URL_DEV_ANDROID: 'http://91.98.73.143:8000',
+  API_BASE_URL_PROD: 'http://91.98.73.143:8000',
 
   // Sentry Configuration
   SENTRY_DSN: '',
